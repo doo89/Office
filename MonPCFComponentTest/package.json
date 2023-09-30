@@ -1,0 +1,15 @@
+{
+  "name": "monpcfcomponenttest",
+  "version": "1.0.0",
+  "description": "A simple PCF component for test",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "pcf-scripts build",
+    "test": "pcf-scripts test",
+    "start": "pcf-scripts start"
+  },
+  "author": "doo89",
+  "license": "MIT",
+  "dependencies": {},
+  "devDependencies": {}
+}
