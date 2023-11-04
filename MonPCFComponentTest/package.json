@@ -1,7 +1,7 @@
 {
   "name": "monpcfcomponenttest",
   "version": "1.0.0",
-  "description": "A simple PCF component for test",
+  "description": "A simple PCF component for test.",
   "main": "dist/index.js",
   "scripts": {
     "build": "pcf-scripts build",
