@@ -2,8 +2,9 @@
   "extends": "./node_modules/pcf-scripts/tsconfig.base.json",
   "compilerOptions": {
     "outDir": "./dist"
-  },
+  } ,
   "include": [
     "src/**/*.ts"
   ]
 }
+// TEST
