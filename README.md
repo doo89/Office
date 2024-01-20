@@ -93,3 +93,5 @@ N'oubliez pas d'ajouter les dépendances nécessaires à votre fichier package.j
 Cela vous donne une base de départ pour un projet PCF simple que vous pouvez déposer sur GitHub. Vous pouvez ensuite ajouter et développer votre propre code dans index.ts pour créer votre composant personnalisé. Assurez-vous de consulter la documentation de Microsoft pour obtenir plus de détails et de bonnes pratiques lors de la création de composants PCF : Power Apps Component Framework (PCF) documentation.
 
 ChatGPT.
+
+//cool
