@@ -1,25 +1,25 @@
 import pygame
 import random
 
-# Initialize the game
+# Initialize la partie
 pygame.init()
 
-# Set the width and height of the game window
+# Définition de la taille de l'écran
 width = 800
 height = 600
 screen = pygame.display.set_mode((width, height))
 pygame.display.set_caption("Flappy Bird")
 
-# Define colors
+# Définition des couleurs
 white = (255, 255, 255)
 black = (0, 0, 0)
 
-# Load images
+# Lires les images
 bird_img = pygame.image.load("bird.png")
 pipe_img = pygame.image.load("pipe.png")
 background_img = pygame.image.load("background.png")
 
-# Define the bird class
+# Définir la classe Bird
 class Bird:
     def __init__(self):
         self.x = 100
@@ -37,7 +37,7 @@ class Bird:
     def draw(self):
         screen.blit(bird_img, (self.x, self.y))
 
-# Define the pipe class
+# Définir la classe Pipe
 class Pipe:
     def __init__(self):
         self.x = width
@@ -50,11 +50,11 @@ class Pipe:
     def draw(self):
         screen.blit(pipe_img, (self.x, self.y))
 
-# Create bird and pipes
+# Créer des un oiseau et des tuyaux
 bird = Bird()
 pipes = [Pipe()]
 
-# Game loop
+# Boucle de la partie
 running = True
 clock = pygame.time.Clock()
 
