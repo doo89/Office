@@ -91,9 +91,9 @@ while running:
     for pipe in pipes:
         pipe.draw()
 
-    # Update the display
+    # mise a jour écran
     pygame.display.update()
     clock.tick(30)
 
-# Quit the game
+# Quitter le jeu
 pygame.quit()
