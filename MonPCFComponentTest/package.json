@@ -8,7 +8,7 @@
     "test": "pcf-scripts test",
     "start": "pcf-scripts start"
   },
-  "author": "doo89",
+  "author": "Doo89",
   "license": "MIT",
   "dependencies": {},
   "devDependencies": {}
