@@ -1,0 +1,41 @@
+Catégorie:
+Creadoo
+    |
+    --> Keys
+    |
+    --> Orientation
+
+-----------
+
+Code java pour les touches enfoncées (Output boolean):
+
+(Screen.hasAltDown())
+
+(Screen.hasControlDown())
+
+(Screen.hasShiftDown())
+----------
+
+Exemple images format svg:
+
+CTRL:
+https://visualpharm.com/assets/527/Ctrl-595b40b75ba036ed117d8bbb.svg
+
+-----------
+Code pour plugin Orientation (Input):
+
+Bloc 1 moveX
+((double) ((${input$speed}) * Math.cos((((${input$orientation}) + 90) * (Math.PI / 180)))))
+Texte:
+Calculer la vitesse horizontale en fonction des valeurs d'orientation et de vitesse
+
+Bloc 2 moveZ
+((double) ((${input$speed}) * Math.sin((((${input$orientation}) + 90) * (Math.PI / 180)))))
+Texte:
+Calculate vertical speed based on orientation and speed values
+
+Bloc 3
+( 180 - (Math.toDegrees(Math.atan2((${input$x} - ${input$x1}),(${input$z} - ${input$z1})))))
+Texte:
+Calculate angle between points (%1, %2) and (%3, %4)
+
