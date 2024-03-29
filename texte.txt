@@ -1,0 +1,16 @@
+{
+  "jars": [
+    {
+      "identifier": {
+        "group": "dev.shadowsoffire.placebo",
+        "artifact": "Placebo"
+      },
+      "version": {
+        "range": "[8.6.1,)",
+        "artifactVersion": "1.20.1-8.6.1"
+      },
+      "path": "META-INF/jarjar/Placebo-1.20.1-8.6.1.jar",
+      "isObfuscated": false
+    }
+  ]
+}
