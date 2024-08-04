@@ -1,0 +1,3 @@
+Set(maVariable, ""); // Pour une variable de type chaîne
+Set(maVariable, 0); // Pour une variable de type nombre
+Set(maVariable, {}); // Pour une variable de type enregistrement
