@@ -1,0 +1,82 @@
+ComponentDefinitions:
+  Comp_CercleProgression:
+    DefinitionType: CanvasComponent
+    CustomProperties:
+      CouleurAlerte:
+        PropertyKind: Input
+        DisplayName: CouleurAlerte
+        Description: Propriété personnalisée
+        DataType: Color
+        Default: =RGBA(0, 0, 0, 1)
+      CouleurCercle:
+        PropertyKind: Input
+        DisplayName: CouleurCercle
+        Description: Propriété personnalisée
+        DataType: Color
+        Default: =RGBA(0, 0, 0, 1)
+      Decalage:
+        PropertyKind: Input
+        DisplayName: Decalage
+        Description: Propriété personnalisée
+        DataType: Number
+        Default: =100
+      Epaisseur:
+        PropertyKind: Input
+        DisplayName: Epaisseur
+        Description: Propriété personnalisée
+        DataType: Number
+        Default: =100
+      Valeur:
+        PropertyKind: Input
+        DisplayName: Valeur
+        Description: Propriété personnalisée
+        DataType: Number
+        Default: =100
+    Children:
+      - Image1:
+          Control: Image@2.2.3
+          Properties:
+            BorderColor: =RGBA(0, 0, 0, 0)
+            BorderStyle: =BorderStyle.None
+            BorderThickness: =2
+            DisabledBorderColor: =RGBA(0, 0, 0, 0)
+            DisabledFill: =RGBA(0, 0, 0, 0)
+            FocusedBorderThickness: =4
+            Height: =Parent.Height
+            HoverBorderColor: =RGBA(0, 0, 0, 0)
+            HoverFill: =RGBA(0, 0, 0, 0)
+            Image: |-
+              ="data:image/svg+xml;utf8," & 
+              EncodeUrl(
+                  "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'>
+                      <defs>
+                          <linearGradient id='grad' x1='0%' y1='0%' x2='100%' y2='0%'>
+                              <stop offset='0%' style='stop-color:skyblue;stop-opacity:1' />
+                              <stop offset='100%' style='stop-color:navy;stop-opacity:1' />
+                          </linearGradient>
+                      </defs>
+                      <circle cx='50' cy='50' r='40' stroke='#F0F0F0' stroke-width='" & Parent.Epaisseur & "' fill='none' />
+                      <circle cx='50' cy='50' r='40' stroke='url(#grad)' 
+                          stroke-width='" & Parent.Epaisseur & "' fill='none' 
+                          stroke-dasharray='" & (2 * Pi() * 40 * Parent.Valeur / 100) & " " & (2 * Pi() * 40) & "' 
+                          stroke-linecap='round' transform='rotate(" & Parent.Decalage & " 50 50)' />
+                  </svg>"
+              )
+            PressedBorderColor: =RGBA(0, 0, 0, 0)
+            PressedFill: =RGBA(0, 0, 0, 0)
+            Width: =Parent.Width
+      - Label2:
+          Control: Label@2.5.1
+          Properties:
+            Align: =Align.Center
+            BorderColor: =RGBA(0, 0, 0, 0)
+            BorderStyle: =BorderStyle.None
+            BorderThickness: =2
+            DisabledBorderColor: =RGBA(0, 0, 0, 0)
+            DisabledColor: =RGBA(161, 159, 157, 1)
+            FocusedBorderThickness: =4
+            Font: =Font.'Segoe UI'
+            Height: =Parent.Height
+            Size: =40
+            Text: =Parent.Valeur
+            Width: =Parent.Width
