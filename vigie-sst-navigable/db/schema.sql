@@ -8,6 +8,8 @@ create table documents (
   url text,                  -- Lien vers la source officielle (Légifrance, etc.)
   published_date date,       -- Date de publication ou d'effet
   content text,              -- Contenu textuel complet ou extrait
+  source text not null,      -- Source principale (ex: 'Legifrance', 'INRS', 'OPPBTP', 'VNF')
+  category text,             -- Catégorie spécifique (ex: 'Risque noyade', 'Code du travail', 'Règlement de sécurité')
   embedding vector(768),     -- Vecteur pour la recherche sémantique (taille dépend du modèle utilisé, ex: 768 pour Gemini)
   created_at timestamptz default now()
 );
@@ -23,6 +25,8 @@ returns table (
   content text,
   title text,
   url text,
+  source text,
+  category text,
   similarity float
 )
 language plpgsql
@@ -34,6 +38,8 @@ begin
     documents.content,
     documents.title,
     documents.url,
+    documents.source,
+    documents.category,
     1 - (documents.embedding <=> query_embedding) as similarity
   from documents
   where 1 - (documents.embedding <=> query_embedding) > match_threshold
