@@ -4,7 +4,7 @@ Pour enrichir la base de connaissances de Vigie-SST Navigable, suivez la procéd
 
 ## Prérequis
 
-*   Accès à la base de données Vercel Postgres du projet.
+*   Accès à la base de données Supabase du projet.
 *   Accès à l'API Gemini (ou autre modèle d'embedding configuré) pour générer les vecteurs.
 
 ## Procédure d'indexation
@@ -23,19 +23,21 @@ Pour enrichir la base de connaissances de Vigie-SST Navigable, suivez la procéd
     *   Générez un vecteur pour le contenu textuel.
 
 4.  **Insertion en Base de Données**
-    *   Exécutez une requête SQL d'insertion dans la table `documents`.
+    *   Exécutez une requête SQL d'insertion dans la table `documents_sst`.
 
     ```sql
-    INSERT INTO documents (title, url, published_date, content, embedding)
+    INSERT INTO documents_sst (title, url, published_date, content, source, category, embedding)
     VALUES (
         'Titre du Décret',
         'https://legifrance.gouv.fr/...',
         '2023-10-25',
         'Contenu extrait du texte...',
+        'Legifrance',
+        'Code du travail',
         '[0.012, -0.045, ...]' -- Le vecteur généré
     );
     ```
 
-## Scripts d'automatisation (À venir)
+## Scripts d'automatisation
 
-Des scripts Python/Node.js seront mis à disposition dans le dossier `scripts/` pour automatiser l'extraction et l'insertion à partir d'un fichier PDF ou d'une URL.
+Utilisez le script `scripts/seed-supabase.js` pour insérer des données initiales. Assurez-vous d'avoir configuré `SUPABASE_URL` et `SUPABASE_ANON_KEY` dans votre environnement.
