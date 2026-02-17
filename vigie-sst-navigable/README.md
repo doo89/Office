@@ -1,36 +1,38 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Vigie-SST Navigable
 
-## Getting Started
+Plateforme intelligente de veille et de conseil en Santé et Sécurité au Travail (SST) pour les voies navigables.
 
-First, run the development server:
+## Technologies
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+*   **Framework :** Next.js 15+ (App Router)
+*   **Base de données :** Supabase (PostgreSQL + pgvector)
+*   **IA :** Google Gemini (Embeddings + Chat)
+*   **UI :** Tailwind CSS
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Configuration Environnement (Local & Vercel)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Pour que l'application fonctionne, vous devez configurer les variables d'environnement suivantes.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 1. Variables Supabase
+Ces variables sont nécessaires pour connecter l'application à votre base de données Supabase.
 
-## Learn More
+*   `SUPABASE_URL` : L'URL de votre projet Supabase (ex: `https://xyz.supabase.co`).
+*   `SUPABASE_ANON_KEY` : La clé publique (anon) de votre projet.
 
-To learn more about Next.js, take a look at the following resources:
+### 2. Variable Google Gemini (IA)
+Cette variable est requise pour générer les réponses de l'assistant Jules et les vecteurs de recherche.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+*   `GOOGLE_GENERATIVE_AI_API_KEY` : Votre clé API Google AI Studio (Gemini).
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Déploiement sur Vercel
 
-## Deploy on Vercel
+1.  Connectez votre dépôt GitHub à Vercel.
+2.  Dans les paramètres du projet ("Settings" > "Environment Variables"), ajoutez les trois clés ci-dessus :
+    *   `SUPABASE_URL`
+    *   `SUPABASE_ANON_KEY`
+    *   `GOOGLE_GENERATIVE_AI_API_KEY`
+3.  Redéployez l'application pour que les changements prennent effet.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Contribution & Indexation
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Voir le fichier [CONTRIBUTE.md](./CONTRIBUTE.md) pour savoir comment ajouter de nouveaux textes réglementaires.
