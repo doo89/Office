@@ -4,7 +4,7 @@ Pour enrichir la base de connaissances de Vigie-SST Navigable, suivez la procéd
 
 ## Prérequis
 
-*   Accès à la base de données Supabase du projet.
+*   Accès à la base de données Vercel Postgres du projet.
 *   Accès à l'API Gemini (ou autre modèle d'embedding configuré) pour générer les vecteurs.
 
 ## Procédure d'indexation

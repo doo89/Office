@@ -2,21 +2,31 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { sendMessage } from "./actions";
 
 export default function Home() {
   const [messages, setMessages] = useState<{role: 'user' | 'assistant', content: string}[]>([
     { role: 'assistant', content: 'Bonjour ! Je suis Jules, votre assistant en prévention SST. Je suis connecté aux bases de données Légifrance, INRS, OPPBTP et VNF. Comment puis-je vous aider ?' }
   ]);
   const [input, setInput] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSend = () => {
-    if (!input.trim()) return;
-    setMessages([...messages, { role: 'user', content: input }]);
+  const handleSend = async () => {
+    if (!input.trim() || isLoading) return;
+
+    const userMessage = input;
     setInput("");
-    // Simulate response
-    setTimeout(() => {
-        setMessages(prev => [...prev, { role: 'assistant', content: "Je consulte les bases de données (Légifrance, INRS, VNF)... (Simulation : Je n'ai pas encore accès à l'API Gemini pour traiter votre demande)." }]);
-    }, 1000);
+    setMessages(prev => [...prev, { role: 'user', content: userMessage }]);
+    setIsLoading(true);
+
+    try {
+        const response = await sendMessage(userMessage);
+        setMessages(prev => [...prev, { role: 'assistant', content: response }]);
+    } catch (error) {
+        setMessages(prev => [...prev, { role: 'assistant', content: "Désolé, une erreur est survenue." }]);
+    } finally {
+        setIsLoading(false);
+    }
   };
 
   return (
@@ -44,21 +54,30 @@ export default function Home() {
               </div>
             </div>
           ))}
+          {isLoading && (
+            <div className="flex justify-start">
+              <div className="bg-white text-gray-500 p-4 rounded-lg border border-gray-200 animate-pulse">
+                Jules réfléchit...
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="p-4 bg-white border-t border-gray-200">
           <div className="max-w-4xl mx-auto flex gap-2">
             <input
               type="text"
-              className="flex-1 border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800 shadow-sm"
+              className="flex-1 border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800 shadow-sm disabled:opacity-50"
               placeholder="Posez votre question métier (ex: EPI obligatoires écluse...)"
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+              disabled={isLoading}
             />
             <button
               onClick={handleSend}
-              className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition font-medium shadow-sm"
+              className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition font-medium shadow-sm disabled:opacity-50"
+              disabled={isLoading}
             >
               Envoyer
             </button>
