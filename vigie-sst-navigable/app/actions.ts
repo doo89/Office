@@ -21,10 +21,29 @@ export async function sendMessage(userMessage: string) {
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     // 1. Generate Embedding for the user query
-    // Using 'text-embedding-004' as standard for Gemini.
-    const embeddingModel = genAI.getGenerativeModel({ model: "text-embedding-004" });
-    const resultEmbedding = await embeddingModel.embedContent(userMessage);
-    const embedding = resultEmbedding.embedding.values;
+    // Use 'models/text-embedding-004' (stable on v1) as requested.
+    // If it fails (e.g., 404 on specific endpoint), fallback to 'models/embedding-001'.
+    let embedding: number[] = [];
+    try {
+        // Force API version v1 instead of v1beta default to fix 404
+        const embeddingModel = genAI.getGenerativeModel({
+            model: "models/text-embedding-004"
+        }, { apiVersion: "v1" });
+        const resultEmbedding = await embeddingModel.embedContent(userMessage);
+        embedding = resultEmbedding.embedding.values;
+    } catch (embeddingError) {
+        console.warn("Error with 'models/text-embedding-004' (v1), trying fallback 'models/embedding-001' (v1):", embeddingError);
+        try {
+            const fallbackModel = genAI.getGenerativeModel({
+                model: "models/embedding-001"
+            }, { apiVersion: "v1" });
+            const fallbackResult = await fallbackModel.embedContent(userMessage);
+            embedding = fallbackResult.embedding.values;
+        } catch (fallbackError) {
+            console.error("Both embedding models failed:", fallbackError);
+            return "Désolé, impossible de traiter votre demande pour le moment (Erreur API Embedding).";
+        }
+    }
 
     // 2. Search for relevant documents in Supabase (documents_sst)
     // We call the RPC function 'match_documents_sst' defined in schema.sql
@@ -49,7 +68,11 @@ export async function sendMessage(userMessage: string) {
     }
 
     // 3. Generate the answer with Gemini
-    const chatModel = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    // Ensure we use 'gemini-1.5-flash' on v1 API
+    const chatModel = genAI.getGenerativeModel({
+        model: "gemini-1.5-flash"
+    }, { apiVersion: "v1" });
+
     const prompt = `
       Tu es Jules, un expert en prévention Santé et Sécurité au Travail (SST) spécialisé dans les voies navigables.
       Ton rôle est d'aider les agents de terrain et les préventeurs.
