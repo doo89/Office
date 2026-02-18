@@ -25,13 +25,18 @@ export async function sendMessage(userMessage: string) {
     // If it fails (e.g., 404 on specific endpoint), fallback to 'models/embedding-001'.
     let embedding: number[] = [];
     try {
-        const embeddingModel = genAI.getGenerativeModel({ model: "models/text-embedding-004" });
+        // Force API version v1 instead of v1beta default to fix 404
+        const embeddingModel = genAI.getGenerativeModel({
+            model: "models/text-embedding-004"
+        }, { apiVersion: "v1" });
         const resultEmbedding = await embeddingModel.embedContent(userMessage);
         embedding = resultEmbedding.embedding.values;
     } catch (embeddingError) {
-        console.warn("Error with 'models/text-embedding-004', trying fallback 'models/embedding-001':", embeddingError);
+        console.warn("Error with 'models/text-embedding-004' (v1), trying fallback 'models/embedding-001' (v1):", embeddingError);
         try {
-            const fallbackModel = genAI.getGenerativeModel({ model: "models/embedding-001" });
+            const fallbackModel = genAI.getGenerativeModel({
+                model: "models/embedding-001"
+            }, { apiVersion: "v1" });
             const fallbackResult = await fallbackModel.embedContent(userMessage);
             embedding = fallbackResult.embedding.values;
         } catch (fallbackError) {
@@ -63,8 +68,11 @@ export async function sendMessage(userMessage: string) {
     }
 
     // 3. Generate the answer with Gemini
-    // Ensure we use 'gemini-1.5-flash'
-    const chatModel = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    // Ensure we use 'gemini-1.5-flash' on v1 API
+    const chatModel = genAI.getGenerativeModel({
+        model: "gemini-1.5-flash"
+    }, { apiVersion: "v1" });
+
     const prompt = `
       Tu es Jules, un expert en prévention Santé et Sécurité au Travail (SST) spécialisé dans les voies navigables.
       Ton rôle est d'aider les agents de terrain et les préventeurs.
