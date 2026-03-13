@@ -10,7 +10,7 @@ export const Canvas: React.FC = () => {
     canvas, setPan, setZoom, isNight,
     players, updatePlayer, addPlayer, deletePlayer,
     markers, updateMarker, addMarker, deleteMarker,
-    roles, grid, room
+    roles, teams, grid, room
   } = useVttStore();
   const [isPanning, setIsPanning] = useState(false);
   const [startPan, setStartPan] = useState({ x: 0, y: 0 });
@@ -234,6 +234,7 @@ export const Canvas: React.FC = () => {
         {/* Render Players */}
         {players.map(player => {
           const role = roles.find(r => r.id === player.roleId);
+          const team = teams.find(t => t.id === player.teamId);
           return (
             <div
               key={player.id}
@@ -296,6 +297,7 @@ export const Canvas: React.FC = () => {
               <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-max max-w-[200px] bg-popover text-popover-foreground text-xs p-2 rounded shadow-xl border border-border opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
                 <p className="font-bold">{player.name}</p>
                 {role && <p>Rôle: <span style={{ color: role.color }}>{role.name}</span></p>}
+                {team && <p>Équipe: <span style={{ color: team.color }}>{team.name}</span></p>}
                 {player.isDead && <p className="text-destructive font-bold">Mort</p>}
                 {player.tags.length > 0 && (
                   <div className="mt-1 border-t border-border pt-1">

@@ -45,6 +45,11 @@ interface VttStore extends GameState {
   updateRole: (id: EntityId, updates: Partial<Role>) => void;
   deleteRole: (id: EntityId) => void;
 
+  // Teams
+  addTeam: (teamData: Omit<Team, 'id'>) => void;
+  updateTeam: (id: EntityId, updates: Partial<Team>) => void;
+  deleteTeam: (id: EntityId) => void;
+
   // Tags (Models)
   tags: TagModel[];
   addTagModel: (tagData: Omit<TagModel, 'id'>) => void;
@@ -140,6 +145,17 @@ export const useVttStore = create<VttStore>((set) => ({
   })),
   deleteRole: (id) => set((state) => ({
     roles: state.roles.filter(r => r.id !== id)
+  })),
+
+  // Teams
+  addTeam: (teamData) => set((state) => ({
+    teams: [...state.teams, { ...teamData, id: uuidv4() }]
+  })),
+  updateTeam: (id, updates) => set((state) => ({
+    teams: state.teams.map(t => t.id === id ? { ...t, ...updates } : t)
+  })),
+  deleteTeam: (id) => set((state) => ({
+    teams: state.teams.filter(t => t.id !== id)
   })),
 
   // Tags
