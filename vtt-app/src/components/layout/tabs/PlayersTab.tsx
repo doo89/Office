@@ -1,9 +1,15 @@
-import { Plus, Trash2, Edit2, Shield, Users, Sword, Heart, Star, Flag } from 'lucide-react';
+import { Plus, Trash2, Edit2, Shield, Users, Sword, Heart, Star, Flag, icons } from 'lucide-react';
 import React, { useState } from 'react';
 import { useVttStore } from '../../../store';
 
+const TEAM_ICONS = [
+  'Users', 'Shield', 'Sword', 'Heart', 'Star', 'Flag', 'Skull', 'Ghost',
+  'Crown', 'Flame', 'Zap', 'Droplet', 'Sun', 'Moon', 'Eye', 'Feather',
+  'Key', 'Anchor', 'Axe', 'Castle', 'Crosshair', 'Hexagon', 'Sprout', 'Target', 'Gem'
+];
+
 export const PlayersTab: React.FC = () => {
-  const { playerTemplates, teams, setEditingEntity, addPlayerTemplate, deletePlayerTemplate, addPlayer, addTeam, deleteTeam } = useVttStore();
+  const { playerTemplates, teams, setEditingEntity, addPlayerTemplate, deletePlayerTemplate, addTeam, deleteTeam } = useVttStore();
   const [newPlayerName, setNewPlayerName] = useState('');
   const [newPlayerColor, setNewPlayerColor] = useState('#ef4444');
 
@@ -123,21 +129,30 @@ export const PlayersTab: React.FC = () => {
             onChange={(e) => setNewTeamName(e.target.value)}
             className="w-full bg-input border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
           />
-          <div className="flex gap-2">
-            <select
-              value={newTeamIcon}
-              onChange={(e) => setNewTeamIcon(e.target.value)}
-              className="bg-input border border-border rounded-md px-2 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring flex-1"
-            >
-              <option value="Users">Utilisateurs</option>
-              <option value="Shield">Bouclier</option>
-              <option value="Sword">Épée</option>
-              <option value="Heart">Cœur</option>
-              <option value="Star">Étoile</option>
-              <option value="Flag">Drapeau</option>
-            </select>
+          <div className="flex flex-col gap-1">
+            <span className="text-xs text-muted-foreground">Icône de l'équipe</span>
+            <div className="flex flex-wrap gap-1.5 bg-input border border-border rounded-md p-2 max-h-32 overflow-y-auto">
+              {TEAM_ICONS.map(iconName => {
+                const IconComponent = icons[iconName as keyof typeof icons];
+                if (!IconComponent) return null;
+                return (
+                  <button
+                    key={iconName}
+                    onClick={() => setNewTeamIcon(iconName)}
+                    className={`p-1.5 rounded-md transition-colors flex items-center justify-center ${
+                      newTeamIcon === iconName
+                        ? 'bg-primary text-primary-foreground'
+                        : 'hover:bg-accent hover:text-accent-foreground text-muted-foreground'
+                    }`}
+                    title={iconName}
+                  >
+                    {React.createElement(IconComponent, { size: 16 })}
+                  </button>
+                );
+              })}
+            </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 mt-1">
             <input
               type="color"
               value={newTeamColor}

@@ -1,9 +1,15 @@
 import React from 'react';
 import { useVttStore } from '../store';
-import { X, Trash2 } from 'lucide-react';
+import { X, Trash2, icons } from 'lucide-react';
+
+const TEAM_ICONS = [
+  'Users', 'Shield', 'Sword', 'Heart', 'Star', 'Flag', 'Skull', 'Ghost',
+  'Crown', 'Flame', 'Zap', 'Droplet', 'Sun', 'Moon', 'Eye', 'Feather',
+  'Key', 'Anchor', 'Axe', 'Castle', 'Crosshair', 'Hexagon', 'Sprout', 'Target', 'Gem'
+];
 
 export const EditingModal: React.FC = () => {
-  const { editingEntity, setEditingEntity, players, playerTemplates, roles, teams, tags, updatePlayer, updatePlayerTemplate, updateRole, updateTeam, updateTagModel } = useVttStore();
+  const { editingEntity, setEditingEntity, players, playerTemplates, roles, teams, tags, markers, updatePlayer, updatePlayerTemplate, updateRole, updateTeam, updateTagModel, updateMarker } = useVttStore();
 
   if (!editingEntity) return null;
 
@@ -353,31 +359,37 @@ export const EditingModal: React.FC = () => {
             className="bg-input border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
           />
         </div>
-        <div className="flex gap-4">
-          <div className="flex flex-col gap-1 flex-1">
-            <label className="text-sm font-medium">Icône</label>
-            <select
-              value={team.icon}
-              onChange={(e) => updateTeam(team.id, { icon: e.target.value })}
-              className="bg-input border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
-            >
-              <option value="Users">Utilisateurs</option>
-              <option value="Shield">Bouclier</option>
-              <option value="Sword">Épée</option>
-              <option value="Heart">Cœur</option>
-              <option value="Star">Étoile</option>
-              <option value="Flag">Drapeau</option>
-            </select>
+        <div className="flex flex-col gap-1">
+          <label className="text-sm font-medium">Icône de l'équipe</label>
+          <div className="flex flex-wrap gap-1.5 bg-input border border-border rounded-md p-2 max-h-40 overflow-y-auto">
+            {TEAM_ICONS.map(iconName => {
+              const IconComponent = icons[iconName as keyof typeof icons];
+              if (!IconComponent) return null;
+              return (
+                <button
+                  key={iconName}
+                  onClick={() => updateTeam(team.id, { icon: iconName })}
+                  className={`p-2 rounded-md transition-colors flex items-center justify-center ${
+                    team.icon === iconName
+                      ? 'bg-primary text-primary-foreground shadow-sm'
+                      : 'hover:bg-accent hover:text-accent-foreground text-muted-foreground'
+                  }`}
+                  title={iconName}
+                >
+                  {React.createElement(IconComponent, { size: 20 })}
+                </button>
+              );
+            })}
           </div>
-          <div className="flex flex-col gap-1">
-            <label className="text-sm font-medium">Couleur</label>
-            <input
-              type="color"
-              value={team.color}
-              onChange={(e) => updateTeam(team.id, { color: e.target.value })}
-              className="w-10 h-10 rounded cursor-pointer bg-transparent border-0 p-0"
-            />
-          </div>
+        </div>
+        <div className="flex flex-col gap-1">
+          <label className="text-sm font-medium">Couleur</label>
+          <input
+            type="color"
+            value={team.color}
+            onChange={(e) => updateTeam(team.id, { color: e.target.value })}
+            className="w-10 h-10 rounded cursor-pointer bg-transparent border-0 p-0"
+          />
         </div>
       </div>
     );
@@ -470,7 +482,7 @@ export const EditingModal: React.FC = () => {
       entityTitle = `Modifier Tag de ${player.name}: ${tag.name}`;
     } else {
       // Otherwise, it's a standalone marker on the canvas
-      const marker = markers.find(m => m.tag.instanceId === editingEntity.id);
+      const marker = markers.find((m: any) => m.tag.instanceId === editingEntity.id);
       if (!marker) return null;
       tag = marker.tag;
 
