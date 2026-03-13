@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { useVttStore } from '../../store';
-import { ZoomIn, ZoomOut, Maximize, Tag, Skull } from 'lucide-react';
+import { ZoomIn, ZoomOut, Maximize, Tag, Skull, Trash2, Settings, ChevronRight } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 import type { Marker } from '../../types';
 
@@ -8,7 +8,7 @@ export const Canvas: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const {
     canvas, setPan, setZoom, isNight,
-    players, updatePlayer, addPlayer,
+    players, updatePlayer, addPlayer, deletePlayer,
     markers, updateMarker, addMarker, deleteMarker,
     roles, grid, room
   } = useVttStore();
@@ -380,6 +380,67 @@ export const Canvas: React.FC = () => {
                 }}
               >
                 Éditer
+              </button>
+
+              {/* Tags Submenu */}
+              {players.find(p => p.id === contextMenu.playerId)!.tags.length > 0 && (
+                <div className="relative group">
+                  <button className="w-full text-left px-4 py-2 text-sm hover:bg-accent hover:text-accent-foreground flex items-center justify-between gap-2">
+                    <span className="flex items-center gap-2"><Tag size={14} /> Éditer les tags</span>
+                    <ChevronRight size={14} />
+                  </button>
+                  <div className="absolute left-full top-0 ml-1 bg-popover text-popover-foreground border border-border rounded-md shadow-xl py-1 min-w-[150px] hidden group-hover:block z-[101]">
+                    {players.find(p => p.id === contextMenu.playerId)!.tags.map(tag => (
+                      <div key={tag.instanceId} className="flex items-center justify-between px-2 py-1 hover:bg-accent hover:text-accent-foreground">
+                        <span className="text-sm truncate flex-1 flex items-center gap-2" title={tag.name}>
+                          <div className="w-2 h-2 rounded-full" style={{ backgroundColor: tag.color }} />
+                          {tag.name}
+                        </span>
+                        <div className="flex items-center gap-1 opacity-60 hover:opacity-100">
+                          <button
+                            className="p-1 hover:text-primary"
+                            onMouseDown={(e) => {
+                              e.stopPropagation();
+                              useVttStore.getState().setEditingEntity({ type: 'tagInstance', id: tag.instanceId, parentId: contextMenu.playerId });
+                              closeContextMenu();
+                            }}
+                          >
+                            <Settings size={14} />
+                          </button>
+                          <button
+                            className="p-1 hover:text-destructive"
+                            onMouseDown={(e) => {
+                              e.stopPropagation();
+                              const player = players.find(p => p.id === contextMenu.playerId);
+                              if (player) {
+                                updatePlayer(player.id, {
+                                  tags: player.tags.filter(t => t.instanceId !== tag.instanceId)
+                                });
+                              }
+                              // Keep menu open unless there are no more tags
+                              if (player && player.tags.length <= 1) closeContextMenu();
+                            }}
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="h-px bg-border my-1" />
+              <button
+                className="w-full text-left px-4 py-2 text-sm hover:bg-destructive/10 text-destructive flex items-center gap-2"
+                onMouseDown={(e) => {
+                  e.stopPropagation();
+                  deletePlayer(contextMenu.playerId);
+                  closeContextMenu();
+                }}
+              >
+                <Trash2 size={14} />
+                Supprimer
               </button>
             </>
           )}
