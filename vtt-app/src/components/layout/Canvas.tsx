@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { useVttStore } from '../../store';
-import { ZoomIn, ZoomOut, Maximize, Tag, Skull, Trash2, Settings, ChevronRight } from 'lucide-react';
+import { ZoomIn, ZoomOut, Maximize, Tag, Skull, Trash2, Settings, ChevronRight, icons } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 import type { Marker } from '../../types';
 
@@ -303,6 +303,19 @@ export const Canvas: React.FC = () => {
                 {player.imageUrl && (
                   <div className="absolute top-full mt-1 bg-background/80 backdrop-blur-sm px-2 py-0.5 rounded text-xs font-bold whitespace-nowrap border border-border pointer-events-none">
                     {player.name}
+                  </div>
+                )}
+
+                {/* Team Badge */}
+                {team && (
+                  <div
+                    className="absolute -top-1 -left-1 w-6 h-6 rounded-full flex items-center justify-center border-2 border-background shadow-sm"
+                    style={{ backgroundColor: team.color }}
+                    title={`Équipe: ${team.name}`}
+                  >
+                    {team.icon && icons[team.icon as keyof typeof icons] ? (
+                      React.createElement(icons[team.icon as keyof typeof icons], { size: 12, className: "text-white drop-shadow" })
+                    ) : null}
                   </div>
                 )}
               </div>

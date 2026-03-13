@@ -22,19 +22,6 @@ export const PlayersTab: React.FC = () => {
       teamId: null,
       size: 40, // Default size
     });
-
-    // Immediately spawn an instance in the middle of the canvas
-    addPlayer({
-      name: newPlayerName,
-      color: newPlayerColor,
-      size: 40,
-      x: 0,
-      y: 0,
-      roleId: null,
-      teamId: null,
-      isDead: false,
-      tags: [],
-    });
     setNewPlayerName('');
   };
 
@@ -75,7 +62,9 @@ export const PlayersTab: React.FC = () => {
           {playerTemplates.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-4">Aucun joueur créé.</p>
           ) : (
-            playerTemplates.map((player) => (
+            playerTemplates.map((player) => {
+              const team = teams.find(t => t.id === player.teamId);
+              return (
               <div
                 key={player.id}
                 className="flex items-center justify-between p-2 rounded-md border border-border bg-card hover:bg-accent/50 group"
@@ -85,10 +74,19 @@ export const PlayersTab: React.FC = () => {
                 }}
               >
                 <div className="flex items-center gap-3">
-                  <div
-                    className="w-6 h-6 rounded-full border border-border"
-                    style={{ backgroundColor: player.color }}
-                  />
+                  <div className="relative">
+                    <div
+                      className="w-6 h-6 rounded-full border border-border"
+                      style={{ backgroundColor: player.color }}
+                    />
+                    {team && (
+                      <div
+                        className="absolute -top-1 -left-1 w-2.5 h-2.5 rounded-full border border-background"
+                        style={{ backgroundColor: team.color }}
+                        title={`Équipe: ${team.name}`}
+                      />
+                    )}
+                  </div>
                   <span className="text-sm font-medium">{player.name}</span>
                 </div>
                 <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -108,7 +106,8 @@ export const PlayersTab: React.FC = () => {
                   </button>
                 </div>
               </div>
-            ))
+            );
+          })
           )}
         </div>
       </section>
