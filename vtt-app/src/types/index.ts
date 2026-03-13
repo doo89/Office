@@ -61,6 +61,7 @@ export interface Team {
 }
 
 export interface GameState {
+  roomName: string;
   players: Player[];
   roles: Role[];
   markers: Marker[];

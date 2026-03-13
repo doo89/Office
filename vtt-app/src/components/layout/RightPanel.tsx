@@ -59,8 +59,12 @@ export const RightPanel: React.FC = () => {
     const state = useVttStore.getState();
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state));
     const downloadAnchorNode = document.createElement('a');
+
+    // Sanitize room name for filename
+    const safeRoomName = state.roomName ? state.roomName.replace(/[^a-z0-9]/gi, '_').toLowerCase() : 'vtt_state';
+
     downloadAnchorNode.setAttribute("href", dataStr);
-    downloadAnchorNode.setAttribute("download", "vtt_state.json");
+    downloadAnchorNode.setAttribute("download", `${safeRoomName}.json`);
     document.body.appendChild(downloadAnchorNode); // required for firefox
     downloadAnchorNode.click();
     downloadAnchorNode.remove();

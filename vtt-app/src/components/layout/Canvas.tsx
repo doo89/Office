@@ -7,6 +7,7 @@ import type { Marker } from '../../types';
 export const Canvas: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const {
+    roomName, setRoomName,
     canvas, setPan, setZoom, isNight,
     players, updatePlayer, addPlayer, deletePlayer,
     markers, updateMarker, addMarker, deleteMarker,
@@ -162,6 +163,19 @@ export const Canvas: React.FC = () => {
   }, []);
 
   return (
+    <div className="flex-1 relative flex flex-col min-w-0">
+      {/* Banner */}
+      <div className="h-12 bg-card border-b border-border flex items-center justify-center shrink-0 z-40 relative shadow-sm">
+        <input
+          type="text"
+          value={roomName}
+          onChange={(e) => setRoomName(e.target.value)}
+          className="text-lg font-bold text-center bg-transparent border-none focus:outline-none focus:ring-2 focus:ring-primary/50 rounded px-2"
+          placeholder="Nom de la salle"
+          title="Nom de la salle (utilisé pour l'export JSON)"
+        />
+      </div>
+
     <div
       ref={containerRef}
       className="flex-1 relative overflow-hidden bg-background outline-none"
@@ -449,6 +463,7 @@ export const Canvas: React.FC = () => {
         </div>
       )}
 
+    </div>
     </div>
   );
 };

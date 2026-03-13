@@ -15,6 +15,9 @@ export interface PlayerTemplate {
 interface VttStore extends GameState {
   playerTemplates: PlayerTemplate[];
 
+  // Room
+  setRoomName: (name: string) => void;
+
   // Navigation
   setPan: (x: number, y: number) => void;
   setZoom: (zoom: number) => void;
@@ -67,6 +70,7 @@ interface VttStore extends GameState {
 }
 
 const initialState = {
+  roomName: 'Ma Salle',
   playerTemplates: [],
   players: [],
   roles: [],
@@ -101,6 +105,8 @@ const initialState = {
 
 export const useVttStore = create<VttStore>((set) => ({
   ...initialState,
+
+  setRoomName: (name) => set({ roomName: name }),
 
   setPan: (x, y) => set((state) => ({ canvas: { ...state.canvas, panX: x, panY: y } })),
   setZoom: (zoom) => set((state) => ({ canvas: { ...state.canvas, zoom } })),
