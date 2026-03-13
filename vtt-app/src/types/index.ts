@@ -98,6 +98,10 @@ export interface GameState {
     showRole: boolean;
     showTeam: boolean;
     showTags: boolean;
+    showPlayers: boolean;
+    showCenter: boolean;
+    showCycleIcon: boolean;
+    foregroundElement: 'players' | 'markers';
   };
 }
 

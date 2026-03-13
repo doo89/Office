@@ -130,9 +130,50 @@ export const RightPanel: React.FC = () => {
               />
               Mode Nuit Actif
             </label>
+            <label className="flex items-center gap-2 text-sm cursor-pointer">
+              <input
+                type="checkbox"
+                checked={displaySettings.showCenter}
+                onChange={(e) => updateDisplaySettings({ showCenter: e.target.checked })}
+                className="rounded border-border"
+              />
+              Afficher le centre de la salle
+            </label>
+            <label className="flex items-center gap-2 text-sm cursor-pointer">
+              <input
+                type="checkbox"
+                checked={displaySettings.showCycleIcon}
+                onChange={(e) => updateDisplaySettings({ showCycleIcon: e.target.checked })}
+                className="rounded border-border"
+              />
+              Afficher l'icône Jour/Nuit
+            </label>
+
+            {/* Foreground Selection */}
+            <div className="mt-2 flex flex-col gap-1.5 border-t border-border/50 pt-2">
+              <label className="text-xs font-semibold text-muted-foreground">Élément au premier plan</label>
+              <select
+                value={displaySettings.foregroundElement}
+                onChange={(e) => updateDisplaySettings({ foregroundElement: e.target.value as 'players' | 'markers' })}
+                className="w-full bg-background border border-border rounded px-2 py-1 text-sm focus:ring-1 focus:ring-ring focus:border-input outline-none"
+              >
+                <option value="players">Joueurs</option>
+                <option value="markers">Marqueurs</option>
+              </select>
+            </div>
+
             {/* Display Settings for Players */}
             <div className="mt-2 flex flex-col gap-2 border-t border-border/50 pt-2">
               <span className="text-xs font-semibold text-muted-foreground">Paramètres d'affichage des Joueurs</span>
+              <label className="flex items-center gap-2 text-sm cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={displaySettings.showPlayers}
+                  onChange={(e) => updateDisplaySettings({ showPlayers: e.target.checked })}
+                  className="rounded border-border"
+                />
+                Afficher les joueurs
+              </label>
               <label className="flex items-center gap-2 text-sm cursor-pointer">
                 <input
                   type="checkbox"

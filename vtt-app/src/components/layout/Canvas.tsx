@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { useVttStore } from '../../store';
-import { ZoomIn, ZoomOut, Maximize, Tag, Skull, Trash2, Settings, ChevronRight, icons } from 'lucide-react';
+import { ZoomIn, ZoomOut, Maximize, Tag, Skull, Trash2, Settings, ChevronRight, Sun, Moon, icons } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 import type { Marker } from '../../types';
 
@@ -8,7 +8,7 @@ export const Canvas: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const {
     roomName, setRoomName,
-    canvas, setPan, setZoom, isNight,
+    canvas, setPan, setZoom, isNight, nextCycle,
     players, updatePlayer, addPlayer, deletePlayer,
     markers, updateMarker, addMarker, deleteMarker,
     roles, teams, grid, room, displaySettings
@@ -189,6 +189,17 @@ export const Canvas: React.FC = () => {
       tabIndex={0}
       style={{ cursor: isPanning ? 'grabbing' : 'grab' }}
     >
+      {/* Cycle Icon */}
+      {displaySettings.showCycleIcon && (
+        <button
+          onClick={nextCycle}
+          className="absolute top-4 left-4 z-50 p-3 rounded-full shadow-lg bg-card/80 backdrop-blur border border-border hover:bg-accent hover:text-accent-foreground transition-all flex items-center justify-center group"
+          title={`Passer au ${isNight ? 'Jour' : 'Nuit'}`}
+        >
+          {isNight ? <Sun className="text-yellow-500 group-hover:scale-110 transition-transform" size={28} /> : <Moon className="text-blue-400 group-hover:scale-110 transition-transform" size={28} />}
+        </button>
+      )}
+
       {/* Night Overlay */}
       {isNight && (
         <div className="absolute inset-0 bg-black/60 z-30 pointer-events-none transition-opacity duration-1000" />
@@ -243,10 +254,12 @@ export const Canvas: React.FC = () => {
         />
 
         {/* Origin indicator (0,0) */}
-        <div className="absolute w-4 h-4 rounded-full bg-red-500/50 -ml-2 -mt-2" />
+        {displaySettings.showCenter && (
+          <div className="absolute w-4 h-4 rounded-full bg-red-500/50 -ml-2 -mt-2" />
+        )}
 
         {/* Render Players */}
-        {players.map(player => {
+        {displaySettings.showPlayers && players.map(player => {
           const role = roles.find(r => r.id === player.roleId);
           const team = teams.find(t => t.id === player.teamId);
           return (
@@ -257,7 +270,8 @@ export const Canvas: React.FC = () => {
                 left: player.x,
                 top: player.y,
                 transform: 'translate(-50%, -50%)',
-                cursor: 'grab'
+                cursor: 'grab',
+                zIndex: displaySettings.foregroundElement === 'players' ? 20 : 10
               }}
               draggable
               onDragStart={(e) => {
@@ -355,7 +369,8 @@ export const Canvas: React.FC = () => {
               left: marker.x,
               top: marker.y,
               transform: 'translate(-50%, -50%)',
-              cursor: 'grab'
+              cursor: 'grab',
+              zIndex: displaySettings.foregroundElement === 'markers' ? 20 : 10
             }}
             draggable
             onDragStart={(e) => {
