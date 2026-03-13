@@ -311,6 +311,84 @@ export const EditingModal: React.FC = () => {
         </div>
       </div>
     );
+  } else if (editingEntity.type === 'tagInstance') {
+    const player = players.find(p => p.id === editingEntity.parentId);
+    if (!player) return null;
+    const tag = player.tags.find(t => t.instanceId === editingEntity.id);
+    if (!tag) return null;
+
+    const updateTagInstance = (updates: any) => {
+      const newTags = player.tags.map(t => t.instanceId === tag.instanceId ? { ...t, ...updates } : t);
+      updatePlayer(player.id, { tags: newTags });
+    };
+
+    entityTitle = `Modifier Tag de ${player.name}: ${tag.name}`;
+    entityContent = (
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-1">
+          <label className="text-sm font-medium">Nom</label>
+          <input
+            type="text"
+            value={tag.name}
+            onChange={(e) => updateTagInstance({ name: e.target.value })}
+            className="bg-input border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+          />
+        </div>
+        <div className="flex gap-4">
+          <div className="flex flex-col gap-1 flex-1">
+            <label className="text-sm font-medium">Points</label>
+            <input
+              type="number"
+              value={tag.points}
+              onChange={(e) => updateTagInstance({ points: parseInt(e.target.value) || 0 })}
+              className="bg-input border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+            />
+          </div>
+          <div className="flex flex-col gap-1 flex-1">
+            <label className="text-sm font-medium">Utilisations (Uses)</label>
+            <input
+              type="number"
+              value={tag.uses}
+              onChange={(e) => updateTagInstance({ uses: parseInt(e.target.value) || 0 })}
+              className="bg-input border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+            />
+          </div>
+        </div>
+        <div className="flex gap-4">
+          <div className="flex flex-col gap-1 flex-1">
+            <label className="text-sm font-medium text-muted-foreground text-xs">Ordre Appel Jour</label>
+            <input
+              type="number"
+              value={tag.callOrderDay || ''}
+              onChange={(e) => updateTagInstance({ callOrderDay: e.target.value ? parseInt(e.target.value) : null })}
+              placeholder="Ex: 1"
+              className="bg-input border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+            />
+          </div>
+          <div className="flex flex-col gap-1 flex-1">
+            <label className="text-sm font-medium text-muted-foreground text-xs">Ordre Appel Nuit</label>
+            <input
+              type="number"
+              value={tag.callOrderNight || ''}
+              onChange={(e) => updateTagInstance({ callOrderNight: e.target.value ? parseInt(e.target.value) : null })}
+              placeholder="Ex: 5"
+              className="bg-input border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+            />
+          </div>
+        </div>
+        <div className="flex flex-col gap-1 mt-2">
+          <label className="text-sm font-medium">Couleur</label>
+          <div className="flex items-center gap-3">
+            <input
+              type="color"
+              value={tag.color}
+              onChange={(e) => updateTagInstance({ color: e.target.value })}
+              className="w-10 h-10 rounded cursor-pointer bg-transparent border-0 p-0"
+            />
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
