@@ -453,17 +453,33 @@ export const EditingModal: React.FC = () => {
       </div>
     );
   } else if (editingEntity.type === 'tagInstance') {
-    const player = players.find(p => p.id === editingEntity.parentId);
-    if (!player) return null;
-    const tag = player.tags.find(t => t.instanceId === editingEntity.id);
-    if (!tag) return null;
+    let tag: any = null;
+    let updateTagInstance: (updates: any) => void;
 
-    const updateTagInstance = (updates: any) => {
-      const newTags = player.tags.map(t => t.instanceId === tag.instanceId ? { ...t, ...updates } : t);
-      updatePlayer(player.id, { tags: newTags });
-    };
+    // Check if it's attached to a player
+    if (editingEntity.parentId) {
+      const player = players.find(p => p.id === editingEntity.parentId);
+      if (!player) return null;
+      tag = player.tags.find(t => t.instanceId === editingEntity.id);
+      if (!tag) return null;
 
-    entityTitle = `Modifier Tag de ${player.name}: ${tag.name}`;
+      updateTagInstance = (updates: any) => {
+        const newTags = player.tags.map(t => t.instanceId === tag.instanceId ? { ...t, ...updates } : t);
+        updatePlayer(player.id, { tags: newTags });
+      };
+      entityTitle = `Modifier Tag de ${player.name}: ${tag.name}`;
+    } else {
+      // Otherwise, it's a standalone marker on the canvas
+      const marker = markers.find(m => m.tag.instanceId === editingEntity.id);
+      if (!marker) return null;
+      tag = marker.tag;
+
+      updateTagInstance = (updates: any) => {
+        updateMarker(marker.id, { tag: { ...tag, ...updates } });
+      };
+      entityTitle = `Modifier Marqueur: ${tag.name}`;
+    }
+
     entityContent = (
       <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-1">

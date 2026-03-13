@@ -7,6 +7,7 @@ export const RightPanel: React.FC = () => {
     isRightPanelOpen, toggleRightPanel,
     grid, setGrid,
     isNight, setNight,
+    displaySettings, updateDisplaySettings,
     clearWalls,
     room, setRoom
   } = useVttStore();
@@ -129,7 +130,51 @@ export const RightPanel: React.FC = () => {
               />
               Mode Nuit Actif
             </label>
-            {/* Add more display toggles here if needed (e.g. show/hide markers globally) */}
+            {/* Display Settings for Players */}
+            <div className="mt-2 flex flex-col gap-2 border-t border-border/50 pt-2">
+              <span className="text-xs font-semibold text-muted-foreground">Paramètres d'affichage des Joueurs</span>
+              <label className="flex items-center gap-2 text-sm cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={displaySettings.showTooltip}
+                  onChange={(e) => updateDisplaySettings({ showTooltip: e.target.checked })}
+                  className="rounded border-border"
+                />
+                Afficher la bulle d'information
+              </label>
+
+              {displaySettings.showTooltip && (
+                <div className="flex flex-col gap-1.5 pl-5 border-l-2 border-border/30 ml-1.5 mt-1">
+                  <label className="flex items-center gap-2 text-xs cursor-pointer text-muted-foreground hover:text-foreground">
+                    <input
+                      type="checkbox"
+                      checked={displaySettings.showRole}
+                      onChange={(e) => updateDisplaySettings({ showRole: e.target.checked })}
+                      className="rounded border-border w-3 h-3"
+                    />
+                    Afficher le rôle
+                  </label>
+                  <label className="flex items-center gap-2 text-xs cursor-pointer text-muted-foreground hover:text-foreground">
+                    <input
+                      type="checkbox"
+                      checked={displaySettings.showTeam}
+                      onChange={(e) => updateDisplaySettings({ showTeam: e.target.checked })}
+                      className="rounded border-border w-3 h-3"
+                    />
+                    Afficher l'équipe
+                  </label>
+                  <label className="flex items-center gap-2 text-xs cursor-pointer text-muted-foreground hover:text-foreground">
+                    <input
+                      type="checkbox"
+                      checked={displaySettings.showTags}
+                      onChange={(e) => updateDisplaySettings({ showTags: e.target.checked })}
+                      className="rounded border-border w-3 h-3"
+                    />
+                    Afficher les Tags
+                  </label>
+                </div>
+              )}
+            </div>
           </div>
         </section>
 

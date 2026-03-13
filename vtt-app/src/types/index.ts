@@ -93,6 +93,12 @@ export interface GameState {
     backgroundColor: string;
     texture: string;
   };
+  displaySettings: {
+    showTooltip: boolean;
+    showRole: boolean;
+    showTeam: boolean;
+    showTags: boolean;
+  };
 }
 
 export interface Wall {

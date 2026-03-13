@@ -11,16 +11,16 @@ export const Canvas: React.FC = () => {
     canvas, setPan, setZoom, isNight,
     players, updatePlayer, addPlayer, deletePlayer,
     markers, updateMarker, addMarker, deleteMarker,
-    roles, teams, grid, room
+    roles, teams, grid, room, displaySettings
   } = useVttStore();
   const [isPanning, setIsPanning] = useState(false);
   const [startPan, setStartPan] = useState({ x: 0, y: 0 });
-  const [contextMenu, setContextMenu] = useState<{ x: number, y: number, playerId: string } | null>(null);
+  const [contextMenu, setContextMenu] = useState<{ x: number, y: number, type: 'player' | 'marker', entityId: string } | null>(null);
 
-  const handleContextMenu = (e: React.MouseEvent, playerId: string) => {
+  const handleContextMenu = (e: React.MouseEvent, type: 'player' | 'marker', entityId: string) => {
     e.preventDefault();
     e.stopPropagation();
-    setContextMenu({ x: e.clientX, y: e.clientY, playerId });
+    setContextMenu({ x: e.clientX, y: e.clientY, type, entityId });
   };
 
   const closeContextMenu = () => {
@@ -265,7 +265,7 @@ export const Canvas: React.FC = () => {
                 closeContextMenu();
                 e.dataTransfer.setData('application/json', JSON.stringify({ type: 'existing_player', data: player }));
               }}
-              onContextMenu={(e) => handleContextMenu(e, player.id)}
+              onContextMenu={(e) => handleContextMenu(e, 'player', player.id)}
               onDoubleClick={() => useVttStore.getState().setEditingEntity({ type: 'player', id: player.id })}
             >
               <div className="relative flex flex-col items-center justify-center">
@@ -321,25 +321,27 @@ export const Canvas: React.FC = () => {
               </div>
 
               {/* Tooltip */}
-              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-max max-w-[200px] bg-popover text-popover-foreground text-xs p-2 rounded shadow-xl border border-border opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
-                <p className="font-bold">{player.name}</p>
-                {role && <p>Rôle: <span style={{ color: role.color }}>{role.name}</span></p>}
-                {team && <p>Équipe: <span style={{ color: team.color }}>{team.name}</span></p>}
-                {player.isDead && <p className="text-destructive font-bold">Mort</p>}
-                {player.tags.length > 0 && (
-                  <div className="mt-1 border-t border-border pt-1">
-                    <p className="font-semibold text-[10px] text-muted-foreground">Tags:</p>
-                    <ul className="flex flex-wrap gap-1 mt-1">
-                      {player.tags.map(t => (
-                        <li key={t.instanceId} className="flex items-center gap-1 bg-muted px-1 rounded text-[10px]">
-                          <div className="w-2 h-2 rounded-full" style={{ backgroundColor: t.color }} />
-                          {t.name} ({t.uses})
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </div>
+              {displaySettings.showTooltip && (
+                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-max max-w-[200px] bg-popover text-popover-foreground text-xs p-2 rounded shadow-xl border border-border opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
+                  <p className="font-bold">{player.name}</p>
+                  {displaySettings.showRole && role && <p>Rôle: <span style={{ color: role.color }}>{role.name}</span></p>}
+                  {displaySettings.showTeam && team && <p>Équipe: <span style={{ color: team.color }}>{team.name}</span></p>}
+                  {player.isDead && <p className="text-destructive font-bold">Mort</p>}
+                  {displaySettings.showTags && player.tags.length > 0 && (
+                    <div className="mt-1 border-t border-border pt-1">
+                      <p className="font-semibold text-[10px] text-muted-foreground">Tags:</p>
+                      <ul className="flex flex-wrap gap-1 mt-1">
+                        {player.tags.map(t => (
+                          <li key={t.instanceId} className="flex items-center gap-1 bg-muted px-1 rounded text-[10px]">
+                            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: t.color }} />
+                            {t.name} ({t.uses})
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           );
         })}
@@ -358,8 +360,11 @@ export const Canvas: React.FC = () => {
             draggable
             onDragStart={(e) => {
               e.stopPropagation();
+              closeContextMenu();
               e.dataTransfer.setData('application/json', JSON.stringify({ type: 'existing_marker', data: marker }));
             }}
+            onContextMenu={(e) => handleContextMenu(e, 'marker', marker.id)}
+            onDoubleClick={() => useVttStore.getState().setEditingEntity({ type: 'tagInstance', id: marker.tag.instanceId })}
           >
              <div
                 className="w-10 h-10 rounded-lg shadow-md border-2 flex items-center justify-center bg-card transition-transform hover:scale-110"
@@ -385,26 +390,26 @@ export const Canvas: React.FC = () => {
           style={{ left: contextMenu.x, top: contextMenu.y }}
           onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); }}
         >
-          {players.find(p => p.id === contextMenu.playerId) && (
+          {contextMenu.type === 'player' && players.find(p => p.id === contextMenu.entityId) && (
             <>
               <button
                 className="w-full text-left px-4 py-2 text-sm hover:bg-accent hover:text-accent-foreground flex items-center gap-2"
                 onMouseDown={(e) => {
                   e.stopPropagation();
-                  const p = players.find(p => p.id === contextMenu.playerId);
+                  const p = players.find(p => p.id === contextMenu.entityId);
                   if (p) updatePlayer(p.id, { isDead: !p.isDead });
                   closeContextMenu();
                 }}
               >
-                <Skull size={14} className={players.find(p => p.id === contextMenu.playerId)?.isDead ? "text-muted-foreground" : "text-destructive"} />
-                {players.find(p => p.id === contextMenu.playerId)?.isDead ? "Ressusciter" : "Tuer"}
+                <Skull size={14} className={players.find(p => p.id === contextMenu.entityId)?.isDead ? "text-muted-foreground" : "text-destructive"} />
+                {players.find(p => p.id === contextMenu.entityId)?.isDead ? "Ressusciter" : "Tuer"}
               </button>
               <div className="h-px bg-border my-1" />
               <button
                 className="w-full text-left px-4 py-2 text-sm hover:bg-accent hover:text-accent-foreground flex items-center gap-2"
                 onMouseDown={(e) => {
                   e.stopPropagation();
-                  useVttStore.getState().setEditingEntity({ type: 'player', id: contextMenu.playerId });
+                  useVttStore.getState().setEditingEntity({ type: 'player', id: contextMenu.entityId });
                   closeContextMenu();
                 }}
               >
@@ -412,14 +417,14 @@ export const Canvas: React.FC = () => {
               </button>
 
               {/* Tags Submenu */}
-              {players.find(p => p.id === contextMenu.playerId)!.tags.length > 0 && (
+              {players.find(p => p.id === contextMenu.entityId)!.tags.length > 0 && (
                 <div className="relative group">
                   <button className="w-full text-left px-4 py-2 text-sm hover:bg-accent hover:text-accent-foreground flex items-center justify-between gap-2">
                     <span className="flex items-center gap-2"><Tag size={14} /> Éditer les tags</span>
                     <ChevronRight size={14} />
                   </button>
                   <div className="absolute left-full top-0 ml-1 bg-popover text-popover-foreground border border-border rounded-md shadow-xl py-1 min-w-[150px] hidden group-hover:block z-[101]">
-                    {players.find(p => p.id === contextMenu.playerId)!.tags.map(tag => (
+                    {players.find(p => p.id === contextMenu.entityId)!.tags.map(tag => (
                       <div key={tag.instanceId} className="flex items-center justify-between px-2 py-1 hover:bg-accent hover:text-accent-foreground">
                         <span className="text-sm truncate flex-1 flex items-center gap-2" title={tag.name}>
                           <div className="w-2 h-2 rounded-full" style={{ backgroundColor: tag.color }} />
@@ -430,7 +435,7 @@ export const Canvas: React.FC = () => {
                             className="p-1 hover:text-primary"
                             onMouseDown={(e) => {
                               e.stopPropagation();
-                              useVttStore.getState().setEditingEntity({ type: 'tagInstance', id: tag.instanceId, parentId: contextMenu.playerId });
+                              useVttStore.getState().setEditingEntity({ type: 'tagInstance', id: tag.instanceId, parentId: contextMenu.entityId });
                               closeContextMenu();
                             }}
                           >
@@ -440,7 +445,7 @@ export const Canvas: React.FC = () => {
                             className="p-1 hover:text-destructive"
                             onMouseDown={(e) => {
                               e.stopPropagation();
-                              const player = players.find(p => p.id === contextMenu.playerId);
+                              const player = players.find(p => p.id === contextMenu.entityId);
                               if (player) {
                                 updatePlayer(player.id, {
                                   tags: player.tags.filter(t => t.instanceId !== tag.instanceId)
@@ -464,12 +469,41 @@ export const Canvas: React.FC = () => {
                 className="w-full text-left px-4 py-2 text-sm hover:bg-destructive/10 text-destructive flex items-center gap-2"
                 onMouseDown={(e) => {
                   e.stopPropagation();
-                  deletePlayer(contextMenu.playerId);
+                  deletePlayer(contextMenu.entityId);
                   closeContextMenu();
                 }}
               >
                 <Trash2 size={14} />
                 Supprimer
+              </button>
+            </>
+          )}
+
+          {contextMenu.type === 'marker' && markers.find(m => m.id === contextMenu.entityId) && (
+            <>
+              <button
+                className="w-full text-left px-4 py-2 text-sm hover:bg-accent hover:text-accent-foreground flex items-center gap-2"
+                onMouseDown={(e) => {
+                  e.stopPropagation();
+                  const marker = markers.find(m => m.id === contextMenu.entityId);
+                  if (marker) {
+                    useVttStore.getState().setEditingEntity({ type: 'tagInstance', id: marker.tag.instanceId });
+                  }
+                  closeContextMenu();
+                }}
+              >
+                <Settings size={14} /> Modifier
+              </button>
+              <div className="h-px bg-border my-1" />
+              <button
+                className="w-full text-left px-4 py-2 text-sm text-destructive hover:bg-destructive hover:text-destructive-foreground flex items-center gap-2"
+                onMouseDown={(e) => {
+                  e.stopPropagation();
+                  deleteMarker(contextMenu.entityId);
+                  closeContextMenu();
+                }}
+              >
+                <Trash2 size={14} /> Supprimer
               </button>
             </>
           )}

@@ -1,10 +1,10 @@
-import { Moon, Sun, FastForward } from 'lucide-react';
+import { Moon, Sun, FastForward, RotateCcw } from 'lucide-react';
 import React, { useMemo } from 'react';
 import { useVttStore } from '../../../store';
 import type { Player, Marker, TagInstance } from '../../../types';
 
 export const GameTab: React.FC = () => {
-  const { isNight, cycleNumber, nextCycle, players, markers, updatePlayer, updateMarker } = useVttStore();
+  const { isNight, cycleNumber, nextCycle, resetCycle, players, markers, updatePlayer, updateMarker } = useVttStore();
 
   const handleModifyTagUses = (player: Player, tag: TagInstance, amount: number) => {
     const updatedTags = player.tags.map(t =>
@@ -71,11 +71,20 @@ export const GameTab: React.FC = () => {
       <section className="flex flex-col gap-3">
         <h3 className="font-semibold text-sm border-b border-border pb-1">Phase Actuelle</h3>
         <div className="p-4 border border-border rounded-lg bg-card text-center flex flex-col items-center justify-center gap-3">
-          <div className="flex items-center gap-2">
-            {isNight ? <Moon className="text-blue-400" size={24} /> : <Sun className="text-yellow-400" size={24} />}
-            <span className="text-2xl font-bold">
-              {isNight ? 'Nuit' : 'Jour'} {cycleNumber}
-            </span>
+          <div className="flex items-center justify-between w-full">
+            <div className="flex items-center gap-2 mx-auto">
+              {isNight ? <Moon className="text-blue-400" size={24} /> : <Sun className="text-yellow-400" size={24} />}
+              <span className="text-2xl font-bold">
+                {isNight ? 'Nuit' : 'Jour'} {cycleNumber}
+              </span>
+            </div>
+            <button
+              onClick={resetCycle}
+              className="p-2 bg-destructive/10 text-destructive hover:bg-destructive/20 rounded-md transition-colors"
+              title="Réinitialiser au Jour 1"
+            >
+              <RotateCcw size={16} />
+            </button>
           </div>
           <button
             onClick={nextCycle}

@@ -67,6 +67,10 @@ interface VttStore extends GameState {
   // Game Logic
   setNight: (isNight: boolean) => void;
   nextCycle: () => void;
+  resetCycle: () => void;
+
+  // Settings
+  updateDisplaySettings: (updates: Partial<GameState['displaySettings']>) => void;
 }
 
 const initialState = {
@@ -98,6 +102,12 @@ const initialState = {
     height: 1500,
     backgroundColor: '#ffffff',
     texture: 'none',
+  },
+  displaySettings: {
+    showTooltip: true,
+    showRole: true,
+    showTeam: true,
+    showTags: true,
   },
   isLeftPanelOpen: true,
   isRightPanelOpen: true,
@@ -195,4 +205,10 @@ export const useVttStore = create<VttStore>((set) => ({
       return { isNight: true };
     }
   }),
+  resetCycle: () => set({ isNight: false, cycleNumber: 1 }),
+
+  // Settings
+  updateDisplaySettings: (updates) => set((state) => ({
+    displaySettings: { ...state.displaySettings, ...updates }
+  })),
 }));
