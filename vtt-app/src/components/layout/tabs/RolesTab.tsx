@@ -1,0 +1,129 @@
+import { Plus, Trash2, Edit2 } from 'lucide-react';
+import React, { useState } from 'react';
+import { useVttStore } from '../../../store';
+
+export const RolesTab: React.FC = () => {
+  const { roles, setEditingEntity, addRole, deleteRole } = useVttStore();
+  const [newRoleName, setNewRoleName] = useState('');
+  const [newRoleColor, setNewRoleColor] = useState('#3b82f6');
+  const [newRoleLives, setNewRoleLives] = useState(1);
+  const [newRoleUnique, setNewRoleUnique] = useState(true);
+
+  const handleAddRole = () => {
+    if (!newRoleName.trim()) return;
+    addRole({
+      name: newRoleName,
+      color: newRoleColor,
+      lives: newRoleLives,
+      isUnique: newRoleUnique,
+      teamId: null,
+      tags: [],
+    });
+    setNewRoleName('');
+    setNewRoleLives(1);
+    setNewRoleUnique(true);
+  };
+
+  return (
+    <div className="flex flex-col gap-6">
+      {/* Create Role Section */}
+      <section className="flex flex-col gap-3">
+        <h3 className="font-semibold text-sm border-b border-border pb-1">Créer un Rôle</h3>
+        <div className="flex flex-col gap-3">
+          <input
+            type="text"
+            placeholder="Nom du rôle"
+            value={newRoleName}
+            onChange={(e) => setNewRoleName(e.target.value)}
+            className="w-full bg-input border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+          />
+          <div className="flex items-center gap-3 justify-between">
+            <div className="flex items-center gap-2 flex-1">
+              <label className="text-xs font-medium text-muted-foreground whitespace-nowrap">Vies:</label>
+              <input
+                type="number"
+                min="0"
+                value={newRoleLives}
+                onChange={(e) => setNewRoleLives(parseInt(e.target.value) || 0)}
+                className="w-full bg-input border border-border rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-ring text-center"
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="unique-role"
+                checked={newRoleUnique}
+                onChange={(e) => setNewRoleUnique(e.target.checked)}
+                className="w-4 h-4 rounded border-border text-primary focus:ring-ring cursor-pointer"
+              />
+              <label htmlFor="unique-role" className="text-xs font-medium text-muted-foreground whitespace-nowrap cursor-pointer">
+                Unique
+              </label>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <input
+              type="color"
+              value={newRoleColor}
+              onChange={(e) => setNewRoleColor(e.target.value)}
+              className="w-8 h-8 rounded cursor-pointer bg-transparent border-0 p-0"
+              title="Couleur du rôle"
+            />
+            <button
+              onClick={handleAddRole}
+              className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90 px-3 py-2 rounded-md text-sm font-medium flex items-center justify-center gap-2"
+            >
+              <Plus size={16} /> Ajouter Rôle
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* List Roles Section */}
+      <section className="flex flex-col gap-3">
+        <h3 className="font-semibold text-sm border-b border-border pb-1">Rôles Disponibles</h3>
+        <div className="flex flex-col gap-2">
+          {roles.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-4">Aucun rôle défini.</p>
+          ) : (
+            roles.map((role) => (
+              <div
+                key={role.id}
+                className="flex items-center justify-between p-2 rounded-md border border-border bg-card hover:bg-accent/50 group"
+              >
+                <div className="flex items-center gap-3">
+                  <div
+                    className="w-4 h-4 rounded-sm border border-border"
+                    style={{ backgroundColor: role.color }}
+                  />
+                  <div className="flex flex-col">
+                    <span className="text-sm font-medium leading-none">{role.name}</span>
+                    <span className="text-[10px] text-muted-foreground mt-1">
+                      {role.lives} PV • {role.isUnique ? 'Unique' : 'Multiple'}
+                    </span>
+                  </div>
+                </div>
+                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button
+                    onClick={() => setEditingEntity({ type: 'role', id: role.id })}
+                    className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-accent rounded-md"
+                    title="Modifier"
+                  >
+                    <Edit2 size={14} />
+                  </button>
+                  <button
+                    onClick={() => deleteRole(role.id)}
+                    className="p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-md"
+                    title="Supprimer"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </section>
+    </div>
+  );
+};
