@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { useVttStore } from '../../store';
-import { ZoomIn, ZoomOut, Maximize, Tag } from 'lucide-react';
+import { ZoomIn, ZoomOut, Maximize, Tag, Skull } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 import type { Marker } from '../../types';
 
@@ -14,6 +14,17 @@ export const Canvas: React.FC = () => {
   } = useVttStore();
   const [isPanning, setIsPanning] = useState(false);
   const [startPan, setStartPan] = useState({ x: 0, y: 0 });
+  const [contextMenu, setContextMenu] = useState<{ x: number, y: number, playerId: string } | null>(null);
+
+  const handleContextMenu = (e: React.MouseEvent, playerId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setContextMenu({ x: e.clientX, y: e.clientY, playerId });
+  };
+
+  const closeContextMenu = () => {
+    if (contextMenu) setContextMenu(null);
+  };
 
   // Handle Drag & Drop
   const handleDragOver = (e: React.DragEvent) => {
@@ -106,6 +117,7 @@ export const Canvas: React.FC = () => {
   };
 
   const handleMouseDown = (e: React.MouseEvent) => {
+    closeContextMenu();
     // Only start panning if clicking directly on the canvas background, not on entities
     if ((e.target as HTMLElement).closest('.canvas-entity')) return;
 
@@ -210,19 +222,24 @@ export const Canvas: React.FC = () => {
               draggable
               onDragStart={(e) => {
                 e.stopPropagation();
+                closeContextMenu();
                 e.dataTransfer.setData('application/json', JSON.stringify({ type: 'existing_player', data: player }));
               }}
+              onContextMenu={(e) => handleContextMenu(e, player.id)}
             >
               <div
-                className={`rounded-full border-4 shadow-lg flex items-center justify-center transition-all ${player.isDead ? 'opacity-40 grayscale' : ''}`}
+                className={`rounded-full border-4 shadow-lg flex items-center justify-center transition-all overflow-hidden ${player.isDead ? 'opacity-80' : ''}`}
                 style={{
                   width: player.size * 2,
                   height: player.size * 2,
-                  backgroundColor: player.color,
-                  borderColor: role?.color || '#ffffff',
+                  backgroundColor: player.isDead ? '#27272a' : player.color, // zinc-800
+                  borderColor: player.isDead ? '#7f1d1d' : (role?.color || '#ffffff'), // red-900
                 }}
               >
-                <span className="font-bold text-white text-sm mix-blend-difference drop-shadow-md px-1 text-center leading-tight">
+                {player.isDead && (
+                  <Skull size={player.size * 1.5} className="absolute text-red-900/60 pointer-events-none" />
+                )}
+                <span className="font-bold text-white text-sm mix-blend-difference drop-shadow-md px-1 text-center leading-tight z-10">
                   {player.name}
                 </span>
               </div>
@@ -283,6 +300,29 @@ export const Canvas: React.FC = () => {
         ))}
 
       </div>
+
+      {/* Context Menu */}
+      {contextMenu && (
+        <div
+          className="fixed z-[100] bg-popover text-popover-foreground border border-border rounded-md shadow-xl py-1 min-w-[120px]"
+          style={{ left: contextMenu.x, top: contextMenu.y }}
+        >
+          {players.find(p => p.id === contextMenu.playerId) && (
+            <button
+              className="w-full text-left px-4 py-2 text-sm hover:bg-accent hover:text-accent-foreground flex items-center gap-2"
+              onClick={() => {
+                const p = players.find(p => p.id === contextMenu.playerId);
+                if (p) updatePlayer(p.id, { isDead: !p.isDead });
+                closeContextMenu();
+              }}
+            >
+              <Skull size={14} className={players.find(p => p.id === contextMenu.playerId)?.isDead ? "text-muted-foreground" : "text-destructive"} />
+              {players.find(p => p.id === contextMenu.playerId)?.isDead ? "Vivant" : "Mort"}
+            </button>
+          )}
+        </div>
+      )}
+
     </div>
   );
 };
