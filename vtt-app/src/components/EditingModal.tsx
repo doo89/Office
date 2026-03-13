@@ -1,9 +1,9 @@
 import React from 'react';
 import { useVttStore } from '../store';
-import { X } from 'lucide-react';
+import { X, Trash2 } from 'lucide-react';
 
 export const EditingModal: React.FC = () => {
-  const { editingEntity, setEditingEntity, players, roles, tags, updatePlayer, updateRole, updateTagModel } = useVttStore();
+  const { editingEntity, setEditingEntity, players, playerTemplates, roles, tags, updatePlayer, updatePlayerTemplate, updateRole, updateTagModel } = useVttStore();
 
   if (!editingEntity) return null;
 
@@ -12,7 +12,90 @@ export const EditingModal: React.FC = () => {
   let entityTitle = '';
   let entityContent = null;
 
-  if (editingEntity.type === 'player') {
+  if (editingEntity.type === 'playerTemplate') {
+    const template = playerTemplates.find(p => p.id === editingEntity.id);
+    if (!template) return null;
+
+    entityTitle = `Modifier Modèle de Joueur: ${template.name}`;
+    entityContent = (
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-1">
+          <label className="text-sm font-medium">Nom</label>
+          <input
+            type="text"
+            value={template.name}
+            onChange={(e) => updatePlayerTemplate(template.id, { name: e.target.value })}
+            className="bg-input border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+          />
+        </div>
+        <div className="flex gap-4">
+          <div className="flex flex-col gap-1 flex-1">
+            <label className="text-sm font-medium">Couleur</label>
+            <div className="flex items-center gap-3">
+              <input
+                type="color"
+                value={template.color}
+                onChange={(e) => updatePlayerTemplate(template.id, { color: e.target.value })}
+                className="w-10 h-10 rounded cursor-pointer bg-transparent border-0 p-0"
+              />
+            </div>
+          </div>
+          <div className="flex flex-col gap-1 flex-1">
+            <label className="text-sm font-medium">Taille (Rayon px)</label>
+            <input
+              type="number"
+              value={template.size}
+              onChange={(e) => updatePlayerTemplate(template.id, { size: Math.max(10, parseInt(e.target.value) || 40) })}
+              className="bg-input border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+            />
+          </div>
+        </div>
+        <div className="flex flex-col gap-1">
+          <label className="text-sm font-medium">Image / Icône (Modèle)</label>
+          <div className="flex items-center gap-3">
+            {template.imageUrl && (
+              <img src={template.imageUrl} alt="Avatar" className="w-10 h-10 rounded-full object-cover border border-border" />
+            )}
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) {
+                  const reader = new FileReader();
+                  reader.onload = (event) => {
+                    updatePlayerTemplate(template.id, { imageUrl: event.target?.result as string });
+                  };
+                  reader.readAsDataURL(file);
+                }
+              }}
+              className="text-xs file:mr-2 file:py-1 file:px-2 file:rounded-md file:border-0 file:text-xs file:font-medium file:bg-primary file:text-primary-foreground hover:file:bg-primary/90"
+            />
+            {template.imageUrl && (
+              <button
+                onClick={() => updatePlayerTemplate(template.id, { imageUrl: undefined })}
+                className="p-1 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded"
+                title="Supprimer l'image"
+              >
+                <Trash2 size={14} />
+              </button>
+            )}
+          </div>
+        </div>
+        <div className="flex flex-col gap-1">
+          <label className="text-sm font-medium">Rôle par défaut</label>
+          <select
+            value={template.roleId || ''}
+            onChange={(e) => updatePlayerTemplate(template.id, { roleId: e.target.value || null })}
+            className="bg-input border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+          >
+            <option value="">Aucun rôle</option>
+            {roles.map((r: any) => <option key={r.id} value={r.id}>{r.name}</option>)}
+          </select>
+        </div>
+      </div>
+    );
+  } else if (editingEntity.type === 'player') {
     const player = players.find(p => p.id === editingEntity.id);
     if (!player) return null;
 
@@ -28,16 +111,58 @@ export const EditingModal: React.FC = () => {
             className="bg-input border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
           />
         </div>
-        <div className="flex flex-col gap-1">
-          <label className="text-sm font-medium">Couleur</label>
-          <div className="flex items-center gap-3">
+        <div className="flex gap-4">
+          <div className="flex flex-col gap-1 flex-1">
+            <label className="text-sm font-medium">Couleur</label>
+            <div className="flex items-center gap-3">
+              <input
+                type="color"
+                value={player.color}
+                onChange={(e) => updatePlayer(player.id, { color: e.target.value })}
+                className="w-10 h-10 rounded cursor-pointer bg-transparent border-0 p-0"
+              />
+            </div>
+          </div>
+          <div className="flex flex-col gap-1 flex-1">
+            <label className="text-sm font-medium">Taille (Rayon px)</label>
             <input
-              type="color"
-              value={player.color}
-              onChange={(e) => updatePlayer(player.id, { color: e.target.value })}
-              className="w-10 h-10 rounded cursor-pointer bg-transparent border-0 p-0"
+              type="number"
+              value={player.size}
+              onChange={(e) => updatePlayer(player.id, { size: Math.max(10, parseInt(e.target.value) || 40) })}
+              className="bg-input border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
             />
-            <span className="text-sm text-muted-foreground uppercase">{player.color}</span>
+          </div>
+        </div>
+        <div className="flex flex-col gap-1">
+          <label className="text-sm font-medium">Image / Icône</label>
+          <div className="flex items-center gap-3">
+            {player.imageUrl && (
+              <img src={player.imageUrl} alt="Avatar" className="w-10 h-10 rounded-full object-cover border border-border" />
+            )}
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) {
+                  const reader = new FileReader();
+                  reader.onload = (event) => {
+                    updatePlayer(player.id, { imageUrl: event.target?.result as string });
+                  };
+                  reader.readAsDataURL(file);
+                }
+              }}
+              className="text-xs file:mr-2 file:py-1 file:px-2 file:rounded-md file:border-0 file:text-xs file:font-medium file:bg-primary file:text-primary-foreground hover:file:bg-primary/90"
+            />
+            {player.imageUrl && (
+              <button
+                onClick={() => updatePlayer(player.id, { imageUrl: undefined })}
+                className="p-1 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded"
+                title="Supprimer l'image"
+              >
+                <Trash2 size={14} />
+              </button>
+            )}
           </div>
         </div>
         <div className="flex flex-col gap-1">
@@ -48,7 +173,7 @@ export const EditingModal: React.FC = () => {
             className="bg-input border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
           >
             <option value="">Aucun rôle</option>
-            {roles.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
+            {roles.map((r: any) => <option key={r.id} value={r.id}>{r.name}</option>)}
           </select>
         </div>
         <div className="flex items-center gap-2 mt-2">

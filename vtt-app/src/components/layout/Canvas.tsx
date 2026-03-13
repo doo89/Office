@@ -59,7 +59,16 @@ export const Canvas: React.FC = () => {
 
       if (payload.type === 'new_player') {
         // Cloning a player from left panel
-        const newPlayer = { ...payload.data, x: canvasX, y: canvasY, id: undefined };
+        const newPlayer = {
+          ...payload.data,
+          size: payload.data.size || 40,
+          imageUrl: payload.data.imageUrl,
+          isDead: false,
+          tags: [],
+          x: canvasX,
+          y: canvasY,
+          id: undefined
+        };
         addPlayer(newPlayer);
       } else if (payload.type === 'existing_player') {
         // Moving an existing player
@@ -226,22 +235,45 @@ export const Canvas: React.FC = () => {
                 e.dataTransfer.setData('application/json', JSON.stringify({ type: 'existing_player', data: player }));
               }}
               onContextMenu={(e) => handleContextMenu(e, player.id)}
+              onDoubleClick={() => useVttStore.getState().setEditingEntity({ type: 'player', id: player.id })}
             >
-              <div
-                className={`rounded-full border-4 shadow-lg flex items-center justify-center transition-all overflow-hidden ${player.isDead ? 'opacity-80' : ''}`}
-                style={{
-                  width: player.size * 2,
-                  height: player.size * 2,
-                  backgroundColor: player.isDead ? '#27272a' : player.color, // zinc-800
-                  borderColor: player.isDead ? '#7f1d1d' : (role?.color || '#ffffff'), // red-900
-                }}
-              >
-                {player.isDead && (
-                  <Skull size={player.size * 1.5} className="absolute text-red-900/60 pointer-events-none" />
+              <div className="relative flex flex-col items-center justify-center">
+                <div
+                  className={`rounded-full shadow-lg flex items-center justify-center transition-all overflow-hidden ${player.isDead ? 'opacity-80' : ''}`}
+                  style={{
+                    width: player.size * 2,
+                    height: player.size * 2,
+                    backgroundColor: player.isDead ? '#27272a' : player.color, // zinc-800
+                    border: `4px solid ${player.isDead ? '#7f1d1d' : (role?.color || '#ffffff')}`, // red-900
+                    padding: player.imageUrl ? '2px' : '0' // Leave 2px border for color if image exists
+                  }}
+                >
+                  {player.imageUrl && !player.isDead && (
+                    <img
+                      src={player.imageUrl}
+                      alt={player.name}
+                      className="w-full h-full object-cover rounded-full bg-background"
+                      draggable={false}
+                    />
+                  )}
+                  {player.isDead && (
+                    <Skull size={player.size * 1.5} className="absolute text-red-900/60 pointer-events-none" />
+                  )}
+
+                  {/* Show name inside circle ONLY if there's no image */}
+                  {!player.imageUrl && (
+                    <span className="font-bold text-white text-sm mix-blend-difference drop-shadow-md px-1 text-center leading-tight z-10 pointer-events-none">
+                      {player.name}
+                    </span>
+                  )}
+                </div>
+
+                {/* Show name below the circle ONLY if there IS an image */}
+                {player.imageUrl && (
+                  <div className="absolute top-full mt-1 bg-background/80 backdrop-blur-sm px-2 py-0.5 rounded text-xs font-bold whitespace-nowrap border border-border pointer-events-none">
+                    {player.name}
+                  </div>
                 )}
-                <span className="font-bold text-white text-sm mix-blend-difference drop-shadow-md px-1 text-center leading-tight z-10">
-                  {player.name}
-                </span>
               </div>
 
               {/* Tooltip */}

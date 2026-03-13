@@ -16,6 +16,7 @@ export const PlayersTab: React.FC = () => {
       color: newPlayerColor,
       roleId: null,
       teamId: null,
+      size: 40, // Default size
     });
 
     // Immediately spawn an instance in the middle of the canvas
@@ -88,7 +89,7 @@ export const PlayersTab: React.FC = () => {
                 </div>
                 <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                   <button
-                    onClick={() => setEditingEntity({ type: 'playerTemplate', id: player.id } as any)}
+                    onClick={() => setEditingEntity({ type: 'playerTemplate', id: player.id })}
                     className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-accent rounded-md"
                     title="Modifier"
                   >

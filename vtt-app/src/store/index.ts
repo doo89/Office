@@ -8,6 +8,8 @@ export interface PlayerTemplate {
   name: string;
   roleId: EntityId | null;
   teamId: EntityId | null;
+  size: number;
+  imageUrl?: string;
 }
 
 interface VttStore extends GameState {

@@ -71,7 +71,7 @@ export interface GameState {
   cycleNumber: number;
   walls: Wall[];
   activeLeftTab: 'players' | 'roles' | 'tags' | 'game';
-  editingEntity: { type: 'player' | 'role' | 'tagModel' | 'team', id: EntityId } | null;
+  editingEntity: { type: 'player' | 'playerTemplate' | 'role' | 'tagModel' | 'team', id: EntityId } | null;
   canvas: {
     panX: number;
     panY: number;
