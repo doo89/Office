@@ -22,6 +22,10 @@ export interface Role {
   isUnique: boolean;
   teamId: EntityId | null;
   tags: TagModel[];
+  imageUrl?: string;
+  seenAsRoleId?: EntityId | null;
+  seenInTeamId?: EntityId | null;
+  description?: string;
 }
 
 export interface MarkerParameter {

@@ -260,6 +260,81 @@ export const EditingModal: React.FC = () => {
               Rôle Unique (un seul joueur peut l'avoir)
             </label>
           </div>
+
+          <div className="flex flex-col gap-1">
+            <label className="text-sm font-medium">Image du rôle</label>
+            <div className="flex items-center gap-2">
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    const reader = new FileReader();
+                    reader.onloadend = () => {
+                      updateRole(role.id, { imageUrl: reader.result as string });
+                    };
+                    reader.readAsDataURL(file);
+                  }
+                }}
+                className="text-sm flex-1 text-muted-foreground file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90"
+              />
+              {role.imageUrl && (
+                <button
+                  onClick={() => updateRole(role.id, { imageUrl: undefined })}
+                  className="p-2 bg-destructive text-destructive-foreground rounded-md hover:bg-destructive/90 transition-colors"
+                  title="Supprimer l'image"
+                >
+                  <X size={16} />
+                </button>
+              )}
+            </div>
+            {role.imageUrl && (
+              <div className="mt-2 w-16 h-16 rounded-md overflow-hidden border border-border">
+                <img src={role.imageUrl} alt={role.name} className="w-full h-full object-cover" />
+              </div>
+            )}
+          </div>
+
+          <div className="flex gap-4">
+            <div className="flex flex-col gap-1 flex-1">
+              <label className="text-sm font-medium">Vu comme rôle</label>
+              <select
+                value={role.seenAsRoleId || ''}
+                onChange={(e) => updateRole(role.id, { seenAsRoleId: e.target.value || null })}
+                className="bg-input border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+              >
+                <option value="">-- Aucun --</option>
+                {roles.filter(r => r.id !== role.id).map(r => (
+                  <option key={r.id} value={r.id}>{r.name}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex flex-col gap-1 flex-1">
+              <label className="text-sm font-medium">Vu dans équipe</label>
+              <select
+                value={role.seenInTeamId || ''}
+                onChange={(e) => updateRole(role.id, { seenInTeamId: e.target.value || null })}
+                className="bg-input border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+              >
+                <option value="">-- Aucune --</option>
+                {teams.map(t => (
+                  <option key={t.id} value={t.id}>{t.name}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-1">
+            <label className="text-sm font-medium">Description libre</label>
+            <textarea
+              value={role.description || ''}
+              onChange={(e) => updateRole(role.id, { description: e.target.value })}
+              placeholder="Ex: Si tué la nuit, ressuscite le lendemain..."
+              className="bg-input border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring min-h-[80px]"
+            />
+          </div>
       </div>
     );
   } else if (editingEntity.type === 'team') {
