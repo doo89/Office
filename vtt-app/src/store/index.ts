@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { GameState, EntityId, Player, Role, TagModel, Marker } from '../types';
+import type { GameState, EntityId, Player, Role, TagModel, Marker, Team } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 
 export interface PlayerTemplate {
@@ -149,7 +149,7 @@ export const useVttStore = create<VttStore>((set) => ({
 
   // Teams
   addTeam: (teamData) => set((state) => ({
-    teams: [...state.teams, { ...teamData, id: uuidv4() }]
+    teams: [...state.teams, { id: uuidv4(), ...teamData } as Team]
   })),
   updateTeam: (id, updates) => set((state) => ({
     teams: state.teams.map(t => t.id === id ? { ...t, ...updates } : t)
