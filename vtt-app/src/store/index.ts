@@ -27,6 +27,7 @@ interface VttStore extends GameState {
 
   // Tools
   setGrid: (grid: GameState['grid']) => void;
+  setRoom: (room: Partial<GameState['room']>) => void;
   clearWalls: () => void;
 
   // Player Templates
@@ -83,6 +84,12 @@ const initialState = {
     sizeX: 50,
     sizeY: 50,
   },
+  room: {
+    width: 2000,
+    height: 1500,
+    backgroundColor: '#ffffff',
+    texture: 'none',
+  },
   isLeftPanelOpen: true,
   isRightPanelOpen: true,
 };
@@ -99,6 +106,7 @@ export const useVttStore = create<VttStore>((set) => ({
 
   // Tools
   setGrid: (grid) => set({ grid }),
+  setRoom: (roomUpdates) => set((state) => ({ room: { ...state.room, ...roomUpdates } })),
   clearWalls: () => set({ walls: [] }),
 
   // Player Templates

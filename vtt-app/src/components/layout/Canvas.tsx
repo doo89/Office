@@ -10,7 +10,7 @@ export const Canvas: React.FC = () => {
     canvas, setPan, setZoom, isNight,
     players, updatePlayer, addPlayer,
     markers, updateMarker, addMarker, deleteMarker,
-    roles, grid
+    roles, grid, room
   } = useVttStore();
   const [isPanning, setIsPanning] = useState(false);
   const [startPan, setStartPan] = useState({ x: 0, y: 0 });
@@ -212,6 +212,22 @@ export const Canvas: React.FC = () => {
           height: 0,
         }}
       >
+        {/* Room Area */}
+        <div
+          className="absolute origin-center transition-colors duration-500 shadow-2xl"
+          style={{
+            width: room.width,
+            height: room.height,
+            left: -room.width / 2,
+            top: -room.height / 2,
+            backgroundColor: room.backgroundColor,
+            backgroundImage: room.texture !== 'none' ? `url(${room.texture})` : 'none',
+            border: '2px solid rgba(0,0,0,0.1)',
+            borderRadius: '8px',
+            pointerEvents: 'none', // Allow clicking through to canvas for panning
+          }}
+        />
+
         {/* Origin indicator (0,0) */}
         <div className="absolute w-4 h-4 rounded-full bg-red-500/50 -ml-2 -mt-2" />
 

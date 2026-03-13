@@ -82,6 +82,12 @@ export interface GameState {
     sizeX: number;
     sizeY: number;
   };
+  room: {
+    width: number;
+    height: number;
+    backgroundColor: string;
+    texture: string;
+  };
 }
 
 export interface Wall {
