@@ -262,6 +262,16 @@ export const Canvas: React.FC = () => {
         {displaySettings.showPlayers && players.map(player => {
           const role = roles.find(r => r.id === player.roleId);
           const team = teams.find(t => t.id === player.teamId);
+
+          let imageToShow = null;
+          if (displaySettings.showPlayerImage && player.imageUrl && displaySettings.showRoleImage && role?.imageUrl) {
+            imageToShow = displaySettings.imagePriority === 'player' ? player.imageUrl : role.imageUrl;
+          } else if (displaySettings.showPlayerImage && player.imageUrl) {
+            imageToShow = player.imageUrl;
+          } else if (displaySettings.showRoleImage && role?.imageUrl) {
+            imageToShow = role.imageUrl;
+          }
+
           return (
             <div
               key={player.id}
@@ -290,12 +300,12 @@ export const Canvas: React.FC = () => {
                     height: player.size * 2,
                     backgroundColor: player.isDead ? '#27272a' : player.color, // zinc-800
                     border: `4px solid ${player.isDead ? '#7f1d1d' : (role?.color || '#ffffff')}`, // red-900
-                    padding: player.imageUrl ? '2px' : '0' // Leave 2px border for color if image exists
+                    padding: imageToShow ? '2px' : '0' // Leave 2px border for color if image exists
                   }}
                 >
-                  {player.imageUrl && !player.isDead && (
+                  {imageToShow && !player.isDead && (
                     <img
-                      src={player.imageUrl}
+                      src={imageToShow}
                       alt={player.name}
                       className="w-full h-full object-cover rounded-full bg-background"
                       draggable={false}
@@ -306,7 +316,7 @@ export const Canvas: React.FC = () => {
                   )}
 
                   {/* Show name inside circle ONLY if there's no image */}
-                  {!player.imageUrl && (
+                  {!imageToShow && (
                     <span className="font-bold text-white text-sm mix-blend-difference drop-shadow-md px-1 text-center leading-tight z-10 pointer-events-none">
                       {player.name}
                     </span>
@@ -314,7 +324,7 @@ export const Canvas: React.FC = () => {
                 </div>
 
                 {/* Show name below the circle ONLY if there IS an image */}
-                {player.imageUrl && (
+                {imageToShow && (
                   <div className="absolute top-full mt-1 bg-background/80 backdrop-blur-sm px-2 py-0.5 rounded text-xs font-bold whitespace-nowrap border border-border pointer-events-none">
                     {player.name}
                   </div>

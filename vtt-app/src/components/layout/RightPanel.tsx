@@ -174,6 +174,41 @@ export const RightPanel: React.FC = () => {
                 />
                 Afficher les joueurs
               </label>
+
+              {displaySettings.showPlayers && (
+                <div className="flex flex-col gap-1.5 pl-5 border-l-2 border-border/30 ml-1.5 mt-1">
+                  <label className="flex items-center gap-2 text-xs cursor-pointer text-muted-foreground hover:text-foreground">
+                    <input
+                      type="checkbox"
+                      checked={displaySettings.showPlayerImage}
+                      onChange={(e) => updateDisplaySettings({ showPlayerImage: e.target.checked })}
+                      className="rounded border-border w-3 h-3"
+                    />
+                    Afficher l'image du joueur
+                  </label>
+                  <label className="flex items-center gap-2 text-xs cursor-pointer text-muted-foreground hover:text-foreground">
+                    <input
+                      type="checkbox"
+                      checked={displaySettings.showRoleImage}
+                      onChange={(e) => updateDisplaySettings({ showRoleImage: e.target.checked })}
+                      className="rounded border-border w-3 h-3"
+                    />
+                    Afficher l'image du rôle
+                  </label>
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <span>Priorité si les deux existent :</span>
+                    <select
+                      value={displaySettings.imagePriority}
+                      onChange={(e) => updateDisplaySettings({ imagePriority: e.target.value as 'player' | 'role' })}
+                      className="bg-background border border-border rounded px-1 py-0.5 outline-none focus:ring-1 focus:ring-ring"
+                    >
+                      <option value="player">Joueur</option>
+                      <option value="role">Rôle</option>
+                    </select>
+                  </div>
+                </div>
+              )}
+
               <label className="flex items-center gap-2 text-sm cursor-pointer">
                 <input
                   type="checkbox"

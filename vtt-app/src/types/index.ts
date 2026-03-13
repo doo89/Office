@@ -102,6 +102,9 @@ export interface GameState {
     showCenter: boolean;
     showCycleIcon: boolean;
     foregroundElement: 'players' | 'markers';
+    showPlayerImage: boolean;
+    showRoleImage: boolean;
+    imagePriority: 'player' | 'role';
   };
 }
 
