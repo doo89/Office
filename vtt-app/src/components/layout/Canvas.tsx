@@ -338,19 +338,34 @@ export const Canvas: React.FC = () => {
         <div
           className="fixed z-[100] bg-popover text-popover-foreground border border-border rounded-md shadow-xl py-1 min-w-[120px]"
           style={{ left: contextMenu.x, top: contextMenu.y }}
+          onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); }}
         >
           {players.find(p => p.id === contextMenu.playerId) && (
-            <button
-              className="w-full text-left px-4 py-2 text-sm hover:bg-accent hover:text-accent-foreground flex items-center gap-2"
-              onClick={() => {
-                const p = players.find(p => p.id === contextMenu.playerId);
-                if (p) updatePlayer(p.id, { isDead: !p.isDead });
-                closeContextMenu();
-              }}
-            >
-              <Skull size={14} className={players.find(p => p.id === contextMenu.playerId)?.isDead ? "text-muted-foreground" : "text-destructive"} />
-              {players.find(p => p.id === contextMenu.playerId)?.isDead ? "Vivant" : "Mort"}
-            </button>
+            <>
+              <button
+                className="w-full text-left px-4 py-2 text-sm hover:bg-accent hover:text-accent-foreground flex items-center gap-2"
+                onMouseDown={(e) => {
+                  e.stopPropagation();
+                  const p = players.find(p => p.id === contextMenu.playerId);
+                  if (p) updatePlayer(p.id, { isDead: !p.isDead });
+                  closeContextMenu();
+                }}
+              >
+                <Skull size={14} className={players.find(p => p.id === contextMenu.playerId)?.isDead ? "text-muted-foreground" : "text-destructive"} />
+                {players.find(p => p.id === contextMenu.playerId)?.isDead ? "Ressusciter" : "Tuer"}
+              </button>
+              <div className="h-px bg-border my-1" />
+              <button
+                className="w-full text-left px-4 py-2 text-sm hover:bg-accent hover:text-accent-foreground flex items-center gap-2"
+                onMouseDown={(e) => {
+                  e.stopPropagation();
+                  useVttStore.getState().setEditingEntity({ type: 'player', id: contextMenu.playerId });
+                  closeContextMenu();
+                }}
+              >
+                Éditer
+              </button>
+            </>
           )}
         </div>
       )}
