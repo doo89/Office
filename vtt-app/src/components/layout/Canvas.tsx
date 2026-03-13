@@ -184,9 +184,9 @@ export const Canvas: React.FC = () => {
       <div
         className="absolute origin-center"
         style={{
-          transform: `translate(calc(50% + ${canvas.panX}px), calc(50% + ${canvas.panY}px)) scale(${canvas.zoom})`,
-          left: 0,
-          top: 0,
+          transform: `translate(${canvas.panX}px, ${canvas.panY}px) scale(${canvas.zoom})`,
+          left: '50%',
+          top: '50%',
           width: 0,
           height: 0,
         }}

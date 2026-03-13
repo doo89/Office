@@ -2,7 +2,17 @@ import { create } from 'zustand';
 import type { GameState, EntityId, Player, Role, TagModel, Marker } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 
+export interface PlayerTemplate {
+  id: EntityId;
+  color: string;
+  name: string;
+  roleId: EntityId | null;
+  teamId: EntityId | null;
+}
+
 interface VttStore extends GameState {
+  playerTemplates: PlayerTemplate[];
+
   // Navigation
   setPan: (x: number, y: number) => void;
   setZoom: (zoom: number) => void;
@@ -15,7 +25,12 @@ interface VttStore extends GameState {
 
   // Tools
   setGrid: (grid: GameState['grid']) => void;
-  clearWalls: () => void; // Placeholder
+  clearWalls: () => void;
+
+  // Player Templates
+  addPlayerTemplate: (templateData: Omit<PlayerTemplate, 'id'>) => void;
+  updatePlayerTemplate: (id: EntityId, updates: Partial<PlayerTemplate>) => void;
+  deletePlayerTemplate: (id: EntityId) => void;
 
   // Players
   addPlayer: (playerData: Omit<Player, 'id'>) => void;
@@ -44,6 +59,7 @@ interface VttStore extends GameState {
 }
 
 const initialState = {
+  playerTemplates: [],
   players: [],
   roles: [],
   tags: [],
@@ -82,6 +98,17 @@ export const useVttStore = create<VttStore>((set) => ({
   // Tools
   setGrid: (grid) => set({ grid }),
   clearWalls: () => set({ walls: [] }),
+
+  // Player Templates
+  addPlayerTemplate: (templateData) => set((state) => ({
+    playerTemplates: [...state.playerTemplates, { ...templateData, id: uuidv4() }]
+  })),
+  updatePlayerTemplate: (id, updates) => set((state) => ({
+    playerTemplates: state.playerTemplates.map(p => p.id === id ? { ...p, ...updates } : p)
+  })),
+  deletePlayerTemplate: (id) => set((state) => ({
+    playerTemplates: state.playerTemplates.filter(p => p.id !== id)
+  })),
 
   // Players
   addPlayer: (playerData) => set((state) => ({

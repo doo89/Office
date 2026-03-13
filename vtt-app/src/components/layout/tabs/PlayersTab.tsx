@@ -3,12 +3,22 @@ import React, { useState } from 'react';
 import { useVttStore } from '../../../store';
 
 export const PlayersTab: React.FC = () => {
-  const { players, setEditingEntity, addPlayer, deletePlayer } = useVttStore();
+  const { playerTemplates, setEditingEntity, addPlayerTemplate, deletePlayerTemplate, addPlayer } = useVttStore();
   const [newPlayerName, setNewPlayerName] = useState('');
   const [newPlayerColor, setNewPlayerColor] = useState('#ef4444');
 
   const handleAddPlayer = () => {
     if (!newPlayerName.trim()) return;
+
+    // Create the template to display in the left panel
+    addPlayerTemplate({
+      name: newPlayerName,
+      color: newPlayerColor,
+      roleId: null,
+      teamId: null,
+    });
+
+    // Immediately spawn an instance in the middle of the canvas
     addPlayer({
       name: newPlayerName,
       color: newPlayerColor,
@@ -57,10 +67,10 @@ export const PlayersTab: React.FC = () => {
       <section className="flex flex-col gap-3">
         <h3 className="font-semibold text-sm border-b border-border pb-1">Joueurs</h3>
         <div className="flex flex-col gap-2">
-          {players.length === 0 ? (
+          {playerTemplates.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-4">Aucun joueur créé.</p>
           ) : (
-            players.map((player) => (
+            playerTemplates.map((player) => (
               <div
                 key={player.id}
                 className="flex items-center justify-between p-2 rounded-md border border-border bg-card hover:bg-accent/50 group"
@@ -78,14 +88,14 @@ export const PlayersTab: React.FC = () => {
                 </div>
                 <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                   <button
-                    onClick={() => setEditingEntity({ type: 'player', id: player.id })}
+                    onClick={() => setEditingEntity({ type: 'playerTemplate', id: player.id } as any)}
                     className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-accent rounded-md"
                     title="Modifier"
                   >
                     <Edit2 size={14} />
                   </button>
                   <button
-                    onClick={() => deletePlayer(player.id)}
+                    onClick={() => deletePlayerTemplate(player.id)}
                     className="p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-md"
                     title="Supprimer"
                   >
