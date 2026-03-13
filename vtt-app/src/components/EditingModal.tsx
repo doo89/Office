@@ -3,7 +3,7 @@ import { useVttStore } from '../store';
 import { X, Trash2 } from 'lucide-react';
 
 export const EditingModal: React.FC = () => {
-  const { editingEntity, setEditingEntity, players, playerTemplates, roles, tags, updatePlayer, updatePlayerTemplate, updateRole, updateTagModel } = useVttStore();
+  const { editingEntity, setEditingEntity, players, playerTemplates, roles, teams, tags, updatePlayer, updatePlayerTemplate, updateRole, updateTeam, updateTagModel } = useVttStore();
 
   if (!editingEntity) return null;
 
@@ -93,6 +93,17 @@ export const EditingModal: React.FC = () => {
             {roles.map((r: any) => <option key={r.id} value={r.id}>{r.name}</option>)}
           </select>
         </div>
+        <div className="flex flex-col gap-1">
+          <label className="text-sm font-medium">Équipe par défaut</label>
+          <select
+            value={template.teamId || ''}
+            onChange={(e) => updatePlayerTemplate(template.id, { teamId: e.target.value || null })}
+            className="bg-input border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+          >
+            <option value="">Aucune équipe</option>
+            {teams.map((t: any) => <option key={t.id} value={t.id}>{t.name}</option>)}
+          </select>
+        </div>
       </div>
     );
   } else if (editingEntity.type === 'player') {
@@ -176,6 +187,17 @@ export const EditingModal: React.FC = () => {
             {roles.map((r: any) => <option key={r.id} value={r.id}>{r.name}</option>)}
           </select>
         </div>
+        <div className="flex flex-col gap-1">
+          <label className="text-sm font-medium">Équipe</label>
+          <select
+            value={player.teamId || ''}
+            onChange={(e) => updatePlayer(player.id, { teamId: e.target.value || null })}
+            className="bg-input border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+          >
+            <option value="">Aucune équipe</option>
+            {teams.map((t: any) => <option key={t.id} value={t.id}>{t.name}</option>)}
+          </select>
+        </div>
         <div className="flex items-center gap-2 mt-2">
             <input
               type="checkbox"
@@ -238,6 +260,50 @@ export const EditingModal: React.FC = () => {
               Rôle Unique (un seul joueur peut l'avoir)
             </label>
           </div>
+      </div>
+    );
+  } else if (editingEntity.type === 'team') {
+    const team = teams.find(t => t.id === editingEntity.id);
+    if (!team) return null;
+
+    entityTitle = `Modifier Équipe: ${team.name}`;
+    entityContent = (
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-1">
+          <label className="text-sm font-medium">Nom de l'équipe</label>
+          <input
+            type="text"
+            value={team.name}
+            onChange={(e) => updateTeam(team.id, { name: e.target.value })}
+            className="bg-input border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+          />
+        </div>
+        <div className="flex gap-4">
+          <div className="flex flex-col gap-1 flex-1">
+            <label className="text-sm font-medium">Icône</label>
+            <select
+              value={team.icon}
+              onChange={(e) => updateTeam(team.id, { icon: e.target.value })}
+              className="bg-input border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+            >
+              <option value="Users">Utilisateurs</option>
+              <option value="Shield">Bouclier</option>
+              <option value="Sword">Épée</option>
+              <option value="Heart">Cœur</option>
+              <option value="Star">Étoile</option>
+              <option value="Flag">Drapeau</option>
+            </select>
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-sm font-medium">Couleur</label>
+            <input
+              type="color"
+              value={team.color}
+              onChange={(e) => updateTeam(team.id, { color: e.target.value })}
+              className="w-10 h-10 rounded cursor-pointer bg-transparent border-0 p-0"
+            />
+          </div>
+        </div>
       </div>
     );
   } else if (editingEntity.type === 'tagModel') {

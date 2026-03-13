@@ -1,11 +1,15 @@
-import { Plus, Trash2, Edit2 } from 'lucide-react';
+import { Plus, Trash2, Edit2, Shield, Users, Sword, Heart, Star, Flag } from 'lucide-react';
 import React, { useState } from 'react';
 import { useVttStore } from '../../../store';
 
 export const PlayersTab: React.FC = () => {
-  const { playerTemplates, setEditingEntity, addPlayerTemplate, deletePlayerTemplate, addPlayer } = useVttStore();
+  const { playerTemplates, teams, setEditingEntity, addPlayerTemplate, deletePlayerTemplate, addPlayer, addTeam, deleteTeam } = useVttStore();
   const [newPlayerName, setNewPlayerName] = useState('');
   const [newPlayerColor, setNewPlayerColor] = useState('#ef4444');
+
+  const [newTeamName, setNewTeamName] = useState('');
+  const [newTeamColor, setNewTeamColor] = useState('#3b82f6');
+  const [newTeamIcon, setNewTeamIcon] = useState('Users');
 
   const handleAddPlayer = () => {
     if (!newPlayerName.trim()) return;
@@ -109,10 +113,90 @@ export const PlayersTab: React.FC = () => {
         </div>
       </section>
 
-      {/* Teams Section Placeholder */}
-      <section className="flex flex-col gap-3 opacity-50">
-        <h3 className="font-semibold text-sm border-b border-border pb-1">Équipes</h3>
-        <p className="text-xs text-muted-foreground">La gestion des équipes sera accessible via la modale d'édition universelle.</p>
+      {/* Teams Section */}
+      <section className="flex flex-col gap-3 pt-4 border-t border-border">
+        <h3 className="font-semibold text-sm border-b border-border pb-1">Créer une Équipe</h3>
+        <div className="flex flex-col gap-2">
+          <input
+            type="text"
+            placeholder="Nom de l'équipe"
+            value={newTeamName}
+            onChange={(e) => setNewTeamName(e.target.value)}
+            className="w-full bg-input border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+          />
+          <div className="flex gap-2">
+            <select
+              value={newTeamIcon}
+              onChange={(e) => setNewTeamIcon(e.target.value)}
+              className="bg-input border border-border rounded-md px-2 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring flex-1"
+            >
+              <option value="Users">Utilisateurs</option>
+              <option value="Shield">Bouclier</option>
+              <option value="Sword">Épée</option>
+              <option value="Heart">Cœur</option>
+              <option value="Star">Étoile</option>
+              <option value="Flag">Drapeau</option>
+            </select>
+          </div>
+          <div className="flex items-center gap-2">
+            <input
+              type="color"
+              value={newTeamColor}
+              onChange={(e) => setNewTeamColor(e.target.value)}
+              className="w-8 h-8 rounded cursor-pointer bg-transparent border-0 p-0"
+            />
+            <button
+              onClick={() => {
+                if (!newTeamName.trim()) return;
+                addTeam({ name: newTeamName, color: newTeamColor, icon: newTeamIcon });
+                setNewTeamName('');
+              }}
+              className="flex-1 bg-accent hover:bg-accent/80 text-foreground px-3 py-2 rounded-md text-sm font-medium flex items-center justify-center gap-2"
+            >
+              <Plus size={16} /> Ajouter Équipe
+            </button>
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-2 mt-2">
+          {teams.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-2">Aucune équipe.</p>
+          ) : (
+            teams.map((team) => {
+              let IconComponent = Users;
+              if (team.icon === 'Shield') IconComponent = Shield;
+              if (team.icon === 'Sword') IconComponent = Sword;
+              if (team.icon === 'Heart') IconComponent = Heart;
+              if (team.icon === 'Star') IconComponent = Star;
+              if (team.icon === 'Flag') IconComponent = Flag;
+
+              return (
+                <div key={team.id} className="flex items-center justify-between p-2 rounded-md border border-border bg-card hover:bg-accent/50 group">
+                  <div className="flex items-center gap-3">
+                    <IconComponent size={16} style={{ color: team.color }} />
+                    <span className="text-sm font-medium" style={{ color: team.color }}>{team.name}</span>
+                  </div>
+                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button
+                      onClick={() => setEditingEntity({ type: 'team', id: team.id })}
+                      className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-accent rounded-md"
+                      title="Modifier"
+                    >
+                      <Edit2 size={14} />
+                    </button>
+                    <button
+                      onClick={() => deleteTeam(team.id)}
+                      className="p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-md"
+                      title="Supprimer"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
       </section>
     </div>
   );
