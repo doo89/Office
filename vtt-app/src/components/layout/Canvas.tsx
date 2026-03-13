@@ -351,10 +351,16 @@ export const Canvas: React.FC = () => {
                   {displaySettings.showRole && role && <p>Rôle: <span style={{ color: role.color }}>{role.name}</span></p>}
                   {displaySettings.showTeam && team && <p>Équipe: <span style={{ color: team.color }}>{team.name}</span></p>}
                   {player.isDead && <p className="text-destructive font-bold">Mort</p>}
-                  {displaySettings.showTags && player.tags.length > 0 && (
+                  {displaySettings.showTags && (player.tags.length > 0 || (role && role.tags && role.tags.length > 0)) && (
                     <div className="mt-1 border-t border-border pt-1">
                       <p className="font-semibold text-[10px] text-muted-foreground">Tags:</p>
                       <ul className="flex flex-wrap gap-1 mt-1">
+                        {role?.tags?.map(t => (
+                          <li key={`role-tag-${t.id}`} className="flex items-center gap-1 bg-muted px-1 rounded text-[10px] border border-dashed border-border" title="Tag de Rôle">
+                            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: t.color }} />
+                            {t.name} (Rôle)
+                          </li>
+                        ))}
                         {player.tags.map(t => (
                           <li key={t.instanceId} className="flex items-center gap-1 bg-muted px-1 rounded text-[10px]">
                             <div className="w-2 h-2 rounded-full" style={{ backgroundColor: t.color }} />

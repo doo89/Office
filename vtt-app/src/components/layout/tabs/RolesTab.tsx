@@ -3,25 +3,30 @@ import React, { useState } from 'react';
 import { useVttStore } from '../../../store';
 
 export const RolesTab: React.FC = () => {
-  const { roles, setEditingEntity, addRole, deleteRole } = useVttStore();
+  const { roles, tags, setEditingEntity, addRole, deleteRole } = useVttStore();
   const [newRoleName, setNewRoleName] = useState('');
   const [newRoleColor, setNewRoleColor] = useState('#3b82f6');
   const [newRoleLives, setNewRoleLives] = useState(1);
   const [newRoleUnique, setNewRoleUnique] = useState(true);
+  const [newRoleTags, setNewRoleTags] = useState<string[]>([]);
 
   const handleAddRole = () => {
     if (!newRoleName.trim()) return;
+
+    const selectedTags = tags.filter(t => newRoleTags.includes(t.id));
+
     addRole({
       name: newRoleName,
       color: newRoleColor,
       lives: newRoleLives,
       isUnique: newRoleUnique,
       teamId: null,
-      tags: [],
+      tags: selectedTags,
     });
     setNewRoleName('');
     setNewRoleLives(1);
     setNewRoleUnique(true);
+    setNewRoleTags([]);
   };
 
   return (
@@ -61,6 +66,32 @@ export const RolesTab: React.FC = () => {
               </label>
             </div>
           </div>
+
+          {tags.length > 0 && (
+            <div className="flex flex-col gap-1.5 mt-1">
+              <span className="text-xs font-medium text-muted-foreground">Tags par défaut :</span>
+              <select
+                multiple
+                value={newRoleTags}
+                onChange={(e) => {
+                  const options = Array.from(e.target.selectedOptions);
+                  setNewRoleTags(options.map(o => o.value));
+                }}
+                className="w-full bg-background border border-border rounded px-3 py-2 text-sm focus:ring-1 focus:ring-ring focus:border-input outline-none h-24 custom-scrollbar"
+                title="Maintenez Ctrl (ou Cmd) pour sélectionner plusieurs tags."
+              >
+                {tags.map(tag => (
+                  <option key={tag.id} value={tag.id}>
+                    {tag.name}
+                  </option>
+                ))}
+              </select>
+              <span className="text-[10px] text-muted-foreground leading-tight">
+                Maintenez <kbd className="bg-muted px-1 rounded">Ctrl</kbd> ou <kbd className="bg-muted px-1 rounded">Cmd</kbd> pour sélectionner plusieurs tags.
+              </span>
+            </div>
+          )}
+
           <div className="flex items-center gap-2">
             <input
               type="color"

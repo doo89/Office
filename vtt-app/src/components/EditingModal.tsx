@@ -341,6 +341,36 @@ export const EditingModal: React.FC = () => {
               className="bg-input border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring min-h-[80px]"
             />
           </div>
+
+          <div className="flex flex-col gap-1">
+            <label className="text-sm font-medium">Tags attachés</label>
+            {tags.length === 0 ? (
+              <p className="text-xs text-muted-foreground italic">Aucun tag défini dans le jeu.</p>
+            ) : (
+              <select
+                multiple
+                value={(role.tags || []).map(t => t.id)}
+                onChange={(e) => {
+                  const options = Array.from(e.target.selectedOptions);
+                  const selectedTagIds = options.map(o => o.value);
+                  const newTags = tags.filter(t => selectedTagIds.includes(t.id));
+                  updateRole(role.id, { tags: newTags });
+                }}
+                className="w-full bg-input border border-border rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-ring focus:border-input outline-none h-24 custom-scrollbar"
+                title="Maintenez Ctrl (ou Cmd) pour sélectionner plusieurs tags."
+              >
+                {tags.map(tag => (
+                  <option key={tag.id} value={tag.id}>
+                    {tag.name}
+                  </option>
+                ))}
+              </select>
+            )}
+            <span className="text-[10px] text-muted-foreground leading-tight mt-1">
+              Maintenez <kbd className="bg-muted px-1 rounded">Ctrl</kbd> ou <kbd className="bg-muted px-1 rounded">Cmd</kbd> pour sélectionner plusieurs tags.
+            </span>
+          </div>
+
       </div>
     );
   } else if (editingEntity.type === 'team') {

@@ -42,6 +42,21 @@ export const GameTab: React.FC = () => {
         }
       });
 
+      // Check role's tags
+      const role = useVttStore.getState().roles.find(r => r.id === player.roleId);
+      if (role && role.tags) {
+        role.tags.forEach(tag => {
+          const order = isNight ? tag.callOrderNight : tag.callOrderDay;
+          if (order !== null && order !== undefined) {
+            isCalled = true;
+            if (order < minOrder) {
+              minOrder = order;
+              reason = `Tag Rôle: ${tag.name}`;
+            }
+          }
+        });
+      }
+
       if (isCalled) {
         called.push({ type: 'player', entity: player, order: minOrder, reason });
       } else {
