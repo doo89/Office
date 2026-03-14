@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { useVttStore } from '../../store';
-import { ZoomIn, ZoomOut, Maximize, Tag, Skull, Trash2, Settings, ChevronRight, Sun, Moon, icons } from 'lucide-react';
+import { ZoomIn, ZoomOut, Maximize, Tag, Skull, Trash2, Settings, ChevronRight, Sun, Moon, Copy, icons } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 import type { Marker } from '../../types';
 
@@ -573,6 +573,28 @@ export const Canvas: React.FC = () => {
                 }}
               >
                 <Settings size={14} /> Modifier
+              </button>
+              <button
+                className="w-full text-left px-4 py-2 text-sm hover:bg-accent hover:text-accent-foreground flex items-center gap-2"
+                onMouseDown={(e) => {
+                  e.stopPropagation();
+                  const marker = markers.find(m => m.id === contextMenu.entityId);
+                  if (marker) {
+                    // Create a new instance id for the duplicated tag
+                    const duplicatedTag = {
+                      ...marker.tag,
+                      instanceId: uuidv4()
+                    };
+                    addMarker({
+                      x: marker.x + 20, // offset slightly
+                      y: marker.y + 20,
+                      tag: duplicatedTag
+                    });
+                  }
+                  closeContextMenu();
+                }}
+              >
+                <Copy size={14} /> Dupliquer
               </button>
               <div className="h-px bg-border my-1" />
               <button
