@@ -31,10 +31,12 @@ export interface Role {
 export interface MarkerParameter {
   id: EntityId;
   name: string;
-  lives: number;
-  points: number;
-  votes: number;
-  uses: number;
+  lives: number | null;
+  points: number | null;
+  votes: number | null;
+  uses: number | null;
+  autoDeleteOnZeroUses?: boolean;
+  description?: string;
   callOrderDay: number | null;
   callOrderNight: number | null;
 }
@@ -50,6 +52,7 @@ export interface Marker {
 export interface TagModel extends MarkerParameter {
   color: string;
   icon: string;
+  imageUrl?: string;
 }
 
 // Local Tag Instance (attached to a player or marker)

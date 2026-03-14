@@ -1,28 +1,48 @@
-import { Plus, Trash2, Edit2, Tag } from 'lucide-react';
+import { Plus, Trash2, Edit2, Tag, icons } from 'lucide-react';
 import React, { useState } from 'react';
 import { useVttStore } from '../../../store';
+
+const TAG_ICONS = [
+  'Tag', 'Shield', 'Sword', 'Heart', 'Star', 'Flag', 'Skull', 'Ghost',
+  'Crown', 'Flame', 'Zap', 'Droplet', 'Sun', 'Moon', 'Eye', 'Feather',
+  'Key', 'Anchor', 'Axe', 'Castle', 'Crosshair', 'Hexagon', 'Sprout', 'Target', 'Gem'
+];
 
 export const TagsTab: React.FC = () => {
   const { tags, addTagModel, deleteTagModel, setEditingEntity } = useVttStore();
   const [newTagName, setNewTagName] = useState('');
   const [newTagColor, setNewTagColor] = useState('#10b981');
-  const [newTagPoints, setNewTagPoints] = useState(0);
+  const [newTagPoints, setNewTagPoints] = useState<number | ''>('');
+  const [newTagLives, setNewTagLives] = useState<number | ''>('');
+  const [newTagVotes, setNewTagVotes] = useState<number | ''>('');
+  const [newTagUses, setNewTagUses] = useState<number | ''>('');
+  const [newTagAutoDelete, setNewTagAutoDelete] = useState(false);
+  const [newTagDesc, setNewTagDesc] = useState('');
+  const [newTagIcon, setNewTagIcon] = useState('Tag');
 
   const handleAddTag = () => {
     if (!newTagName.trim()) return;
     addTagModel({
       name: newTagName,
       color: newTagColor,
-      icon: 'Tag', // Default icon string
-      lives: 0,
-      points: newTagPoints,
-      votes: 0,
-      uses: 1,
+      icon: newTagIcon,
+      lives: newTagLives === '' ? null : newTagLives,
+      points: newTagPoints === '' ? null : newTagPoints,
+      votes: newTagVotes === '' ? null : newTagVotes,
+      uses: newTagUses === '' ? null : newTagUses,
+      autoDeleteOnZeroUses: newTagAutoDelete,
+      description: newTagDesc,
       callOrderDay: null,
       callOrderNight: null,
     });
     setNewTagName('');
-    setNewTagPoints(0);
+    setNewTagPoints('');
+    setNewTagLives('');
+    setNewTagVotes('');
+    setNewTagUses('');
+    setNewTagAutoDelete(false);
+    setNewTagDesc('');
+    setNewTagIcon('Tag');
   };
 
   return (
@@ -38,17 +58,96 @@ export const TagsTab: React.FC = () => {
             onChange={(e) => setNewTagName(e.target.value)}
             className="w-full bg-input border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
           />
-          <div className="flex items-center gap-3 justify-between">
-            <div className="flex items-center gap-2 flex-1">
-              <label className="text-xs font-medium text-muted-foreground whitespace-nowrap">Points:</label>
+
+          <div className="flex flex-col gap-1.5 mt-1">
+            <label className="text-xs font-medium text-muted-foreground">Icône :</label>
+            <div className="flex flex-wrap gap-1 bg-input border border-border rounded-md p-1.5 max-h-32 overflow-y-auto custom-scrollbar">
+              {TAG_ICONS.map(iconName => {
+                const IconComponent = icons[iconName as keyof typeof icons];
+                if (!IconComponent) return null;
+                return (
+                  <button
+                    key={iconName}
+                    onClick={() => setNewTagIcon(iconName)}
+                    className={`p-1.5 rounded-md transition-colors flex items-center justify-center ${
+                      newTagIcon === iconName
+                        ? 'bg-primary text-primary-foreground shadow-sm'
+                        : 'hover:bg-accent hover:text-accent-foreground text-muted-foreground'
+                    }`}
+                    title={iconName}
+                  >
+                    {React.createElement(IconComponent, { size: 16 })}
+                  </button>
+                );
+              })}
+            </div>
+            <span className="text-[10px] text-muted-foreground italic">
+              Vous pourrez ajouter une image personnalisée en modifiant le tag.
+            </span>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            <div className="flex items-center gap-2">
+              <label className="text-xs font-medium text-muted-foreground whitespace-nowrap flex-1">Ajout Vie:</label>
+              <input
+                type="number"
+                value={newTagLives}
+                onChange={(e) => setNewTagLives(e.target.value === '' ? '' : parseInt(e.target.value))}
+                placeholder="0"
+                className="w-16 bg-input border border-border rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-ring text-center"
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <label className="text-xs font-medium text-muted-foreground whitespace-nowrap flex-1">Votes:</label>
+              <input
+                type="number"
+                value={newTagVotes}
+                onChange={(e) => setNewTagVotes(e.target.value === '' ? '' : parseInt(e.target.value))}
+                placeholder="-1"
+                title="-1 pour illimité"
+                className="w-16 bg-input border border-border rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-ring text-center"
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <label className="text-xs font-medium text-muted-foreground whitespace-nowrap flex-1">Pts:</label>
               <input
                 type="number"
                 value={newTagPoints}
-                onChange={(e) => setNewTagPoints(parseInt(e.target.value) || 0)}
-                className="w-full bg-input border border-border rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-ring text-center"
+                onChange={(e) => setNewTagPoints(e.target.value === '' ? '' : parseInt(e.target.value))}
+                placeholder="0"
+                className="w-16 bg-input border border-border rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-ring text-center"
               />
             </div>
+            <div className="flex flex-col gap-1">
+              <div className="flex items-center gap-2">
+                <label className="text-xs font-medium text-muted-foreground whitespace-nowrap flex-1">Uses:</label>
+                <input
+                  type="number"
+                  value={newTagUses}
+                  onChange={(e) => setNewTagUses(e.target.value === '' ? '' : parseInt(e.target.value))}
+                  placeholder="1"
+                  className="w-16 bg-input border border-border rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-ring text-center"
+                />
+              </div>
+              <label className="flex items-center gap-1 text-[10px] text-muted-foreground cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={newTagAutoDelete}
+                  onChange={(e) => setNewTagAutoDelete(e.target.checked)}
+                  className="rounded border-border w-2.5 h-2.5"
+                />
+                Suppr. auto à 0
+              </label>
+            </div>
           </div>
+
+          <textarea
+            value={newTagDesc}
+            onChange={(e) => setNewTagDesc(e.target.value)}
+            placeholder="Texte libre..."
+            className="w-full bg-input border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring min-h-[60px]"
+          />
+
           <div className="flex items-center gap-2">
             <input
               type="color"
@@ -74,7 +173,9 @@ export const TagsTab: React.FC = () => {
           {tags.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-4">Aucun tag défini.</p>
           ) : (
-            tags.map((tag) => (
+            tags.map((tag) => {
+              const IconComponent = icons[tag.icon as keyof typeof icons] || Tag;
+              return (
               <div
                 key={tag.id}
                 className="flex items-center justify-between p-2 rounded-md border border-border bg-card hover:bg-accent/50 group"
@@ -85,15 +186,19 @@ export const TagsTab: React.FC = () => {
               >
                 <div className="flex items-center gap-3">
                   <div
-                    className="flex items-center justify-center w-6 h-6 rounded-md border border-border"
+                    className="flex items-center justify-center w-6 h-6 rounded-md border border-border overflow-hidden"
                     style={{ backgroundColor: `${tag.color}20`, borderColor: tag.color }}
                   >
-                    <Tag size={12} style={{ color: tag.color }} />
+                    {tag.imageUrl ? (
+                      <img src={tag.imageUrl} alt={tag.name} className="w-full h-full object-cover" draggable={false} />
+                    ) : (
+                      <IconComponent size={12} style={{ color: tag.color }} />
+                    )}
                   </div>
                   <div className="flex flex-col">
                     <span className="text-sm font-medium leading-none">{tag.name}</span>
                     <span className="text-[10px] text-muted-foreground mt-1">
-                      Pts: {tag.points} • Uses: {tag.uses}
+                      {tag.uses !== null ? `Uses: ${tag.uses}` : ''} {tag.points !== null ? `Pts: ${tag.points}` : ''}
                     </span>
                   </div>
                 </div>
@@ -114,7 +219,8 @@ export const TagsTab: React.FC = () => {
                   </button>
                 </div>
               </div>
-            ))
+              );
+            })
           )}
         </div>
       </section>

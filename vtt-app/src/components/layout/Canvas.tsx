@@ -354,17 +354,37 @@ export const Canvas: React.FC = () => {
                   {displaySettings.showTags && (player.tags.length > 0 || (role && role.tags && role.tags.length > 0)) && (
                     <div className="mt-1 border-t border-border pt-1">
                       <p className="font-semibold text-[10px] text-muted-foreground">Tags:</p>
-                      <ul className="flex flex-wrap gap-1 mt-1">
+                      <ul className="flex flex-col gap-1 mt-1">
                         {role?.tags?.map(t => (
-                          <li key={`role-tag-${t.id}`} className="flex items-center gap-1 bg-muted px-1 rounded text-[10px] border border-dashed border-border" title="Tag de Rôle">
-                            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: t.color }} />
-                            {t.name} (Rôle)
+                          <li key={`role-tag-${t.id}`} className="flex flex-col bg-muted px-1.5 py-0.5 rounded text-[10px] border border-dashed border-border" title="Tag de Rôle">
+                            <div className="flex items-center gap-1">
+                              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: t.color }} />
+                              <span className="font-medium">{t.name} (Rôle)</span>
+                            </div>
+                            {(t.uses !== null || t.points !== null || t.votes !== null) && (
+                              <div className="text-[9px] text-muted-foreground pl-3">
+                                {t.uses !== null && <span>Uses: {t.uses} </span>}
+                                {t.points !== null && <span>Pts: {t.points} </span>}
+                                {t.votes !== null && <span>Votes: {t.votes === -1 ? 'Illimité' : t.votes}</span>}
+                              </div>
+                            )}
+                            {t.description && <div className="text-[9px] text-muted-foreground pl-3 italic">{t.description}</div>}
                           </li>
                         ))}
                         {player.tags.map(t => (
-                          <li key={t.instanceId} className="flex items-center gap-1 bg-muted px-1 rounded text-[10px]">
-                            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: t.color }} />
-                            {t.name} ({t.uses})
+                          <li key={t.instanceId} className="flex flex-col bg-muted px-1.5 py-0.5 rounded text-[10px]">
+                            <div className="flex items-center gap-1">
+                              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: t.color }} />
+                              <span className="font-medium">{t.name}</span>
+                            </div>
+                            {(t.uses !== null || t.points !== null || t.votes !== null) && (
+                              <div className="text-[9px] text-muted-foreground pl-3">
+                                {t.uses !== null && <span>Uses: {t.uses} </span>}
+                                {t.points !== null && <span>Pts: {t.points} </span>}
+                                {t.votes !== null && <span>Votes: {t.votes === -1 ? 'Illimité' : t.votes}</span>}
+                              </div>
+                            )}
+                            {t.description && <div className="text-[9px] text-muted-foreground pl-3 italic">{t.description}</div>}
                           </li>
                         ))}
                       </ul>
@@ -405,9 +425,14 @@ export const Canvas: React.FC = () => {
               </div>
 
                {/* Tooltip */}
-               <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 w-max bg-popover text-popover-foreground text-xs p-2 rounded shadow-xl border border-border opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
+               <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 w-max max-w-[200px] bg-popover text-popover-foreground text-xs p-2 rounded shadow-xl border border-border opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
                 <p className="font-bold" style={{ color: marker.tag.color }}>{marker.tag.name}</p>
-                <p>Pts: {marker.tag.points} | Uses: {marker.tag.uses}</p>
+                <div className="text-[10px] text-muted-foreground mt-1">
+                  {marker.tag.uses !== null && <span>Uses: {marker.tag.uses} </span>}
+                  {marker.tag.points !== null && <span>Pts: {marker.tag.points} </span>}
+                  {marker.tag.votes !== null && <span>Votes: {marker.tag.votes === -1 ? 'Illimité' : marker.tag.votes}</span>}
+                </div>
+                {marker.tag.description && <p className="text-[10px] text-muted-foreground italic mt-1">{marker.tag.description}</p>}
               </div>
           </div>
         ))}

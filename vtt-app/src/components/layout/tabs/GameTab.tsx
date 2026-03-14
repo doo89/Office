@@ -7,15 +7,30 @@ export const GameTab: React.FC = () => {
   const { isNight, cycleNumber, nextCycle, resetCycle, players, markers, updatePlayer, updateMarker } = useVttStore();
 
   const handleModifyTagUses = (player: Player, tag: TagInstance, amount: number) => {
-    const updatedTags = player.tags.map(t =>
-      t.instanceId === tag.instanceId ? { ...t, uses: Math.max(0, t.uses + amount) } : t
+    const newUses = Math.max(0, (tag.uses ?? 0) + amount);
+    let updatedTags = player.tags.map(t =>
+      t.instanceId === tag.instanceId ? { ...t, uses: newUses } : t
     );
+
+    // Handle Auto-delete
+    if (newUses === 0 && tag.autoDeleteOnZeroUses) {
+      updatedTags = updatedTags.filter(t => t.instanceId !== tag.instanceId);
+    }
+
     updatePlayer(player.id, { tags: updatedTags });
   };
 
   const handleModifyMarkerTagUses = (marker: Marker, amount: number) => {
+    const newUses = Math.max(0, (marker.tag.uses ?? 0) + amount);
+
+    // Handle Auto-delete
+    if (newUses === 0 && marker.tag.autoDeleteOnZeroUses) {
+      useVttStore.getState().deleteMarker(marker.id);
+      return;
+    }
+
     updateMarker(marker.id, {
-      tag: { ...marker.tag, uses: Math.max(0, marker.tag.uses + amount) }
+      tag: { ...marker.tag, uses: newUses }
     });
   };
 
