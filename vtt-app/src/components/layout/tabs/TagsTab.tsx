@@ -19,6 +19,8 @@ export const TagsTab: React.FC = () => {
   const [newTagAutoDelete, setNewTagAutoDelete] = useState(false);
   const [newTagDesc, setNewTagDesc] = useState('');
   const [newTagIcon, setNewTagIcon] = useState('Tag');
+  const [newTagShowInTooltip, setNewTagShowInTooltip] = useState(true);
+  const [newTagShowInGameTab, setNewTagShowInGameTab] = useState(true);
 
   const handleAddTag = () => {
     if (!newTagName.trim()) return;
@@ -32,6 +34,8 @@ export const TagsTab: React.FC = () => {
       uses: newTagUses === '' ? null : newTagUses,
       autoDeleteOnZeroUses: newTagAutoDelete,
       description: newTagDesc,
+      showInTooltip: newTagShowInTooltip,
+      showInGameTab: newTagShowInGameTab,
       callOrderDay: null,
       callOrderNight: null,
     });
@@ -43,6 +47,8 @@ export const TagsTab: React.FC = () => {
     setNewTagAutoDelete(false);
     setNewTagDesc('');
     setNewTagIcon('Tag');
+    setNewTagShowInTooltip(true);
+    setNewTagShowInGameTab(true);
   };
 
   return (
@@ -147,6 +153,27 @@ export const TagsTab: React.FC = () => {
             placeholder="Texte libre..."
             className="w-full bg-input border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring min-h-[60px]"
           />
+
+          <div className="flex flex-col gap-2 mt-1">
+            <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
+              <input
+                type="checkbox"
+                checked={newTagShowInTooltip}
+                onChange={(e) => setNewTagShowInTooltip(e.target.checked)}
+                className="rounded border-border w-3 h-3"
+              />
+              Visible dans l'info-bulle (au survol du joueur)
+            </label>
+            <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
+              <input
+                type="checkbox"
+                checked={newTagShowInGameTab}
+                onChange={(e) => setNewTagShowInGameTab(e.target.checked)}
+                className="rounded border-border w-3 h-3"
+              />
+              Visible dans l'onglet Jeu (sous le joueur)
+            </label>
+          </div>
 
           <div className="flex items-center gap-2">
             <input

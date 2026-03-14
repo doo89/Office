@@ -39,6 +39,8 @@ export interface MarkerParameter {
   description?: string;
   callOrderDay: number | null;
   callOrderNight: number | null;
+  showInTooltip?: boolean;
+  showInGameTab?: boolean;
 }
 
 export interface Marker {

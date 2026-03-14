@@ -158,7 +158,7 @@ export const GameTab: React.FC = () => {
                 </div>
 
                 {/* Quick actions for players */}
-                {item.type === 'player' && item.entity.tags.map((tag: TagInstance) => (
+                {item.type === 'player' && item.entity.tags.filter((t: TagInstance) => t.showInGameTab !== false).map((tag: TagInstance) => (
                   <div key={tag.instanceId} className="flex flex-col gap-1 pl-7 pr-2 bg-background/30 rounded p-1">
                     <span className="text-xs font-semibold text-muted-foreground" title={tag.name}>Tag: {tag.name}</span>
 
@@ -206,7 +206,7 @@ export const GameTab: React.FC = () => {
                 ))}
 
                 {/* Quick actions for markers */}
-                {item.type === 'marker' && (
+                {item.type === 'marker' && item.entity.tag.showInGameTab !== false && (
                   <div className="flex flex-col gap-1 pl-7 pr-2">
                     {item.entity.tag.uses !== null && (
                       <div className="flex items-center justify-between">

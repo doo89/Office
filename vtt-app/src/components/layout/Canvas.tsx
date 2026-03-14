@@ -351,42 +351,59 @@ export const Canvas: React.FC = () => {
                   {displaySettings.showRole && role && <p>Rôle: <span style={{ color: role.color }}>{role.name}</span></p>}
                   {displaySettings.showTeam && team && <p>Équipe: <span style={{ color: team.color }}>{team.name}</span></p>}
                   {player.isDead && <p className="text-destructive font-bold">Mort</p>}
-                  {displaySettings.showTags && (player.tags.length > 0 || (role && role.tags && role.tags.length > 0)) && (
+                  {displaySettings.showTags && (
+                    player.tags.some(t => t.showInTooltip !== false) ||
+                    (role && role.tags && role.tags.some(t => t.showInTooltip !== false))
+                  ) && (
                     <div className="mt-1 border-t border-border pt-1">
                       <p className="font-semibold text-[10px] text-muted-foreground">Tags:</p>
                       <ul className="flex flex-col gap-1 mt-1">
-                        {role?.tags?.map(t => (
-                          <li key={`role-tag-${t.id}`} className="flex flex-col bg-muted px-1.5 py-0.5 rounded text-[10px] border border-dashed border-border" title="Tag de Rôle">
-                            <div className="flex items-center gap-1">
-                              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: t.color }} />
-                              <span className="font-medium">{t.name} (Rôle)</span>
-                            </div>
-                            {(t.uses !== null || t.points !== null || t.votes !== null) && (
-                              <div className="text-[9px] text-muted-foreground pl-3">
-                                {t.uses !== null && <span>Uses: {t.uses} </span>}
-                                {t.points !== null && <span>Pts: {t.points} </span>}
-                                {t.votes !== null && <span>Votes: {t.votes === -1 ? 'Illimité' : t.votes}</span>}
+                        {role?.tags?.filter(t => t.showInTooltip !== false).map(t => {
+                          const TIcon = icons[t.icon as keyof typeof icons] || Tag;
+                          return (
+                            <li key={`role-tag-${t.id}`} className="flex flex-col bg-muted px-1.5 py-0.5 rounded text-[10px] border border-dashed border-border" title="Tag de Rôle">
+                              <div className="flex items-center gap-1">
+                                {t.imageUrl ? (
+                                  <img src={t.imageUrl} alt={t.name} className="w-3 h-3 rounded-full object-cover" />
+                                ) : (
+                                  <TIcon size={10} style={{ color: t.color }} />
+                                )}
+                                <span className="font-medium">{t.name} (Rôle)</span>
                               </div>
-                            )}
-                            {t.description && <div className="text-[9px] text-muted-foreground pl-3 italic">{t.description}</div>}
-                          </li>
-                        ))}
-                        {player.tags.map(t => (
-                          <li key={t.instanceId} className="flex flex-col bg-muted px-1.5 py-0.5 rounded text-[10px]">
-                            <div className="flex items-center gap-1">
-                              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: t.color }} />
-                              <span className="font-medium">{t.name}</span>
-                            </div>
-                            {(t.uses !== null || t.points !== null || t.votes !== null) && (
-                              <div className="text-[9px] text-muted-foreground pl-3">
-                                {t.uses !== null && <span>Uses: {t.uses} </span>}
-                                {t.points !== null && <span>Pts: {t.points} </span>}
-                                {t.votes !== null && <span>Votes: {t.votes === -1 ? 'Illimité' : t.votes}</span>}
+                              {(t.uses !== null || t.points !== null || t.votes !== null) && (
+                                <div className="text-[9px] text-muted-foreground pl-4">
+                                  {t.uses !== null && <span>Uses: {t.uses} </span>}
+                                  {t.points !== null && <span>Pts: {t.points} </span>}
+                                  {t.votes !== null && <span>Votes: {t.votes === -1 ? 'Illimité' : t.votes}</span>}
+                                </div>
+                              )}
+                              {t.description && <div className="text-[9px] text-muted-foreground pl-4 italic">{t.description}</div>}
+                            </li>
+                          );
+                        })}
+                        {player.tags.filter(t => t.showInTooltip !== false).map(t => {
+                          const TIcon = icons[t.icon as keyof typeof icons] || Tag;
+                          return (
+                            <li key={t.instanceId} className="flex flex-col bg-muted px-1.5 py-0.5 rounded text-[10px]">
+                              <div className="flex items-center gap-1">
+                                {t.imageUrl ? (
+                                  <img src={t.imageUrl} alt={t.name} className="w-3 h-3 rounded-full object-cover" />
+                                ) : (
+                                  <TIcon size={10} style={{ color: t.color }} />
+                                )}
+                                <span className="font-medium">{t.name}</span>
                               </div>
-                            )}
-                            {t.description && <div className="text-[9px] text-muted-foreground pl-3 italic">{t.description}</div>}
-                          </li>
-                        ))}
+                              {(t.uses !== null || t.points !== null || t.votes !== null) && (
+                                <div className="text-[9px] text-muted-foreground pl-4">
+                                  {t.uses !== null && <span>Uses: {t.uses} </span>}
+                                  {t.points !== null && <span>Pts: {t.points} </span>}
+                                  {t.votes !== null && <span>Votes: {t.votes === -1 ? 'Illimité' : t.votes}</span>}
+                                </div>
+                              )}
+                              {t.description && <div className="text-[9px] text-muted-foreground pl-4 italic">{t.description}</div>}
+                            </li>
+                          );
+                        })}
                       </ul>
                     </div>
                   )}
@@ -397,7 +414,9 @@ export const Canvas: React.FC = () => {
         })}
 
         {/* Render Markers */}
-        {markers.map(marker => (
+        {markers.map(marker => {
+          const TagIconComponent = icons[marker.tag.icon as keyof typeof icons] || Tag;
+          return (
           <div
             key={marker.id}
             className="absolute canvas-entity group"
@@ -418,10 +437,14 @@ export const Canvas: React.FC = () => {
             onDoubleClick={() => useVttStore.getState().setEditingEntity({ type: 'tagInstance', id: marker.tag.instanceId })}
           >
              <div
-                className="w-10 h-10 rounded-lg shadow-md border-2 flex items-center justify-center bg-card transition-transform hover:scale-110"
+                className="w-10 h-10 rounded-lg shadow-md border-2 flex items-center justify-center bg-card transition-transform hover:scale-110 overflow-hidden"
                 style={{ borderColor: marker.tag.color }}
               >
-                <Tag size={20} style={{ color: marker.tag.color }} />
+                {marker.tag.imageUrl ? (
+                  <img src={marker.tag.imageUrl} alt={marker.tag.name} className="w-full h-full object-cover" draggable={false} />
+                ) : (
+                  <TagIconComponent size={20} style={{ color: marker.tag.color }} />
+                )}
               </div>
 
                {/* Tooltip */}
@@ -435,7 +458,8 @@ export const Canvas: React.FC = () => {
                 {marker.tag.description && <p className="text-[10px] text-muted-foreground italic mt-1">{marker.tag.description}</p>}
               </div>
           </div>
-        ))}
+        );
+      })}
 
       </div>
 

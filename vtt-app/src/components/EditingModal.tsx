@@ -561,6 +561,27 @@ export const EditingModal: React.FC = () => {
           />
         </div>
 
+        <div className="flex flex-col gap-2 mt-1">
+          <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
+            <input
+              type="checkbox"
+              checked={tag.showInTooltip !== false}
+              onChange={(e) => updateTagModel(tag.id, { showInTooltip: e.target.checked })}
+              className="rounded border-border w-3 h-3"
+            />
+            Visible dans l'info-bulle (au survol du joueur)
+          </label>
+          <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
+            <input
+              type="checkbox"
+              checked={tag.showInGameTab !== false}
+              onChange={(e) => updateTagModel(tag.id, { showInGameTab: e.target.checked })}
+              className="rounded border-border w-3 h-3"
+            />
+            Visible dans l'onglet Jeu (sous le joueur)
+          </label>
+        </div>
+
         <div className="flex gap-4">
           <div className="flex flex-col gap-1 flex-1">
             <label className="text-sm font-medium text-muted-foreground text-xs">Ordre Appel Jour</label>
@@ -749,6 +770,27 @@ export const EditingModal: React.FC = () => {
             onChange={(e) => updateTagInstance({ description: e.target.value })}
             className="bg-input border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring min-h-[60px]"
           />
+        </div>
+
+        <div className="flex flex-col gap-2 mt-1">
+          <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
+            <input
+              type="checkbox"
+              checked={tag.showInTooltip !== false}
+              onChange={(e) => updateTagInstance({ showInTooltip: e.target.checked })}
+              className="rounded border-border w-3 h-3"
+            />
+            Visible dans l'info-bulle (au survol du joueur)
+          </label>
+          <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
+            <input
+              type="checkbox"
+              checked={tag.showInGameTab !== false}
+              onChange={(e) => updateTagInstance({ showInGameTab: e.target.checked })}
+              className="rounded border-border w-3 h-3"
+            />
+            Visible dans l'onglet Jeu (sous le joueur)
+          </label>
         </div>
 
         <div className="flex gap-4">
