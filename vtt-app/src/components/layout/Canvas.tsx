@@ -162,6 +162,32 @@ export const Canvas: React.FC = () => {
     }
   }, []);
 
+  // Auto-kill logic based on derived lives
+  useEffect(() => {
+    let hasChanges = false;
+    const updates = players.map(player => {
+      if (player.isDead) return null; // Already dead, ignore
+
+      const role = roles.find(r => r.id === player.roleId);
+      const baseLives = role?.lives || 0;
+      const tagLives = player.tags.reduce((sum, t) => sum + (t.lives || 0), 0);
+      const roleTagLives = role?.tags?.reduce((sum, t) => sum + (t.lives || 0), 0) || 0;
+      const totalLives = baseLives + tagLives + roleTagLives;
+
+      if (totalLives <= 0) {
+        hasChanges = true;
+        return player.id;
+      }
+      return null;
+    }).filter(id => id !== null) as string[];
+
+    if (hasChanges) {
+      updates.forEach(id => {
+        updatePlayer(id, { isDead: true });
+      });
+    }
+  }, [players, roles, updatePlayer]);
+
   return (
     <div className="flex-1 relative flex flex-col min-w-0">
       {/* Banner */}
@@ -263,6 +289,12 @@ export const Canvas: React.FC = () => {
           const role = roles.find(r => r.id === player.roleId);
           const team = teams.find(t => t.id === player.teamId);
 
+          // Calculate Total Lives
+          const baseLives = role?.lives || 0;
+          const tagLives = player.tags.reduce((sum, t) => sum + (t.lives || 0), 0);
+          const roleTagLives = role?.tags?.reduce((sum, t) => sum + (t.lives || 0), 0) || 0;
+          const totalLives = baseLives + tagLives + roleTagLives;
+
           let imageToShow = null;
           if (displaySettings.showPlayerImage && player.imageUrl && displaySettings.showRoleImage && role?.imageUrl) {
             imageToShow = displaySettings.imagePriority === 'player' ? player.imageUrl : role.imageUrl;
@@ -342,6 +374,16 @@ export const Canvas: React.FC = () => {
                     ) : null}
                   </div>
                 )}
+
+                {/* Lives Badge */}
+                <div
+                  className={`absolute -top-1 -right-1 min-w-[24px] h-6 px-1 rounded-full flex items-center justify-center border-2 border-background shadow-sm text-[11px] font-bold ${
+                    player.isDead ? 'bg-zinc-700 text-zinc-400' : 'bg-red-500 text-white'
+                  }`}
+                  title={`Vies: ${totalLives}`}
+                >
+                  {totalLives}
+                </div>
               </div>
 
               {/* Tooltip */}
