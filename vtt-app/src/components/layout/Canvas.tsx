@@ -315,16 +315,16 @@ export const Canvas: React.FC = () => {
                     <Skull size={player.size * 1.5} className="absolute text-red-900/60 pointer-events-none" />
                   )}
 
-                  {/* Show name inside circle ONLY if there's no image */}
-                  {!imageToShow && (
+                  {/* Show name inside circle ONLY if there's no image AND setting says 'inside' */}
+                  {!imageToShow && displaySettings.playerNamePosition === 'inside' && (
                     <span className="font-bold text-white text-sm mix-blend-difference drop-shadow-md px-1 text-center leading-tight z-10 pointer-events-none">
                       {player.name}
                     </span>
                   )}
                 </div>
 
-                {/* Show name below the circle ONLY if there IS an image */}
-                {imageToShow && (
+                {/* Show name below the circle IF there IS an image OR setting says 'bottom' */}
+                {(imageToShow || (!imageToShow && displaySettings.playerNamePosition === 'bottom')) && (
                   <div className="absolute top-full mt-1 bg-background/80 backdrop-blur-sm px-2 py-0.5 rounded text-xs font-bold whitespace-nowrap border border-border pointer-events-none">
                     {player.name}
                   </div>

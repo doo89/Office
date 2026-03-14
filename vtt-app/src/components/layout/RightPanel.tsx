@@ -206,6 +206,18 @@ export const RightPanel: React.FC = () => {
                       <option value="role">Rôle</option>
                     </select>
                   </div>
+
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
+                    <span>Position du nom (sans image) :</span>
+                    <select
+                      value={displaySettings.playerNamePosition}
+                      onChange={(e) => updateDisplaySettings({ playerNamePosition: e.target.value as 'inside' | 'bottom' })}
+                      className="bg-background border border-border rounded px-1 py-0.5 outline-none focus:ring-1 focus:ring-ring"
+                    >
+                      <option value="inside">À l'intérieur</option>
+                      <option value="bottom">En dessous</option>
+                    </select>
+                  </div>
                 </div>
               )}
 

@@ -108,6 +108,7 @@ export interface GameState {
     showPlayerImage: boolean;
     showRoleImage: boolean;
     imagePriority: 'player' | 'role';
+    playerNamePosition: 'inside' | 'bottom';
   };
 }
 
