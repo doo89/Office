@@ -6,31 +6,40 @@ import type { Player, Marker, TagInstance } from '../../../types';
 export const GameTab: React.FC = () => {
   const { isNight, cycleNumber, nextCycle, resetCycle, players, markers, updatePlayer, updateMarker } = useVttStore();
 
-  const handleModifyTagUses = (player: Player, tag: TagInstance, amount: number) => {
-    const newUses = Math.max(0, (tag.uses ?? 0) + amount);
+  const handleModifyTagField = (player: Player, tag: TagInstance, field: 'uses' | 'lives' | 'votes' | 'points', amount: number) => {
+    let newValue = (tag[field] ?? 0) + amount;
+
+    // Uses cannot be negative
+    if (field === 'uses') newValue = Math.max(0, newValue);
+    // Votes usually shouldn't go below -1 (-1 = unlimited), but if it's currently >0, prevent going below 0 unless explicitly turning to -1.
+    // Let's just prevent votes going below 0 if they are modifying it, unless it's already -1.
+    // If it is -1, maybe don't modify it. We'll handle this in the UI by hiding buttons if votes == -1.
+
     let updatedTags = player.tags.map(t =>
-      t.instanceId === tag.instanceId ? { ...t, uses: newUses } : t
+      t.instanceId === tag.instanceId ? { ...t, [field]: newValue } : t
     );
 
-    // Handle Auto-delete
-    if (newUses === 0 && tag.autoDeleteOnZeroUses) {
+    // Handle Auto-delete for uses
+    if (field === 'uses' && newValue === 0 && tag.autoDeleteOnZeroUses) {
       updatedTags = updatedTags.filter(t => t.instanceId !== tag.instanceId);
     }
 
     updatePlayer(player.id, { tags: updatedTags });
   };
 
-  const handleModifyMarkerTagUses = (marker: Marker, amount: number) => {
-    const newUses = Math.max(0, (marker.tag.uses ?? 0) + amount);
+  const handleModifyMarkerTagField = (marker: Marker, field: 'uses' | 'lives' | 'votes' | 'points', amount: number) => {
+    let newValue = (marker.tag[field] ?? 0) + amount;
 
-    // Handle Auto-delete
-    if (newUses === 0 && marker.tag.autoDeleteOnZeroUses) {
+    if (field === 'uses') newValue = Math.max(0, newValue);
+
+    // Handle Auto-delete for uses
+    if (field === 'uses' && newValue === 0 && marker.tag.autoDeleteOnZeroUses) {
       useVttStore.getState().deleteMarker(marker.id);
       return;
     }
 
     updateMarker(marker.id, {
-      tag: { ...marker.tag, uses: newUses }
+      tag: { ...marker.tag, [field]: newValue }
     });
   };
 
@@ -150,25 +159,95 @@ export const GameTab: React.FC = () => {
 
                 {/* Quick actions for players */}
                 {item.type === 'player' && item.entity.tags.map((tag: TagInstance) => (
-                  <div key={tag.instanceId} className="flex items-center justify-between pl-7 pr-2">
-                    <span className="text-xs text-muted-foreground truncate w-24" title={tag.name}>- {tag.name}</span>
-                    <div className="flex items-center gap-1">
-                      <button onClick={() => handleModifyTagUses(item.entity, tag, -1)} className="w-5 h-5 flex items-center justify-center bg-accent rounded text-xs hover:bg-accent/80">-</button>
-                      <span className="text-xs w-4 text-center">{tag.uses}</span>
-                      <button onClick={() => handleModifyTagUses(item.entity, tag, 1)} className="w-5 h-5 flex items-center justify-center bg-accent rounded text-xs hover:bg-accent/80">+</button>
-                    </div>
+                  <div key={tag.instanceId} className="flex flex-col gap-1 pl-7 pr-2 bg-background/30 rounded p-1">
+                    <span className="text-xs font-semibold text-muted-foreground" title={tag.name}>Tag: {tag.name}</span>
+
+                    {tag.uses !== null && (
+                      <div className="flex items-center justify-between pl-2">
+                        <span className="text-[10px] text-muted-foreground">Utilisations</span>
+                        <div className="flex items-center gap-1">
+                          <button onClick={() => handleModifyTagField(item.entity, tag, 'uses', -1)} className="w-4 h-4 flex items-center justify-center bg-accent rounded text-[10px] hover:bg-accent/80">-</button>
+                          <span className="text-[10px] w-4 text-center">{tag.uses}</span>
+                          <button onClick={() => handleModifyTagField(item.entity, tag, 'uses', 1)} className="w-4 h-4 flex items-center justify-center bg-accent rounded text-[10px] hover:bg-accent/80">+</button>
+                        </div>
+                      </div>
+                    )}
+                    {tag.lives !== null && (
+                      <div className="flex items-center justify-between pl-2">
+                        <span className="text-[10px] text-muted-foreground">Vies</span>
+                        <div className="flex items-center gap-1">
+                          <button onClick={() => handleModifyTagField(item.entity, tag, 'lives', -1)} className="w-4 h-4 flex items-center justify-center bg-accent rounded text-[10px] hover:bg-accent/80">-</button>
+                          <span className="text-[10px] w-4 text-center">{tag.lives}</span>
+                          <button onClick={() => handleModifyTagField(item.entity, tag, 'lives', 1)} className="w-4 h-4 flex items-center justify-center bg-accent rounded text-[10px] hover:bg-accent/80">+</button>
+                        </div>
+                      </div>
+                    )}
+                    {tag.votes !== null && (
+                      <div className="flex items-center justify-between pl-2">
+                        <span className="text-[10px] text-muted-foreground">Votes</span>
+                        <div className="flex items-center gap-1">
+                          {tag.votes !== -1 && <button onClick={() => handleModifyTagField(item.entity, tag, 'votes', -1)} className="w-4 h-4 flex items-center justify-center bg-accent rounded text-[10px] hover:bg-accent/80">-</button>}
+                          <span className="text-[10px] w-10 text-center">{tag.votes === -1 ? 'Illimité' : tag.votes}</span>
+                          {tag.votes !== -1 && <button onClick={() => handleModifyTagField(item.entity, tag, 'votes', 1)} className="w-4 h-4 flex items-center justify-center bg-accent rounded text-[10px] hover:bg-accent/80">+</button>}
+                        </div>
+                      </div>
+                    )}
+                    {tag.points !== null && (
+                      <div className="flex items-center justify-between pl-2">
+                        <span className="text-[10px] text-muted-foreground">Points</span>
+                        <div className="flex items-center gap-1">
+                          <button onClick={() => handleModifyTagField(item.entity, tag, 'points', -1)} className="w-4 h-4 flex items-center justify-center bg-accent rounded text-[10px] hover:bg-accent/80">-</button>
+                          <span className="text-[10px] w-4 text-center">{tag.points}</span>
+                          <button onClick={() => handleModifyTagField(item.entity, tag, 'points', 1)} className="w-4 h-4 flex items-center justify-center bg-accent rounded text-[10px] hover:bg-accent/80">+</button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ))}
 
                 {/* Quick actions for markers */}
                 {item.type === 'marker' && (
-                  <div className="flex items-center justify-between pl-7 pr-2">
-                    <span className="text-xs text-muted-foreground">Utilisations</span>
-                    <div className="flex items-center gap-1">
-                      <button onClick={() => handleModifyMarkerTagUses(item.entity, -1)} className="w-5 h-5 flex items-center justify-center bg-accent rounded text-xs hover:bg-accent/80">-</button>
-                      <span className="text-xs w-4 text-center">{item.entity.tag.uses}</span>
-                      <button onClick={() => handleModifyMarkerTagUses(item.entity, 1)} className="w-5 h-5 flex items-center justify-center bg-accent rounded text-xs hover:bg-accent/80">+</button>
-                    </div>
+                  <div className="flex flex-col gap-1 pl-7 pr-2">
+                    {item.entity.tag.uses !== null && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] text-muted-foreground">Utilisations</span>
+                        <div className="flex items-center gap-1">
+                          <button onClick={() => handleModifyMarkerTagField(item.entity, 'uses', -1)} className="w-4 h-4 flex items-center justify-center bg-accent rounded text-[10px] hover:bg-accent/80">-</button>
+                          <span className="text-[10px] w-4 text-center">{item.entity.tag.uses}</span>
+                          <button onClick={() => handleModifyMarkerTagField(item.entity, 'uses', 1)} className="w-4 h-4 flex items-center justify-center bg-accent rounded text-[10px] hover:bg-accent/80">+</button>
+                        </div>
+                      </div>
+                    )}
+                    {item.entity.tag.lives !== null && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] text-muted-foreground">Vies</span>
+                        <div className="flex items-center gap-1">
+                          <button onClick={() => handleModifyMarkerTagField(item.entity, 'lives', -1)} className="w-4 h-4 flex items-center justify-center bg-accent rounded text-[10px] hover:bg-accent/80">-</button>
+                          <span className="text-[10px] w-4 text-center">{item.entity.tag.lives}</span>
+                          <button onClick={() => handleModifyMarkerTagField(item.entity, 'lives', 1)} className="w-4 h-4 flex items-center justify-center bg-accent rounded text-[10px] hover:bg-accent/80">+</button>
+                        </div>
+                      </div>
+                    )}
+                    {item.entity.tag.votes !== null && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] text-muted-foreground">Votes</span>
+                        <div className="flex items-center gap-1">
+                          {item.entity.tag.votes !== -1 && <button onClick={() => handleModifyMarkerTagField(item.entity, 'votes', -1)} className="w-4 h-4 flex items-center justify-center bg-accent rounded text-[10px] hover:bg-accent/80">-</button>}
+                          <span className="text-[10px] w-10 text-center">{item.entity.tag.votes === -1 ? 'Illimité' : item.entity.tag.votes}</span>
+                          {item.entity.tag.votes !== -1 && <button onClick={() => handleModifyMarkerTagField(item.entity, 'votes', 1)} className="w-4 h-4 flex items-center justify-center bg-accent rounded text-[10px] hover:bg-accent/80">+</button>}
+                        </div>
+                      </div>
+                    )}
+                    {item.entity.tag.points !== null && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] text-muted-foreground">Points</span>
+                        <div className="flex items-center gap-1">
+                          <button onClick={() => handleModifyMarkerTagField(item.entity, 'points', -1)} className="w-4 h-4 flex items-center justify-center bg-accent rounded text-[10px] hover:bg-accent/80">-</button>
+                          <span className="text-[10px] w-4 text-center">{item.entity.tag.points}</span>
+                          <button onClick={() => handleModifyMarkerTagField(item.entity, 'points', 1)} className="w-4 h-4 flex items-center justify-center bg-accent rounded text-[10px] hover:bg-accent/80">+</button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
