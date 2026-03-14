@@ -287,7 +287,14 @@ export const Canvas: React.FC = () => {
         {/* Render Players */}
         {displaySettings.showPlayers && players.map(player => {
           const role = roles.find(r => r.id === player.roleId);
-          const team = teams.find(t => t.id === player.teamId);
+
+          // Determine effective team (role's seenInTeamId -> role's actual teamId -> player's teamId)
+          const effectiveTeamId = role?.seenInTeamId || role?.teamId || player.teamId;
+          const team = teams.find(t => t.id === effectiveTeamId);
+
+          // Determine effective role for tooltip
+          const effectiveRoleId = role?.seenAsRoleId || role?.id;
+          const effectiveRole = roles.find(r => r.id === effectiveRoleId);
 
           // Calculate Total Lives
           const baseLives = role?.lives || 0;
@@ -392,7 +399,7 @@ export const Canvas: React.FC = () => {
               {displaySettings.showTooltip && (
                 <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-max max-w-[200px] bg-popover text-popover-foreground text-xs p-2 rounded shadow-xl border border-border opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
                   <p className="font-bold">{player.name}</p>
-                  {displaySettings.showRole && role && <p>Rôle: <span style={{ color: role.color }}>{role.name}</span></p>}
+                  {displaySettings.showRole && effectiveRole && <p>Rôle: <span style={{ color: effectiveRole.color }}>{effectiveRole.name}</span></p>}
                   {displaySettings.showTeam && team && <p>Équipe: <span style={{ color: team.color }}>{team.name}</span></p>}
                   {player.isDead && <p className="text-destructive font-bold">Mort</p>}
                   {displaySettings.showTags && (

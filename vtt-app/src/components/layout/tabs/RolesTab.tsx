@@ -3,11 +3,12 @@ import React, { useState } from 'react';
 import { useVttStore } from '../../../store';
 
 export const RolesTab: React.FC = () => {
-  const { roles, tags, setEditingEntity, addRole, deleteRole } = useVttStore();
+  const { roles, teams, tags, setEditingEntity, addRole, deleteRole } = useVttStore();
   const [newRoleName, setNewRoleName] = useState('');
   const [newRoleColor, setNewRoleColor] = useState('#3b82f6');
   const [newRoleLives, setNewRoleLives] = useState(1);
   const [newRoleUnique, setNewRoleUnique] = useState(true);
+  const [newRoleTeamId, setNewRoleTeamId] = useState<string>('');
   const [newRoleTags, setNewRoleTags] = useState<string[]>([]);
 
   const handleAddRole = () => {
@@ -20,12 +21,13 @@ export const RolesTab: React.FC = () => {
       color: newRoleColor,
       lives: newRoleLives,
       isUnique: newRoleUnique,
-      teamId: null,
+      teamId: newRoleTeamId || null,
       tags: selectedTags,
     });
     setNewRoleName('');
     setNewRoleLives(1);
     setNewRoleUnique(true);
+    setNewRoleTeamId('');
     setNewRoleTags([]);
   };
 
@@ -42,6 +44,20 @@ export const RolesTab: React.FC = () => {
             onChange={(e) => setNewRoleName(e.target.value)}
             className="w-full bg-input border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
           />
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-medium text-muted-foreground">Équipe :</label>
+            <select
+              value={newRoleTeamId}
+              onChange={(e) => setNewRoleTeamId(e.target.value)}
+              className="w-full bg-input border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+            >
+              <option value="">-- Aucune --</option>
+              {teams.map(team => (
+                <option key={team.id} value={team.id}>{team.name}</option>
+              ))}
+            </select>
+          </div>
+
           <div className="flex items-center gap-3 justify-between">
             <div className="flex items-center gap-2 flex-1">
               <label className="text-xs font-medium text-muted-foreground whitespace-nowrap">Vies:</label>

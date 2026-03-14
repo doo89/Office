@@ -95,17 +95,6 @@ export const EditingModal: React.FC = () => {
           </div>
         </div>
         <div className="flex flex-col gap-1">
-          <label className="text-sm font-medium">Rôle par défaut</label>
-          <select
-            value={template.roleId || ''}
-            onChange={(e) => updatePlayerTemplate(template.id, { roleId: e.target.value || null })}
-            className="bg-input border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
-          >
-            <option value="">Aucun rôle</option>
-            {roles.map((r: any) => <option key={r.id} value={r.id}>{r.name}</option>)}
-          </select>
-        </div>
-        <div className="flex flex-col gap-1">
           <label className="text-sm font-medium">Équipe par défaut</label>
           <select
             value={template.teamId || ''}
@@ -308,9 +297,23 @@ export const EditingModal: React.FC = () => {
             )}
           </div>
 
+          <div className="flex flex-col gap-1">
+            <label className="text-sm font-medium">Équipe (réelle)</label>
+            <select
+              value={role.teamId || ''}
+              onChange={(e) => updateRole(role.id, { teamId: e.target.value || null })}
+              className="bg-input border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+            >
+              <option value="">-- Aucune --</option>
+              {teams.map(t => (
+                <option key={t.id} value={t.id}>{t.name}</option>
+              ))}
+            </select>
+          </div>
+
           <div className="flex gap-4">
             <div className="flex flex-col gap-1 flex-1">
-              <label className="text-sm font-medium">Vu comme rôle</label>
+              <label className="text-sm font-medium">Vu comme rôle (info-bulle)</label>
               <select
                 value={role.seenAsRoleId || ''}
                 onChange={(e) => updateRole(role.id, { seenAsRoleId: e.target.value || null })}
@@ -324,13 +327,13 @@ export const EditingModal: React.FC = () => {
             </div>
 
             <div className="flex flex-col gap-1 flex-1">
-              <label className="text-sm font-medium">Vu dans équipe</label>
+              <label className="text-sm font-medium">Vu dans équipe (info-bulle)</label>
               <select
                 value={role.seenInTeamId || ''}
                 onChange={(e) => updateRole(role.id, { seenInTeamId: e.target.value || null })}
                 className="bg-input border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
               >
-                <option value="">-- Aucune --</option>
+                <option value="">-- Identique à réelle --</option>
                 {teams.map(t => (
                   <option key={t.id} value={t.id}>{t.name}</option>
                 ))}
