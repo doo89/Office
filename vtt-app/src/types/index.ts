@@ -111,6 +111,8 @@ export interface GameState {
     showRoleImage: boolean;
     imagePriority: 'player' | 'role';
     playerNamePosition: 'inside' | 'bottom';
+    showTeamBadge: boolean;
+    showLivesBadge: boolean;
   };
 }
 

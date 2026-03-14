@@ -116,6 +116,8 @@ const initialState = {
     showRoleImage: true,
     imagePriority: 'player' as const,
     playerNamePosition: 'bottom' as const,
+    showTeamBadge: true,
+    showLivesBadge: true,
   },
   isLeftPanelOpen: true,
   isRightPanelOpen: true,

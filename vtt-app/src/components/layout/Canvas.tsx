@@ -363,7 +363,7 @@ export const Canvas: React.FC = () => {
                 )}
 
                 {/* Team Badge */}
-                {team && (
+                {displaySettings.showTeamBadge && team && (
                   <div
                     className="absolute -top-1 -left-1 w-6 h-6 rounded-full flex items-center justify-center border-2 border-background shadow-sm"
                     style={{ backgroundColor: team.color }}
@@ -376,14 +376,16 @@ export const Canvas: React.FC = () => {
                 )}
 
                 {/* Lives Badge */}
-                <div
-                  className={`absolute -top-1 -right-1 min-w-[24px] h-6 px-1 rounded-full flex items-center justify-center border-2 border-background shadow-sm text-[11px] font-bold ${
-                    player.isDead ? 'bg-zinc-700 text-zinc-400' : 'bg-red-500 text-white'
-                  }`}
-                  title={`Vies: ${totalLives}`}
-                >
-                  {totalLives}
-                </div>
+                {displaySettings.showLivesBadge && (
+                  <div
+                    className={`absolute -top-1 -right-1 min-w-[24px] h-6 px-1 rounded-full flex items-center justify-center border-2 border-background shadow-sm text-[11px] font-bold ${
+                      player.isDead ? 'bg-zinc-700 text-zinc-400' : 'bg-red-500 text-white'
+                    }`}
+                    title={`Vies: ${totalLives}`}
+                  >
+                    {totalLives}
+                  </div>
+                )}
               </div>
 
               {/* Tooltip */}

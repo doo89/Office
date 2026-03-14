@@ -218,6 +218,25 @@ export const RightPanel: React.FC = () => {
                       <option value="bottom">En dessous</option>
                     </select>
                   </div>
+
+                  <label className="flex items-center gap-2 text-xs cursor-pointer text-muted-foreground hover:text-foreground mt-1">
+                    <input
+                      type="checkbox"
+                      checked={displaySettings.showTeamBadge}
+                      onChange={(e) => updateDisplaySettings({ showTeamBadge: e.target.checked })}
+                      className="rounded border-border w-3 h-3"
+                    />
+                    Afficher la pastille d'équipe (Haut-Gauche)
+                  </label>
+                  <label className="flex items-center gap-2 text-xs cursor-pointer text-muted-foreground hover:text-foreground">
+                    <input
+                      type="checkbox"
+                      checked={displaySettings.showLivesBadge}
+                      onChange={(e) => updateDisplaySettings({ showLivesBadge: e.target.checked })}
+                      className="rounded border-border w-3 h-3"
+                    />
+                    Afficher la pastille de vie (Haut-Droite)
+                  </label>
                 </div>
               )}
 
