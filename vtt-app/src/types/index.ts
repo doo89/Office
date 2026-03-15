@@ -69,6 +69,14 @@ export interface Team {
   color: string;
 }
 
+export type BadgeType = 'none' | 'team' | 'lives' | 'votes' | 'points' | 'uses' | 'callOrderDay' | 'callOrderNight';
+
+export interface BadgeConfig {
+  type: BadgeType;
+  bgColor: string;
+  textColor: string;
+}
+
 export interface GameState {
   roomName: string;
   players: Player[];
@@ -111,8 +119,12 @@ export interface GameState {
     showRoleImage: boolean;
     imagePriority: 'player' | 'role';
     playerNamePosition: 'inside' | 'bottom';
-    showTeamBadge: boolean;
-    showLivesBadge: boolean;
+    playerBadges: {
+      topLeft: BadgeConfig;
+      topRight: BadgeConfig;
+      bottomLeft: BadgeConfig;
+      bottomRight: BadgeConfig;
+    };
   };
 }
 

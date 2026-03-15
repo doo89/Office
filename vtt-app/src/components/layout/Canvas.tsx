@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { useVttStore } from '../../store';
-import { ZoomIn, ZoomOut, Maximize, Tag, Skull, Trash2, Settings, ChevronRight, Sun, Moon, Copy, icons } from 'lucide-react';
+import { ZoomIn, ZoomOut, Maximize, Tag, Skull, Trash2, Settings, ChevronRight, Sun, Moon, Copy, Heart, icons } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 import type { Marker } from '../../types';
 
@@ -302,6 +302,101 @@ export const Canvas: React.FC = () => {
           const roleTagLives = role?.tags?.reduce((sum, t) => sum + (t.lives || 0), 0) || 0;
           const totalLives = baseLives + tagLives + roleTagLives;
 
+          // Compute other stats for custom badges
+          const getAggregatedValue = (field: 'votes' | 'points' | 'uses') => {
+            const val1 = player.tags.reduce((sum, t) => sum + (t[field] || 0), 0);
+            const val2 = role?.tags?.reduce((sum, t) => sum + (t[field] || 0), 0) || 0;
+            return val1 + val2;
+          };
+
+          // For call orders, pick the minimum
+          const getMinOrder = (field: 'callOrderDay' | 'callOrderNight') => {
+            const vals = [
+              ...player.tags.map(t => t[field]).filter(v => v !== null),
+              ...(role?.tags || []).map(t => t[field]).filter(v => v !== null)
+            ] as number[];
+            if (vals.length === 0) return null;
+            return Math.min(...vals);
+          };
+
+          const customBadgeValues: Record<string, string | number | null> = {
+            votes: getAggregatedValue('votes'),
+            points: getAggregatedValue('points'),
+            uses: getAggregatedValue('uses'),
+            callOrderDay: getMinOrder('callOrderDay'),
+            callOrderNight: getMinOrder('callOrderNight'),
+          };
+
+          const renderBadge = (position: 'topLeft' | 'topRight' | 'bottomLeft' | 'bottomRight') => {
+            const config = displaySettings.playerBadges?.[position];
+            if (!config || config.type === 'none') return null;
+
+            const baseClasses = "absolute min-w-[24px] h-6 px-1 rounded-full flex items-center justify-center border-2 border-background shadow-sm text-[11px] font-bold z-20";
+            let posClass = "";
+            switch (position) {
+              case 'topLeft': posClass = "-top-1 -left-1"; break;
+              case 'topRight': posClass = "-top-1 -right-1"; break;
+              case 'bottomLeft': posClass = "-bottom-1 -left-1"; break;
+              case 'bottomRight': posClass = "-bottom-1 -right-1"; break;
+            }
+
+            if (config.type === 'team') {
+              if (!team) return null;
+              return (
+                <div
+                  key={position}
+                  className={`${baseClasses} ${posClass} !w-6 !min-w-[24px]`}
+                  style={{ backgroundColor: team.color }}
+                  title={`Équipe: ${team.name}`}
+                >
+                  {team.icon && icons[team.icon as keyof typeof icons] ? (
+                    React.createElement(icons[team.icon as keyof typeof icons], { size: 12, className: "text-white drop-shadow" })
+                  ) : null}
+                </div>
+              );
+            }
+
+            if (config.type === 'lives') {
+              // Note: 'topRight' gets the heart specifically, but we apply heart to any 'lives' type as per the request implied context
+              // The user specifically asked "Pour la pastille en haut à droite, peux tu lui mettre une forme de cœur".
+              // We'll apply the heart shape styling if type === 'lives'.
+              return (
+                <div
+                  key={position}
+                  className={`absolute ${posClass} z-20 w-7 h-7 flex items-center justify-center`}
+                  title={`Vies: ${totalLives}`}
+                >
+                  <Heart
+                    className="absolute w-full h-full drop-shadow-sm"
+                    fill={player.isDead ? '#3f3f46' : config.bgColor} // zinc-700
+                    color={player.isDead ? '#27272a' : config.bgColor} // zinc-800 outline
+                  />
+                  <span
+                    className="relative z-10 text-[11px] font-bold"
+                    style={{ color: player.isDead ? '#a1a1aa' : config.textColor }} // zinc-400
+                  >
+                    {totalLives}
+                  </span>
+                </div>
+              );
+            }
+
+            // Other generic values (votes, points, uses, call orders)
+            const val = customBadgeValues[config.type];
+            if (val === null || val === undefined) return null;
+
+            return (
+              <div
+                key={position}
+                className={`${baseClasses} ${posClass}`}
+                style={{ backgroundColor: config.bgColor, color: config.textColor }}
+                title={`${config.type}: ${val}`}
+              >
+                {val}
+              </div>
+            );
+          };
+
           let imageToShow = null;
           if (displaySettings.showPlayerImage && player.imageUrl && displaySettings.showRoleImage && role?.imageUrl) {
             imageToShow = displaySettings.imagePriority === 'player' ? player.imageUrl : role.imageUrl;
@@ -369,30 +464,11 @@ export const Canvas: React.FC = () => {
                   </div>
                 )}
 
-                {/* Team Badge */}
-                {displaySettings.showTeamBadge && team && (
-                  <div
-                    className="absolute -top-1 -left-1 w-6 h-6 rounded-full flex items-center justify-center border-2 border-background shadow-sm"
-                    style={{ backgroundColor: team.color }}
-                    title={`Équipe: ${team.name}`}
-                  >
-                    {team.icon && icons[team.icon as keyof typeof icons] ? (
-                      React.createElement(icons[team.icon as keyof typeof icons], { size: 12, className: "text-white drop-shadow" })
-                    ) : null}
-                  </div>
-                )}
-
-                {/* Lives Badge */}
-                {displaySettings.showLivesBadge && (
-                  <div
-                    className={`absolute -top-1 -right-1 min-w-[24px] h-6 px-1 rounded-full flex items-center justify-center border-2 border-background shadow-sm text-[11px] font-bold ${
-                      player.isDead ? 'bg-zinc-700 text-zinc-400' : 'bg-red-500 text-white'
-                    }`}
-                    title={`Vies: ${totalLives}`}
-                  >
-                    {totalLives}
-                  </div>
-                )}
+                {/* Custom Badges */}
+                {renderBadge('topLeft')}
+                {renderBadge('topRight')}
+                {renderBadge('bottomLeft')}
+                {renderBadge('bottomRight')}
               </div>
 
               {/* Tooltip */}

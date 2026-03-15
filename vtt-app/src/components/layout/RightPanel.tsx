@@ -1,6 +1,7 @@
 import { Settings, ChevronLeft, ChevronRight, Download, Upload, Grid3X3, Clock, Eye, PaintBucket, CircleDashed, Eraser } from 'lucide-react';
 import React, { useState, useEffect, useRef } from 'react';
 import { useVttStore } from '../../store';
+import type { BadgeConfig, BadgeType } from '../../types';
 
 export const RightPanel: React.FC = () => {
   const {
@@ -219,24 +220,70 @@ export const RightPanel: React.FC = () => {
                     </select>
                   </div>
 
-                  <label className="flex items-center gap-2 text-xs cursor-pointer text-muted-foreground hover:text-foreground mt-1">
-                    <input
-                      type="checkbox"
-                      checked={displaySettings.showTeamBadge}
-                      onChange={(e) => updateDisplaySettings({ showTeamBadge: e.target.checked })}
-                      className="rounded border-border w-3 h-3"
-                    />
-                    Afficher la pastille d'équipe (Haut-Gauche)
-                  </label>
-                  <label className="flex items-center gap-2 text-xs cursor-pointer text-muted-foreground hover:text-foreground">
-                    <input
-                      type="checkbox"
-                      checked={displaySettings.showLivesBadge}
-                      onChange={(e) => updateDisplaySettings({ showLivesBadge: e.target.checked })}
-                      className="rounded border-border w-3 h-3"
-                    />
-                    Afficher la pastille de vie (Haut-Droite)
-                  </label>
+                  {/* Custom Badges Configurator */}
+                  <div className="mt-3 flex flex-col gap-2 border-t border-border/30 pt-2">
+                    <span className="text-[11px] font-bold text-foreground">Pastilles personnalisables</span>
+
+                    {[
+                      { key: 'topLeft', label: 'Haut Gauche' },
+                      { key: 'topRight', label: 'Haut Droite (Cœur si Vie)' },
+                      { key: 'bottomLeft', label: 'Bas Gauche' },
+                      { key: 'bottomRight', label: 'Bas Droite' }
+                    ].map(corner => {
+                      const badgeKey = corner.key as keyof typeof displaySettings.playerBadges;
+                      const badge = displaySettings.playerBadges?.[badgeKey] || { type: 'none', bgColor: '#000', textColor: '#fff' };
+
+                      const updateBadge = (updates: Partial<BadgeConfig>) => {
+                        updateDisplaySettings({
+                          playerBadges: {
+                            ...displaySettings.playerBadges,
+                            [badgeKey]: { ...badge, ...updates }
+                          }
+                        });
+                      };
+
+                      return (
+                        <div key={corner.key} className="flex flex-col gap-1 bg-muted/20 p-1.5 rounded border border-border/50">
+                          <span className="text-[10px] text-muted-foreground font-medium">{corner.label}</span>
+                          <div className="flex items-center gap-2">
+                            <select
+                              value={badge.type}
+                              onChange={(e) => updateBadge({ type: e.target.value as BadgeType })}
+                              className="flex-1 bg-background border border-border rounded px-1 py-0.5 text-[10px] outline-none focus:ring-1 focus:ring-ring"
+                            >
+                              <option value="none">Rien</option>
+                              <option value="team">Équipe</option>
+                              <option value="lives">Vie</option>
+                              <option value="votes">Votes</option>
+                              <option value="points">Pts</option>
+                              <option value="uses">Uses</option>
+                              <option value="callOrderDay">Ordre Appel Jour</option>
+                              <option value="callOrderNight">Ordre Appel Nuit</option>
+                            </select>
+
+                            {badge.type !== 'none' && badge.type !== 'team' && (
+                              <div className="flex items-center gap-1 shrink-0">
+                                <input
+                                  type="color"
+                                  value={badge.bgColor}
+                                  onChange={(e) => updateBadge({ bgColor: e.target.value })}
+                                  className="w-4 h-4 p-0 border-0 rounded cursor-pointer"
+                                  title="Couleur de fond"
+                                />
+                                <input
+                                  type="color"
+                                  value={badge.textColor}
+                                  onChange={(e) => updateBadge({ textColor: e.target.value })}
+                                  className="w-4 h-4 p-0 border-0 rounded cursor-pointer"
+                                  title="Couleur du texte"
+                                />
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
 
