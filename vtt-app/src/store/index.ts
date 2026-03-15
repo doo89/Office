@@ -32,6 +32,7 @@ interface VttStore extends GameState {
   // Tools
   isDrawingMode: boolean;
   toggleDrawingMode: () => void;
+  updateDrawingSettings: (updates: Partial<GameState['drawingSettings']>) => void;
   setGrid: (grid: GameState['grid']) => void;
   setRoom: (room: Partial<GameState['room']>) => void;
   addWall: (wall: Omit<Wall, 'id'>) => void;
@@ -93,6 +94,13 @@ const initialState = {
   isNight: false,
   cycleNumber: 1,
   walls: [],
+  drawingSettings: {
+    tool: 'line' as const,
+    color: '#000000',
+    thickness: 5,
+    fillColor: '#ef4444',
+    fillTransparent: true,
+  },
   activeLeftTab: 'players' as const,
   editingEntity: null,
   canvas: {
@@ -152,6 +160,9 @@ export const useVttStore = create<VttStore>()(
 
   // Tools
   toggleDrawingMode: () => set((state) => ({ isDrawingMode: !state.isDrawingMode })),
+  updateDrawingSettings: (updates) => set((state) => ({
+    drawingSettings: { ...state.drawingSettings, ...updates }
+  })),
   setGrid: (grid) => set({ grid }),
   setRoom: (roomUpdates) => set((state) => ({ room: { ...state.room, ...roomUpdates } })),
   addWall: (wallData) => set((state) => ({ walls: [...state.walls, { id: uuidv4(), ...wallData }] })),

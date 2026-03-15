@@ -1,4 +1,4 @@
-import { Settings, ChevronLeft, ChevronRight, Upload, Grid3X3, Clock, Eye, PaintBucket, CircleDashed, Eraser, ChevronDown } from 'lucide-react';
+import { Settings, ChevronLeft, ChevronRight, Upload, Grid3X3, Clock, Eye, PaintBucket, CircleDashed, Eraser, ChevronDown, Square, Minus } from 'lucide-react';
 import React, { useState, useEffect, useRef } from 'react';
 import { useVttStore } from '../../store';
 import type { BadgeConfig, BadgeType } from '../../types';
@@ -12,6 +12,7 @@ export const RightPanel: React.FC = () => {
     displaySettings, updateDisplaySettings,
     clearWalls,
     isDrawingMode, toggleDrawingMode,
+    drawingSettings, updateDrawingSettings,
     room, setRoom
   } = useVttStore();
 
@@ -452,13 +453,80 @@ export const RightPanel: React.FC = () => {
           <div className="flex flex-col gap-3 p-3 border-t border-border">
             <button
               onClick={toggleDrawingMode}
-              className={`text-xs py-2 rounded w-full flex items-center justify-center gap-2 font-medium transition-colors ${isDrawingMode ? 'bg-primary text-primary-foreground' : 'bg-accent hover:bg-accent/80'}`}
+              className={`text-xs py-2 rounded w-full flex items-center justify-center gap-2 font-medium transition-colors ${isDrawingMode ? 'bg-primary text-primary-foreground shadow-inner' : 'bg-accent hover:bg-accent/80'}`}
             >
               <Eraser size={14} /> {isDrawingMode ? 'Désactiver le mode dessin' : 'Activer le mode dessin'}
             </button>
-            <p className="text-xs text-muted-foreground text-center">Cliquez et glissez sur le plateau pour tracer un mur.</p>
+
+            {isDrawingMode && (
+              <div className="flex flex-col gap-3 mt-1 p-2 bg-muted/30 rounded-md border border-border/50">
+                <div className="flex gap-2 p-1 bg-background rounded-md border border-border">
+                  <button
+                    onClick={() => updateDrawingSettings({ tool: 'line' })}
+                    className={`flex-1 flex justify-center py-1.5 rounded ${drawingSettings.tool === 'line' ? 'bg-primary text-primary-foreground shadow-sm' : 'hover:bg-accent text-muted-foreground hover:text-foreground'}`}
+                    title="Tracer des lignes"
+                  >
+                    <Minus size={16} />
+                  </button>
+                  <button
+                    onClick={() => updateDrawingSettings({ tool: 'rectangle' })}
+                    className={`flex-1 flex justify-center py-1.5 rounded ${drawingSettings.tool === 'rectangle' ? 'bg-primary text-primary-foreground shadow-sm' : 'hover:bg-accent text-muted-foreground hover:text-foreground'}`}
+                    title="Dessiner des rectangles"
+                  >
+                    <Square size={16} />
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[10px] font-semibold text-muted-foreground uppercase">Couleur trait</label>
+                    <ColorPicker
+                      color={drawingSettings.color}
+                      onChange={(c) => updateDrawingSettings({ color: c })}
+                      label="Couleur du trait"
+                      className="!w-full h-8"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[10px] font-semibold text-muted-foreground uppercase">Épaisseur</label>
+                    <input
+                      type="number"
+                      value={drawingSettings.thickness}
+                      onChange={(e) => updateDrawingSettings({ thickness: Math.max(1, parseInt(e.target.value) || 5) })}
+                      className="w-full bg-input border border-border rounded h-8 px-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                    />
+                  </div>
+                </div>
+
+                {drawingSettings.tool === 'rectangle' && (
+                  <div className="flex flex-col gap-2 pt-2 border-t border-border/50">
+                     <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={drawingSettings.fillTransparent}
+                        onChange={(e) => updateDrawingSettings({ fillTransparent: e.target.checked })}
+                        className="rounded border-border w-3 h-3"
+                      />
+                      Fond transparent
+                    </label>
+                    {!drawingSettings.fillTransparent && (
+                      <div className="flex items-center justify-between">
+                         <span className="text-[10px] font-semibold text-muted-foreground uppercase">Couleur remplissage</span>
+                         <ColorPicker
+                          color={drawingSettings.fillColor}
+                          onChange={(c) => updateDrawingSettings({ fillColor: c })}
+                          label="Couleur de remplissage"
+                          className="!w-8 h-8"
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
             <div className="h-px bg-border my-1"></div>
-            <button onClick={clearWalls} className="text-xs bg-destructive text-destructive-foreground hover:bg-destructive/90 py-1.5 rounded w-full transition-colors">Effacer tous les murs</button>
+            <button onClick={clearWalls} className="text-xs bg-destructive text-destructive-foreground hover:bg-destructive/90 py-1.5 rounded w-full transition-colors">Effacer tous les dessins</button>
           </div>
           )}
         </section>

@@ -12,7 +12,7 @@ export const Canvas: React.FC = () => {
     players, updatePlayer, addPlayer, deletePlayer,
     markers, updateMarker, addMarker, deleteMarker,
     roles, teams, grid, room, displaySettings,
-    isDrawingMode, walls, addWall
+    isDrawingMode, drawingSettings, walls, addWall
   } = useVttStore();
   const [isPanning, setIsPanning] = useState(false);
   const [startPan, setStartPan] = useState({ x: 0, y: 0 });
@@ -188,10 +188,14 @@ export const Canvas: React.FC = () => {
       // Only add wall if it has some length
       if (Math.hypot(endCoord.x - startCoord.x, endCoord.y - startCoord.y) > 5) {
         addWall({
+          type: drawingSettings.tool,
           startX: startCoord.x,
           startY: startCoord.y,
           endX: endCoord.x,
           endY: endCoord.y,
+          color: drawingSettings.color,
+          thickness: drawingSettings.thickness,
+          fillColor: drawingSettings.fillTransparent ? 'transparent' : drawingSettings.fillColor,
         });
       }
       setDrawingStart(null);
@@ -346,31 +350,66 @@ export const Canvas: React.FC = () => {
           const startYScreen = (wall.startY * canvas.zoom) + containerSize.height / 2 + canvas.panY;
           const endXScreen = (wall.endX * canvas.zoom) + containerSize.width / 2 + canvas.panX;
           const endYScreen = (wall.endY * canvas.zoom) + containerSize.height / 2 + canvas.panY;
-          return (
-            <line
-              key={wall.id}
-              x1={startXScreen}
-              y1={startYScreen}
-              x2={endXScreen}
-              y2={endYScreen}
-              stroke="hsl(var(--foreground))"
-              strokeWidth={5 * canvas.zoom}
-              strokeLinecap="round"
-            />
-          );
+
+          if (wall.type === 'rectangle') {
+            const minX = Math.min(startXScreen, endXScreen);
+            const minY = Math.min(startYScreen, endYScreen);
+            const width = Math.abs(endXScreen - startXScreen);
+            const height = Math.abs(endYScreen - startYScreen);
+            return (
+              <rect
+                key={wall.id}
+                x={minX}
+                y={minY}
+                width={width}
+                height={height}
+                stroke={wall.color}
+                strokeWidth={(wall.thickness || 5) * canvas.zoom}
+                fill={wall.fillColor === 'transparent' ? 'none' : (wall.fillColor || 'transparent')}
+                opacity={0.8}
+              />
+            );
+          } else {
+            return (
+              <line
+                key={wall.id}
+                x1={startXScreen}
+                y1={startYScreen}
+                x2={endXScreen}
+                y2={endYScreen}
+                stroke={wall.color || "hsl(var(--foreground))"}
+                strokeWidth={(wall.thickness || 5) * canvas.zoom}
+                strokeLinecap="round"
+              />
+            );
+          }
         })}
         {isDrawingMode && drawingStart && drawingCurrent && (
-          <line
-            x1={(drawingStart.x * canvas.zoom) + containerSize.width / 2 + canvas.panX}
-            y1={(drawingStart.y * canvas.zoom) + containerSize.height / 2 + canvas.panY}
-            x2={(drawingCurrent.x * canvas.zoom) + containerSize.width / 2 + canvas.panX}
-            y2={(drawingCurrent.y * canvas.zoom) + containerSize.height / 2 + canvas.panY}
-            stroke="hsl(var(--foreground))"
-            strokeWidth={5 * canvas.zoom}
-            strokeLinecap="round"
-            opacity={0.5}
-            strokeDasharray="5,5"
-          />
+          drawingSettings.tool === 'rectangle' ? (
+            <rect
+              x={Math.min((drawingStart.x * canvas.zoom) + containerSize.width / 2 + canvas.panX, (drawingCurrent.x * canvas.zoom) + containerSize.width / 2 + canvas.panX)}
+              y={Math.min((drawingStart.y * canvas.zoom) + containerSize.height / 2 + canvas.panY, (drawingCurrent.y * canvas.zoom) + containerSize.height / 2 + canvas.panY)}
+              width={Math.abs(((drawingCurrent.x - drawingStart.x) * canvas.zoom))}
+              height={Math.abs(((drawingCurrent.y - drawingStart.y) * canvas.zoom))}
+              stroke={drawingSettings.color}
+              strokeWidth={drawingSettings.thickness * canvas.zoom}
+              fill={drawingSettings.fillTransparent ? 'none' : drawingSettings.fillColor}
+              opacity={0.5}
+              strokeDasharray="5,5"
+            />
+          ) : (
+            <line
+              x1={(drawingStart.x * canvas.zoom) + containerSize.width / 2 + canvas.panX}
+              y1={(drawingStart.y * canvas.zoom) + containerSize.height / 2 + canvas.panY}
+              x2={(drawingCurrent.x * canvas.zoom) + containerSize.width / 2 + canvas.panX}
+              y2={(drawingCurrent.y * canvas.zoom) + containerSize.height / 2 + canvas.panY}
+              stroke={drawingSettings.color}
+              strokeWidth={drawingSettings.thickness * canvas.zoom}
+              strokeLinecap="round"
+              opacity={0.5}
+              strokeDasharray="5,5"
+            />
+          )
         )}
       </svg>
       <div className="absolute bottom-4 left-4 z-40 flex gap-2 bg-card p-2 rounded-lg border border-border shadow-md">
