@@ -1,10 +1,21 @@
-import { Moon, Sun, FastForward, RotateCcw } from 'lucide-react';
-import React, { useMemo } from 'react';
+import { Moon, Sun, FastForward, RotateCcw, ChevronDown, ChevronRight } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
 import { useVttStore } from '../../../store';
 import type { Player, Marker, TagInstance } from '../../../types';
 
 export const GameTab: React.FC = () => {
   const { isNight, cycleNumber, nextCycle, resetCycle, players, markers, updatePlayer, updateMarker } = useVttStore();
+
+  const [expandedCalledTags, setExpandedCalledTags] = useState<Record<string, boolean>>({});
+  const [expandedOtherTags, setExpandedOtherTags] = useState<Record<string, boolean>>({});
+
+  const toggleCalledTag = (id: string) => {
+    setExpandedCalledTags(prev => ({ ...prev, [id]: prev[id] === undefined ? false : !prev[id] }));
+  };
+
+  const toggleOtherTag = (id: string) => {
+    setExpandedOtherTags(prev => ({ ...prev, [id]: prev[id] === undefined ? true : !prev[id] }));
+  };
 
   const handleModifyTagField = (player: Player, tag: TagInstance, field: 'uses' | 'lives' | 'votes' | 'points', amount: number) => {
     let newValue = (tag[field] ?? 0) + amount;
@@ -158,52 +169,64 @@ export const GameTab: React.FC = () => {
                 </div>
 
                 {/* Quick actions for players */}
-                {item.type === 'player' && item.entity.tags.filter((t: TagInstance) => t.showInGameTab !== false).map((tag: TagInstance) => (
-                  <div key={tag.instanceId} className="flex flex-col gap-1 pl-7 pr-2 bg-background/30 rounded p-1">
-                    <span className="text-xs font-semibold text-muted-foreground" title={tag.name}>Tag: {tag.name}</span>
+                {item.type === 'player' && item.entity.tags.filter((t: TagInstance) => t.showInGameTab !== false).length > 0 && (
+                  <div className="flex flex-col gap-1 mt-1">
+                    <button
+                      onClick={() => toggleCalledTag(item.entity.id)}
+                      className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors w-max"
+                    >
+                      {expandedCalledTags[item.entity.id] !== false ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+                      Tags ({item.entity.tags.filter((t: TagInstance) => t.showInGameTab !== false).length})
+                    </button>
 
-                    {tag.uses !== null && (
-                      <div className="flex items-center justify-between pl-2">
-                        <span className="text-[10px] text-muted-foreground">Utilisations</span>
-                        <div className="flex items-center gap-1">
-                          <button onClick={() => handleModifyTagField(item.entity, tag, 'uses', -1)} className="w-4 h-4 flex items-center justify-center bg-accent rounded text-[10px] hover:bg-accent/80">-</button>
-                          <span className="text-[10px] w-4 text-center">{tag.uses}</span>
-                          <button onClick={() => handleModifyTagField(item.entity, tag, 'uses', 1)} className="w-4 h-4 flex items-center justify-center bg-accent rounded text-[10px] hover:bg-accent/80">+</button>
-                        </div>
+                    {expandedCalledTags[item.entity.id] !== false && item.entity.tags.filter((t: TagInstance) => t.showInGameTab !== false).map((tag: TagInstance) => (
+                      <div key={tag.instanceId} className="flex flex-col gap-1 pl-7 pr-2 bg-background/30 rounded p-1">
+                        <span className="text-xs font-semibold text-muted-foreground" title={tag.name}>Tag: {tag.name}</span>
+
+                        {tag.uses !== null && (
+                          <div className="flex items-center justify-between pl-2">
+                            <span className="text-[10px] text-muted-foreground">Utilisations</span>
+                            <div className="flex items-center gap-1">
+                              <button onClick={() => handleModifyTagField(item.entity, tag, 'uses', -1)} className="w-4 h-4 flex items-center justify-center bg-accent rounded text-[10px] hover:bg-accent/80">-</button>
+                              <span className="text-[10px] w-4 text-center">{tag.uses}</span>
+                              <button onClick={() => handleModifyTagField(item.entity, tag, 'uses', 1)} className="w-4 h-4 flex items-center justify-center bg-accent rounded text-[10px] hover:bg-accent/80">+</button>
+                            </div>
+                          </div>
+                        )}
+                        {tag.lives !== null && (
+                          <div className="flex items-center justify-between pl-2">
+                            <span className="text-[10px] text-muted-foreground">Vies</span>
+                            <div className="flex items-center gap-1">
+                              <button onClick={() => handleModifyTagField(item.entity, tag, 'lives', -1)} className="w-4 h-4 flex items-center justify-center bg-accent rounded text-[10px] hover:bg-accent/80">-</button>
+                              <span className="text-[10px] w-4 text-center">{tag.lives}</span>
+                              <button onClick={() => handleModifyTagField(item.entity, tag, 'lives', 1)} className="w-4 h-4 flex items-center justify-center bg-accent rounded text-[10px] hover:bg-accent/80">+</button>
+                            </div>
+                          </div>
+                        )}
+                        {tag.votes !== null && (
+                          <div className="flex items-center justify-between pl-2">
+                            <span className="text-[10px] text-muted-foreground">Votes</span>
+                            <div className="flex items-center gap-1">
+                              {tag.votes !== -1 && <button onClick={() => handleModifyTagField(item.entity, tag, 'votes', -1)} className="w-4 h-4 flex items-center justify-center bg-accent rounded text-[10px] hover:bg-accent/80">-</button>}
+                              <span className="text-[10px] w-10 text-center">{tag.votes === -1 ? 'Illimité' : tag.votes}</span>
+                              {tag.votes !== -1 && <button onClick={() => handleModifyTagField(item.entity, tag, 'votes', 1)} className="w-4 h-4 flex items-center justify-center bg-accent rounded text-[10px] hover:bg-accent/80">+</button>}
+                            </div>
+                          </div>
+                        )}
+                        {tag.points !== null && (
+                          <div className="flex items-center justify-between pl-2">
+                            <span className="text-[10px] text-muted-foreground">Points</span>
+                            <div className="flex items-center gap-1">
+                              <button onClick={() => handleModifyTagField(item.entity, tag, 'points', -1)} className="w-4 h-4 flex items-center justify-center bg-accent rounded text-[10px] hover:bg-accent/80">-</button>
+                              <span className="text-[10px] w-4 text-center">{tag.points}</span>
+                              <button onClick={() => handleModifyTagField(item.entity, tag, 'points', 1)} className="w-4 h-4 flex items-center justify-center bg-accent rounded text-[10px] hover:bg-accent/80">+</button>
+                            </div>
+                          </div>
+                        )}
                       </div>
-                    )}
-                    {tag.lives !== null && (
-                      <div className="flex items-center justify-between pl-2">
-                        <span className="text-[10px] text-muted-foreground">Vies</span>
-                        <div className="flex items-center gap-1">
-                          <button onClick={() => handleModifyTagField(item.entity, tag, 'lives', -1)} className="w-4 h-4 flex items-center justify-center bg-accent rounded text-[10px] hover:bg-accent/80">-</button>
-                          <span className="text-[10px] w-4 text-center">{tag.lives}</span>
-                          <button onClick={() => handleModifyTagField(item.entity, tag, 'lives', 1)} className="w-4 h-4 flex items-center justify-center bg-accent rounded text-[10px] hover:bg-accent/80">+</button>
-                        </div>
-                      </div>
-                    )}
-                    {tag.votes !== null && (
-                      <div className="flex items-center justify-between pl-2">
-                        <span className="text-[10px] text-muted-foreground">Votes</span>
-                        <div className="flex items-center gap-1">
-                          {tag.votes !== -1 && <button onClick={() => handleModifyTagField(item.entity, tag, 'votes', -1)} className="w-4 h-4 flex items-center justify-center bg-accent rounded text-[10px] hover:bg-accent/80">-</button>}
-                          <span className="text-[10px] w-10 text-center">{tag.votes === -1 ? 'Illimité' : tag.votes}</span>
-                          {tag.votes !== -1 && <button onClick={() => handleModifyTagField(item.entity, tag, 'votes', 1)} className="w-4 h-4 flex items-center justify-center bg-accent rounded text-[10px] hover:bg-accent/80">+</button>}
-                        </div>
-                      </div>
-                    )}
-                    {tag.points !== null && (
-                      <div className="flex items-center justify-between pl-2">
-                        <span className="text-[10px] text-muted-foreground">Points</span>
-                        <div className="flex items-center gap-1">
-                          <button onClick={() => handleModifyTagField(item.entity, tag, 'points', -1)} className="w-4 h-4 flex items-center justify-center bg-accent rounded text-[10px] hover:bg-accent/80">-</button>
-                          <span className="text-[10px] w-4 text-center">{tag.points}</span>
-                          <button onClick={() => handleModifyTagField(item.entity, tag, 'points', 1)} className="w-4 h-4 flex items-center justify-center bg-accent rounded text-[10px] hover:bg-accent/80">+</button>
-                        </div>
-                      </div>
-                    )}
+                    ))}
                   </div>
-                ))}
+                )}
 
                 {/* Quick actions for markers */}
                 {item.type === 'marker' && item.entity.tag.showInGameTab !== false && (
@@ -262,16 +285,82 @@ export const GameTab: React.FC = () => {
           {otherEntities.length === 0 ? (
              <p className="text-xs text-muted-foreground text-center">Aucune autre entité.</p>
           ) : (
-            otherEntities.map((item, index) => (
-              <div key={`other-${index}`} className="flex items-center justify-between p-1.5 rounded bg-muted/30 text-xs">
-                 <span className="truncate flex-1">
-                    {item.type === 'player' ? item.entity.name : `Marqueur: ${item.entity.tag.name}`}
-                 </span>
-                 <span className="text-[10px] text-muted-foreground w-12 text-right">
-                   {item.type === 'player' && item.entity.isDead ? '(Mort)' : ''}
-                 </span>
-              </div>
-            ))
+            otherEntities.map((item, index) => {
+              const hasTags = item.type === 'player' && item.entity.tags.filter((t: TagInstance) => t.showInGameTab !== false).length > 0;
+              const isExpanded = expandedOtherTags[item.type === 'player' ? item.entity.id : item.entity.id] === true;
+
+              return (
+                <div key={`other-${index}`} className="flex flex-col p-1.5 rounded bg-muted/30">
+                  <div className="flex items-center justify-between text-xs">
+                     <span className="truncate flex-1 font-medium">
+                        {item.type === 'player' ? item.entity.name : `Marqueur: ${item.entity.tag.name}`}
+                     </span>
+                     <span className="text-[10px] text-muted-foreground w-12 text-right">
+                       {item.type === 'player' && item.entity.isDead ? '(Mort)' : ''}
+                     </span>
+                  </div>
+
+                  {hasTags && (
+                    <div className="flex flex-col gap-1 mt-1 border-t border-border/50 pt-1">
+                      <button
+                        onClick={() => toggleOtherTag(item.entity.id)}
+                        className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground transition-colors w-max"
+                      >
+                        {isExpanded ? <ChevronDown size={10} /> : <ChevronRight size={10} />}
+                        Tags ({item.entity.tags.filter((t: TagInstance) => t.showInGameTab !== false).length})
+                      </button>
+
+                      {isExpanded && item.entity.tags.filter((t: TagInstance) => t.showInGameTab !== false).map((tag: TagInstance) => (
+                        <div key={tag.instanceId} className="flex flex-col gap-1 pl-4 pr-1 bg-background/50 rounded py-1 mt-1">
+                          <span className="text-[10px] font-semibold text-muted-foreground" title={tag.name}>Tag: {tag.name}</span>
+
+                          {tag.uses !== null && (
+                            <div className="flex items-center justify-between pl-2">
+                              <span className="text-[9px] text-muted-foreground">Utilisations</span>
+                              <div className="flex items-center gap-0.5">
+                                <button onClick={() => handleModifyTagField(item.entity, tag, 'uses', -1)} className="w-3.5 h-3.5 flex items-center justify-center bg-accent rounded text-[9px] hover:bg-accent/80">-</button>
+                                <span className="text-[9px] w-3 text-center">{tag.uses}</span>
+                                <button onClick={() => handleModifyTagField(item.entity, tag, 'uses', 1)} className="w-3.5 h-3.5 flex items-center justify-center bg-accent rounded text-[9px] hover:bg-accent/80">+</button>
+                              </div>
+                            </div>
+                          )}
+                          {tag.lives !== null && (
+                            <div className="flex items-center justify-between pl-2">
+                              <span className="text-[9px] text-muted-foreground">Vies</span>
+                              <div className="flex items-center gap-0.5">
+                                <button onClick={() => handleModifyTagField(item.entity, tag, 'lives', -1)} className="w-3.5 h-3.5 flex items-center justify-center bg-accent rounded text-[9px] hover:bg-accent/80">-</button>
+                                <span className="text-[9px] w-3 text-center">{tag.lives}</span>
+                                <button onClick={() => handleModifyTagField(item.entity, tag, 'lives', 1)} className="w-3.5 h-3.5 flex items-center justify-center bg-accent rounded text-[9px] hover:bg-accent/80">+</button>
+                              </div>
+                            </div>
+                          )}
+                          {tag.votes !== null && (
+                            <div className="flex items-center justify-between pl-2">
+                              <span className="text-[9px] text-muted-foreground">Votes</span>
+                              <div className="flex items-center gap-0.5">
+                                {tag.votes !== -1 && <button onClick={() => handleModifyTagField(item.entity, tag, 'votes', -1)} className="w-3.5 h-3.5 flex items-center justify-center bg-accent rounded text-[9px] hover:bg-accent/80">-</button>}
+                                <span className="text-[9px] w-8 text-center">{tag.votes === -1 ? 'Illimité' : tag.votes}</span>
+                                {tag.votes !== -1 && <button onClick={() => handleModifyTagField(item.entity, tag, 'votes', 1)} className="w-3.5 h-3.5 flex items-center justify-center bg-accent rounded text-[9px] hover:bg-accent/80">+</button>}
+                              </div>
+                            </div>
+                          )}
+                          {tag.points !== null && (
+                            <div className="flex items-center justify-between pl-2">
+                              <span className="text-[9px] text-muted-foreground">Points</span>
+                              <div className="flex items-center gap-0.5">
+                                <button onClick={() => handleModifyTagField(item.entity, tag, 'points', -1)} className="w-3.5 h-3.5 flex items-center justify-center bg-accent rounded text-[9px] hover:bg-accent/80">-</button>
+                                <span className="text-[9px] w-3 text-center">{tag.points}</span>
+                                <button onClick={() => handleModifyTagField(item.entity, tag, 'points', 1)} className="w-3.5 h-3.5 flex items-center justify-center bg-accent rounded text-[9px] hover:bg-accent/80">+</button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })
           )}
         </div>
       </section>

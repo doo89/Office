@@ -1,5 +1,5 @@
-import { Plus, Trash2, Edit2 } from 'lucide-react';
-import React, { useState } from 'react';
+import { Plus, Trash2, Edit2, ChevronDown, ChevronRight, icons } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
 import { useVttStore } from '../../../store';
 
 export const RolesTab: React.FC = () => {
@@ -10,6 +10,29 @@ export const RolesTab: React.FC = () => {
   const [newRoleUnique, setNewRoleUnique] = useState(true);
   const [newRoleTeamId, setNewRoleTeamId] = useState<string>('');
   const [newRoleTags, setNewRoleTags] = useState<string[]>([]);
+  const [expandedTeams, setExpandedTeams] = useState<Record<string, boolean>>({});
+
+  const rolesByTeam = useMemo(() => {
+    const grouped: Record<string, typeof roles> = {
+      'no-team': []
+    };
+
+    teams.forEach(t => grouped[t.id] = []);
+
+    roles.forEach(role => {
+      if (role.teamId && grouped[role.teamId]) {
+        grouped[role.teamId].push(role);
+      } else {
+        grouped['no-team'].push(role);
+      }
+    });
+
+    return grouped;
+  }, [roles, teams]);
+
+  const toggleTeam = (teamId: string) => {
+    setExpandedTeams(prev => ({ ...prev, [teamId]: !prev[teamId] }));
+  };
 
   const handleAddRole = () => {
     if (!newRoleName.trim()) return;
@@ -133,41 +156,77 @@ export const RolesTab: React.FC = () => {
           {roles.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-4">Aucun rôle défini.</p>
           ) : (
-            roles.map((role) => (
-              <div
-                key={role.id}
-                className="flex items-center justify-between p-2 rounded-md border border-border bg-card hover:bg-accent/50 group"
-              >
-                <div className="flex items-center gap-3">
-                  <div
-                    className="w-4 h-4 rounded-sm border border-border"
-                    style={{ backgroundColor: role.color }}
-                  />
-                  <div className="flex flex-col">
-                    <span className="text-sm font-medium leading-none">{role.name}</span>
-                    <span className="text-[10px] text-muted-foreground mt-1">
-                      {role.lives} PV • {role.isUnique ? 'Unique' : 'Multiple'}
-                    </span>
+            <>
+              {Object.entries(rolesByTeam).map(([teamId, teamRoles]) => {
+                if (teamRoles.length === 0) return null;
+
+                const team = teamId === 'no-team' ? null : teams.find(t => t.id === teamId);
+                const isExpanded = expandedTeams[teamId] !== false; // Default to true
+                const TeamIcon = team && team.icon ? icons[team.icon as keyof typeof icons] : null;
+
+                return (
+                  <div key={teamId} className="flex flex-col gap-1">
+                    <button
+                      onClick={() => toggleTeam(teamId)}
+                      className="flex items-center justify-between w-full p-1.5 rounded bg-muted/50 hover:bg-muted text-sm font-medium transition-colors"
+                    >
+                      <div className="flex items-center gap-2">
+                        {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                        {team ? (
+                          <div className="flex items-center gap-1.5" style={{ color: team.color }}>
+                            {TeamIcon && React.createElement(TeamIcon, { size: 14 })}
+                            {team.name}
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground">Sans Équipe</span>
+                        )}
+                        <span className="text-xs text-muted-foreground ml-1">({teamRoles.length})</span>
+                      </div>
+                    </button>
+
+                    {isExpanded && (
+                      <div className="flex flex-col gap-1.5 pl-4 mt-1 border-l-2 border-border/30 ml-2">
+                        {teamRoles.map((role) => (
+                          <div
+                            key={role.id}
+                            className="flex items-center justify-between p-2 rounded-md border border-border bg-card hover:bg-accent/50 group"
+                          >
+                            <div className="flex items-center gap-3">
+                              <div
+                                className="w-4 h-4 rounded-sm border border-border"
+                                style={{ backgroundColor: role.color }}
+                              />
+                              <div className="flex flex-col">
+                                <span className="text-sm font-medium leading-none">{role.name}</span>
+                                <span className="text-[10px] text-muted-foreground mt-1">
+                                  {role.lives} PV • {role.isUnique ? 'Unique' : 'Multiple'}
+                                </span>
+                              </div>
+                            </div>
+                            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <button
+                                onClick={() => setEditingEntity({ type: 'role', id: role.id })}
+                                className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-accent rounded-md"
+                                title="Modifier"
+                              >
+                                <Edit2 size={14} />
+                              </button>
+                              <button
+                                onClick={() => deleteRole(role.id)}
+                                className="p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-md"
+                                title="Supprimer"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                </div>
-                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button
-                    onClick={() => setEditingEntity({ type: 'role', id: role.id })}
-                    className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-accent rounded-md"
-                    title="Modifier"
-                  >
-                    <Edit2 size={14} />
-                  </button>
-                  <button
-                    onClick={() => deleteRole(role.id)}
-                    className="p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-md"
-                    title="Supprimer"
-                  >
-                    <Trash2 size={14} />
-                  </button>
-                </div>
-              </div>
-            ))
+                );
+              })}
+            </>
           )}
         </div>
       </section>
