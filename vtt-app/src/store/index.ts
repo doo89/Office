@@ -1,5 +1,6 @@
 import { create } from 'zustand';
-import type { GameState, EntityId, Player, Role, TagModel, Marker, Team } from '../types';
+import { persist } from 'zustand/middleware';
+import type { GameState, EntityId, Player, Role, TagModel, Marker, Team, Wall } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 
 export interface PlayerTemplate {
@@ -29,8 +30,11 @@ interface VttStore extends GameState {
   isRightPanelOpen: boolean;
 
   // Tools
+  isDrawingMode: boolean;
+  toggleDrawingMode: () => void;
   setGrid: (grid: GameState['grid']) => void;
   setRoom: (room: Partial<GameState['room']>) => void;
+  addWall: (wall: Omit<Wall, 'id'>) => void;
   clearWalls: () => void;
 
   // Player Templates
@@ -125,10 +129,13 @@ const initialState = {
   },
   isLeftPanelOpen: true,
   isRightPanelOpen: true,
+  isDrawingMode: false,
 };
 
-export const useVttStore = create<VttStore>((set) => ({
-  ...initialState,
+export const useVttStore = create<VttStore>()(
+  persist(
+    (set) => ({
+      ...initialState,
 
   setRoomName: (name) => set({ roomName: name }),
 
@@ -140,8 +147,10 @@ export const useVttStore = create<VttStore>((set) => ({
   toggleRightPanel: () => set((state) => ({ isRightPanelOpen: !state.isRightPanelOpen })),
 
   // Tools
+  toggleDrawingMode: () => set((state) => ({ isDrawingMode: !state.isDrawingMode })),
   setGrid: (grid) => set({ grid }),
   setRoom: (roomUpdates) => set((state) => ({ room: { ...state.room, ...roomUpdates } })),
+  addWall: (wallData) => set((state) => ({ walls: [...state.walls, { id: uuidv4(), ...wallData }] })),
   clearWalls: () => set({ walls: [] }),
 
   // Player Templates
@@ -222,7 +231,12 @@ export const useVttStore = create<VttStore>((set) => ({
   resetCycle: () => set({ isNight: false, cycleNumber: 1 }),
 
   // Settings
-  updateDisplaySettings: (updates) => set((state) => ({
-    displaySettings: { ...state.displaySettings, ...updates }
-  })),
-}));
+      updateDisplaySettings: (updates) => set((state) => ({
+        displaySettings: { ...state.displaySettings, ...updates }
+      })),
+    }),
+    {
+      name: 'vtt-storage',
+    }
+  )
+);

@@ -1,4 +1,4 @@
-import { Settings, ChevronLeft, ChevronRight, Download, Upload, Grid3X3, Clock, Eye, PaintBucket, CircleDashed, Eraser } from 'lucide-react';
+import { Settings, ChevronLeft, ChevronRight, Upload, Grid3X3, Clock, Eye, PaintBucket, CircleDashed, Eraser, ChevronDown } from 'lucide-react';
 import React, { useState, useEffect, useRef } from 'react';
 import { useVttStore } from '../../store';
 import type { BadgeConfig, BadgeType } from '../../types';
@@ -10,8 +10,24 @@ export const RightPanel: React.FC = () => {
     isNight, setNight,
     displaySettings, updateDisplaySettings,
     clearWalls,
+    isDrawingMode, toggleDrawingMode,
     room, setRoom
   } = useVttStore();
+
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
+    affichage: true,
+    chrono: true,
+    grille: true,
+    salle: true,
+    dessin: true,
+  });
+
+  const toggleSection = (section: string) => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [section]: !prev[section]
+    }));
+  };
 
   const textures = [
     { value: 'none', label: 'Aucun motif' },
@@ -55,21 +71,6 @@ export const RightPanel: React.FC = () => {
     setIsTimerRunning(false);
     setTimerMinutes(5);
     setTimerSeconds(0);
-  };
-
-  const handleExport = () => {
-    const state = useVttStore.getState();
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state));
-    const downloadAnchorNode = document.createElement('a');
-
-    // Sanitize room name for filename
-    const safeRoomName = state.roomName ? state.roomName.replace(/[^a-z0-9]/gi, '_').toLowerCase() : 'vtt_state';
-
-    downloadAnchorNode.setAttribute("href", dataStr);
-    downloadAnchorNode.setAttribute("download", `${safeRoomName}.json`);
-    document.body.appendChild(downloadAnchorNode); // required for firefox
-    downloadAnchorNode.click();
-    downloadAnchorNode.remove();
   };
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -367,11 +368,18 @@ export const RightPanel: React.FC = () => {
         </section>
 
         {/* Magnetic Grid */}
-        <section className="flex flex-col gap-3">
-          <h3 className="font-semibold text-sm border-b border-border pb-1 flex items-center gap-2">
-            <Grid3X3 size={16} /> Grille Magnétique
-          </h3>
-          <div className="flex flex-col gap-2">
+        <section className="flex flex-col border border-border rounded-md overflow-hidden bg-background">
+          <button
+            onClick={() => toggleSection('grille')}
+            className="flex items-center justify-between p-2 bg-muted/50 hover:bg-muted font-semibold text-sm transition-colors"
+          >
+            <div className="flex items-center gap-2">
+              <Grid3X3 size={16} /> Grille Magnétique
+            </div>
+            {expandedSections['grille'] ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+          </button>
+          {expandedSections['grille'] && (
+          <div className="flex flex-col gap-2 p-3 border-t border-border">
             <label className="flex items-center gap-2 text-sm cursor-pointer">
               <input
                 type="checkbox"
@@ -393,90 +401,122 @@ export const RightPanel: React.FC = () => {
               </div>
             )}
           </div>
+          )}
         </section>
 
         {/* Magnetic Circle Placeholder */}
-         <section className="flex flex-col gap-3 opacity-50">
-          <h3 className="font-semibold text-sm border-b border-border pb-1 flex items-center gap-2">
-            <CircleDashed size={16} /> Cercle Magnétique
-          </h3>
-          <p className="text-xs text-muted-foreground">Outil de disposition circulaire en cours de développement.</p>
+         <section className="flex flex-col border border-border rounded-md overflow-hidden bg-background opacity-50">
+          <button
+            onClick={() => toggleSection('cercle')}
+            className="flex items-center justify-between p-2 bg-muted/50 hover:bg-muted font-semibold text-sm transition-colors"
+          >
+            <div className="flex items-center gap-2">
+              <CircleDashed size={16} /> Cercle Magnétique
+            </div>
+            {expandedSections['cercle'] ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+          </button>
+          {expandedSections['cercle'] && (
+          <div className="flex flex-col gap-2 p-3 border-t border-border">
+            <p className="text-xs text-muted-foreground">Outil de disposition circulaire en cours de développement.</p>
+          </div>
+          )}
         </section>
 
          {/* Walls & Drawing Placeholder */}
-         <section className="flex flex-col gap-3 opacity-50">
-          <h3 className="font-semibold text-sm border-b border-border pb-1 flex items-center gap-2">
-            <Eraser size={16} /> Murs & Dessin
-          </h3>
-          <p className="text-xs text-muted-foreground">Outils de tracé en cours de développement.</p>
-          <button onClick={clearWalls} className="text-xs bg-accent py-1 rounded w-full">Effacer les murs</button>
+         <section className="flex flex-col border border-border rounded-md overflow-hidden bg-background">
+          <button
+            onClick={() => toggleSection('dessin')}
+            className="flex items-center justify-between p-2 bg-muted/50 hover:bg-muted font-semibold text-sm transition-colors"
+          >
+            <div className="flex items-center gap-2">
+              <Eraser size={16} /> Murs & Dessin
+            </div>
+            {expandedSections['dessin'] ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+          </button>
+          {expandedSections['dessin'] && (
+          <div className="flex flex-col gap-3 p-3 border-t border-border">
+            <button
+              onClick={toggleDrawingMode}
+              className={`text-xs py-2 rounded w-full flex items-center justify-center gap-2 font-medium transition-colors ${isDrawingMode ? 'bg-primary text-primary-foreground' : 'bg-accent hover:bg-accent/80'}`}
+            >
+              <Eraser size={14} /> {isDrawingMode ? 'Désactiver le mode dessin' : 'Activer le mode dessin'}
+            </button>
+            <p className="text-xs text-muted-foreground text-center">Cliquez et glissez sur le plateau pour tracer un mur.</p>
+            <div className="h-px bg-border my-1"></div>
+            <button onClick={clearWalls} className="text-xs bg-destructive text-destructive-foreground hover:bg-destructive/90 py-1.5 rounded w-full transition-colors">Effacer tous les murs</button>
+          </div>
+          )}
         </section>
 
 
         {/* Background Config */}
-         <section className="flex flex-col gap-3">
-          <h3 className="font-semibold text-sm border-b border-border pb-1 flex items-center gap-2">
-            <PaintBucket size={16} /> Salle
-          </h3>
-
-          <div className="flex gap-2">
-            <div className="flex flex-col gap-1 flex-1">
-              <label className="text-xs text-muted-foreground">Largeur (px)</label>
-              <input
-                type="number"
-                value={room.width}
-                onChange={(e) => setRoom({ width: Math.max(100, parseInt(e.target.value) || 2000) })}
-                className="w-full bg-input border border-border rounded px-2 py-1 text-sm"
-              />
+         <section className="flex flex-col border border-border rounded-md overflow-hidden bg-background">
+          <button
+            onClick={() => toggleSection('salle')}
+            className="flex items-center justify-between p-2 bg-muted/50 hover:bg-muted font-semibold text-sm transition-colors"
+          >
+            <div className="flex items-center gap-2">
+              <PaintBucket size={16} /> Salle
             </div>
-            <div className="flex flex-col gap-1 flex-1">
-              <label className="text-xs text-muted-foreground">Hauteur (px)</label>
-              <input
-                type="number"
-                value={room.height}
-                onChange={(e) => setRoom({ height: Math.max(100, parseInt(e.target.value) || 1500) })}
-                className="w-full bg-input border border-border rounded px-2 py-1 text-sm"
-              />
+            {expandedSections['salle'] ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+          </button>
+          {expandedSections['salle'] && (
+          <div className="flex flex-col gap-3 p-3 border-t border-border">
+
+            <div className="flex gap-2">
+              <div className="flex flex-col gap-1 flex-1">
+                <label className="text-xs text-muted-foreground">Largeur (px)</label>
+                <input
+                  type="number"
+                  value={room.width}
+                  onChange={(e) => setRoom({ width: Math.max(100, parseInt(e.target.value) || 2000) })}
+                  className="w-full bg-input border border-border rounded px-2 py-1 text-sm"
+                />
+              </div>
+              <div className="flex flex-col gap-1 flex-1">
+                <label className="text-xs text-muted-foreground">Hauteur (px)</label>
+                <input
+                  type="number"
+                  value={room.height}
+                  onChange={(e) => setRoom({ height: Math.max(100, parseInt(e.target.value) || 1500) })}
+                  className="w-full bg-input border border-border rounded px-2 py-1 text-sm"
+                />
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <label className="text-xs text-muted-foreground">Couleur de fond</label>
+              <div className="flex gap-2 items-center">
+                <input
+                  type="color"
+                  value={room.backgroundColor}
+                  onChange={(e) => setRoom({ backgroundColor: e.target.value })}
+                  className="w-8 h-8 p-0 border-0 rounded cursor-pointer bg-transparent"
+                />
+                <span className="text-xs uppercase font-mono">{room.backgroundColor}</span>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <label className="text-xs text-muted-foreground">Motif (Texture)</label>
+              <select
+                value={room.texture}
+                onChange={(e) => setRoom({ texture: e.target.value })}
+                className="bg-input border border-border rounded-md px-2 py-1 text-sm w-full"
+              >
+                {textures.map((t) => (
+                  <option key={t.value} value={t.value}>{t.label}</option>
+                ))}
+              </select>
             </div>
           </div>
-
-          <div className="flex flex-col gap-1">
-            <label className="text-xs text-muted-foreground">Couleur de fond</label>
-            <div className="flex gap-2 items-center">
-              <input
-                type="color"
-                value={room.backgroundColor}
-                onChange={(e) => setRoom({ backgroundColor: e.target.value })}
-                className="w-8 h-8 p-0 border-0 rounded cursor-pointer bg-transparent"
-              />
-              <span className="text-xs uppercase font-mono">{room.backgroundColor}</span>
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-1">
-            <label className="text-xs text-muted-foreground">Motif (Texture)</label>
-            <select
-              value={room.texture}
-              onChange={(e) => setRoom({ texture: e.target.value })}
-              className="bg-input border border-border rounded-md px-2 py-1 text-sm w-full"
-            >
-              {textures.map((t) => (
-                <option key={t.value} value={t.value}>{t.label}</option>
-              ))}
-            </select>
-          </div>
+          )}
         </section>
 
       </div>
 
       {/* Import / Export Footer */}
       <div className="p-4 border-t border-border flex flex-col gap-2">
-        <button
-          onClick={handleExport}
-          className="flex items-center justify-center gap-2 w-full py-2 bg-accent hover:bg-accent/80 rounded-md text-sm font-medium transition-colors"
-        >
-          <Download size={16} /> Exporter (JSON)
-        </button>
         <button
            onClick={handleImportClick}
           className="flex items-center justify-center gap-2 w-full py-2 bg-accent hover:bg-accent/80 rounded-md text-sm font-medium transition-colors"

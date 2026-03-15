@@ -11,10 +11,26 @@ export const Canvas: React.FC = () => {
     canvas, setPan, setZoom, isNight, nextCycle,
     players, updatePlayer, addPlayer, deletePlayer,
     markers, updateMarker, addMarker, deleteMarker,
-    roles, teams, grid, room, displaySettings
+    roles, teams, grid, room, displaySettings,
+    isDrawingMode, walls, addWall
   } = useVttStore();
   const [isPanning, setIsPanning] = useState(false);
   const [startPan, setStartPan] = useState({ x: 0, y: 0 });
+  const [drawingStart, setDrawingStart] = useState<{ x: number, y: number } | null>(null);
+  const [drawingCurrent, setDrawingCurrent] = useState<{ x: number, y: number } | null>(null);
+  const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        setContainerSize({ width: entry.contentRect.width, height: entry.contentRect.height });
+      }
+    });
+    observer.observe(containerRef.current);
+    setContainerSize({ width: containerRef.current.clientWidth, height: containerRef.current.clientHeight });
+    return () => observer.disconnect();
+  }, []);
   const [contextMenu, setContextMenu] = useState<{ x: number, y: number, type: 'player' | 'marker', entityId: string } | null>(null);
 
   const handleContextMenu = (e: React.MouseEvent, type: 'player' | 'marker', entityId: string) => {
@@ -41,14 +57,9 @@ export const Canvas: React.FC = () => {
     e.preventDefault();
     if (!containerRef.current) return;
 
-    // Convert screen coordinates to canvas coordinates
-    const rect = containerRef.current.getBoundingClientRect();
-    const dropX = e.clientX - rect.left;
-    const dropY = e.clientY - rect.top;
-
-    // Apply inverse transform to get coordinates relative to origin
-    let canvasX = (dropX - canvas.panX - rect.width / 2) / canvas.zoom;
-    let canvasY = (dropY - canvas.panY - rect.height / 2) / canvas.zoom;
+    const coords = getCanvasCoordinates(e);
+    let canvasX = coords.x;
+    let canvasY = coords.y;
 
     if (grid.enabled) {
       canvasX = snapToGrid(canvasX, grid.sizeX);
@@ -126,10 +137,28 @@ export const Canvas: React.FC = () => {
     }
   };
 
+  const getCanvasCoordinates = (e: React.MouseEvent | React.DragEvent) => {
+    const container = containerRef.current;
+    if (!container) return { x: 0, y: 0 };
+
+    const rect = container.getBoundingClientRect();
+    const x = (e.clientX - rect.left - canvas.panX - rect.width / 2) / canvas.zoom;
+    const y = (e.clientY - rect.top - canvas.panY - rect.height / 2) / canvas.zoom;
+    return { x, y };
+  };
+
   const handleMouseDown = (e: React.MouseEvent) => {
     closeContextMenu();
     // Only start panning if clicking directly on the canvas background, not on entities
     if ((e.target as HTMLElement).closest('.canvas-entity')) return;
+
+    if (isDrawingMode && e.button === 0) {
+      e.preventDefault();
+      const coords = getCanvasCoordinates(e);
+      setDrawingStart(coords);
+      setDrawingCurrent(coords);
+      return;
+    }
 
     if (e.button === 1 || (e.button === 0 && e.altKey) || e.button === 0) { // Allow left click pan for now if not on entity
       e.preventDefault();
@@ -139,6 +168,11 @@ export const Canvas: React.FC = () => {
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
+    if (isDrawingMode && drawingStart) {
+      setDrawingCurrent(getCanvasCoordinates(e));
+      return;
+    }
+
     if (isPanning) {
       const dx = e.clientX - startPan.x;
       const dy = e.clientY - startPan.y;
@@ -147,7 +181,22 @@ export const Canvas: React.FC = () => {
     }
   };
 
-  const handleMouseUp = () => {
+  const handleMouseUp = (e: React.MouseEvent) => {
+    if (isDrawingMode && drawingStart && drawingCurrent) {
+      const startCoord = drawingStart;
+      const endCoord = getCanvasCoordinates(e);
+      // Only add wall if it has some length
+      if (Math.hypot(endCoord.x - startCoord.x, endCoord.y - startCoord.y) > 5) {
+        addWall({
+          startX: startCoord.x,
+          startY: startCoord.y,
+          endX: endCoord.x,
+          endY: endCoord.y,
+        });
+      }
+      setDrawingStart(null);
+      setDrawingCurrent(null);
+    }
     setIsPanning(false);
   };
 
@@ -191,15 +240,56 @@ export const Canvas: React.FC = () => {
   return (
     <div className="flex-1 relative flex flex-col min-w-0">
       {/* Banner */}
-      <div className="h-12 bg-card border-b border-border flex items-center justify-center shrink-0 z-40 relative shadow-sm">
-        <input
-          type="text"
-          value={roomName}
-          onChange={(e) => setRoomName(e.target.value)}
-          className="text-lg font-bold text-center bg-transparent border-none focus:outline-none focus:ring-2 focus:ring-primary/50 rounded px-2"
-          placeholder="Nom de la salle"
-          title="Nom de la salle (utilisé pour l'export JSON)"
-        />
+      <div className="h-12 bg-card border-b border-border flex items-center shrink-0 z-40 relative shadow-sm px-4">
+        <div className="flex-1 flex items-center gap-2">
+          <input
+            type="text"
+            value={roomName}
+            onChange={(e) => setRoomName(e.target.value)}
+            className="text-lg font-bold bg-transparent border-none focus:outline-none focus:ring-2 focus:ring-primary/50 rounded px-2"
+            placeholder="Nom de la salle"
+            title="Nom de la salle"
+          />
+          <button
+            onClick={() => {
+              const state = useVttStore.getState();
+              // Create a serializable state by extracting the relevant data
+              const stateToSave = {
+                roomName: state.roomName,
+                playerTemplates: state.playerTemplates,
+                players: state.players,
+                roles: state.roles,
+                tags: state.tags,
+                markers: state.markers,
+                markerParameters: state.markerParameters,
+                teams: state.teams,
+                isNight: state.isNight,
+                cycleNumber: state.cycleNumber,
+                walls: state.walls,
+                activeLeftTab: state.activeLeftTab,
+                canvas: state.canvas,
+                grid: state.grid,
+                room: state.room,
+                displaySettings: state.displaySettings,
+              };
+              const stateStr = JSON.stringify(stateToSave, null, 2);
+              const blob = new Blob([stateStr], { type: 'application/json' });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              const safeRoomName = roomName ? roomName.replace(/[^a-z0-9]/gi, '_').toLowerCase() : 'vtt_state';
+              a.download = `${safeRoomName}.json`;
+              document.body.appendChild(a);
+              a.click();
+              document.body.removeChild(a);
+              URL.revokeObjectURL(url);
+            }}
+            className="p-1.5 text-muted-foreground hover:text-primary hover:bg-accent rounded-md transition-colors"
+            title="Exporter l'état (JSON)"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+          </button>
+        </div>
       </div>
 
     <div
@@ -213,7 +303,7 @@ export const Canvas: React.FC = () => {
       onDragOver={handleDragOver}
       onDrop={handleDrop}
       tabIndex={0}
-      style={{ cursor: isPanning ? 'grabbing' : 'grab' }}
+      style={{ cursor: isDrawingMode ? 'crosshair' : (isPanning ? 'grabbing' : 'grab') }}
     >
       {/* Cycle Icon */}
       {displaySettings.showCycleIcon && (
@@ -238,12 +328,45 @@ export const Canvas: React.FC = () => {
           style={{
             backgroundImage: `linear-gradient(to right, currentColor 1px, transparent 1px), linear-gradient(to bottom, currentColor 1px, transparent 1px)`,
             backgroundSize: `${grid.sizeX * canvas.zoom}px ${grid.sizeY * canvas.zoom}px`,
-            backgroundPosition: `${(canvas.panX + containerRef.current?.getBoundingClientRect().width! / 2) % (grid.sizeX * canvas.zoom)}px ${(canvas.panY + containerRef.current?.getBoundingClientRect().height! / 2) % (grid.sizeY * canvas.zoom)}px`
+            backgroundPosition: `${(canvas.panX + containerSize.width / 2) % (grid.sizeX * canvas.zoom)}px ${(canvas.panY + containerSize.height / 2) % (grid.sizeY * canvas.zoom)}px`
           }}
         />
       )}
 
       {/* Controls */}
+      <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 5, overflow: 'visible' }}>
+        {walls.map(wall => {
+          const startXScreen = (wall.startX * canvas.zoom) + containerSize.width / 2 + canvas.panX;
+          const startYScreen = (wall.startY * canvas.zoom) + containerSize.height / 2 + canvas.panY;
+          const endXScreen = (wall.endX * canvas.zoom) + containerSize.width / 2 + canvas.panX;
+          const endYScreen = (wall.endY * canvas.zoom) + containerSize.height / 2 + canvas.panY;
+          return (
+            <line
+              key={wall.id}
+              x1={startXScreen}
+              y1={startYScreen}
+              x2={endXScreen}
+              y2={endYScreen}
+              stroke="hsl(var(--foreground))"
+              strokeWidth={5 * canvas.zoom}
+              strokeLinecap="round"
+            />
+          );
+        })}
+        {isDrawingMode && drawingStart && drawingCurrent && (
+          <line
+            x1={(drawingStart.x * canvas.zoom) + containerSize.width / 2 + canvas.panX}
+            y1={(drawingStart.y * canvas.zoom) + containerSize.height / 2 + canvas.panY}
+            x2={(drawingCurrent.x * canvas.zoom) + containerSize.width / 2 + canvas.panX}
+            y2={(drawingCurrent.y * canvas.zoom) + containerSize.height / 2 + canvas.panY}
+            stroke="hsl(var(--foreground))"
+            strokeWidth={5 * canvas.zoom}
+            strokeLinecap="round"
+            opacity={0.5}
+            strokeDasharray="5,5"
+          />
+        )}
+      </svg>
       <div className="absolute bottom-4 left-4 z-40 flex gap-2 bg-card p-2 rounded-lg border border-border shadow-md">
         <button onClick={() => setZoom(Math.max(0.1, canvas.zoom - 0.1))} className="p-1 hover:bg-accent rounded-md"><ZoomOut size={20} /></button>
         <span className="w-12 text-center text-sm flex items-center justify-center font-mono">{(canvas.zoom * 100).toFixed(0)}%</span>
