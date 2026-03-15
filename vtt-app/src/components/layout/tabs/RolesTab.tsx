@@ -1,6 +1,7 @@
 import { Plus, Trash2, Edit2, ChevronDown, ChevronRight, icons } from 'lucide-react';
 import React, { useState, useMemo } from 'react';
 import { useVttStore } from '../../../store';
+import { ColorPicker } from '../../ColorPicker';
 
 export const RolesTab: React.FC = () => {
   const { roles, teams, tags, setEditingEntity, addRole, deleteRole } = useVttStore();
@@ -132,12 +133,10 @@ export const RolesTab: React.FC = () => {
           )}
 
           <div className="flex items-center gap-2">
-            <input
-              type="color"
-              value={newRoleColor}
-              onChange={(e) => setNewRoleColor(e.target.value)}
-              className="w-8 h-8 rounded cursor-pointer bg-transparent border-0 p-0"
-              title="Couleur du rôle"
+            <ColorPicker
+              color={newRoleColor}
+              onChange={setNewRoleColor}
+              label="Couleur du rôle"
             />
             <button
               onClick={handleAddRole}

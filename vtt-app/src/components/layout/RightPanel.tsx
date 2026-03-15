@@ -2,6 +2,7 @@ import { Settings, ChevronLeft, ChevronRight, Upload, Grid3X3, Clock, Eye, Paint
 import React, { useState, useEffect, useRef } from 'react';
 import { useVttStore } from '../../store';
 import type { BadgeConfig, BadgeType } from '../../types';
+import { ColorPicker } from '../ColorPicker';
 
 export const RightPanel: React.FC = () => {
   const {
@@ -118,11 +119,18 @@ export const RightPanel: React.FC = () => {
       <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-6 custom-scrollbar">
 
         {/* Display Settings */}
-        <section className="flex flex-col gap-3">
-          <h3 className="font-semibold text-sm border-b border-border pb-1 flex items-center gap-2">
-            <Eye size={16} /> Affichage
-          </h3>
-          <div className="flex flex-col gap-2">
+        <section className="flex flex-col border border-border rounded-md overflow-hidden bg-background">
+          <button
+            onClick={() => toggleSection('affichage')}
+            className="flex items-center justify-between p-2 bg-muted/50 hover:bg-muted font-semibold text-sm transition-colors"
+          >
+            <div className="flex items-center gap-2">
+              <Eye size={16} /> Affichage
+            </div>
+            {expandedSections['affichage'] ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+          </button>
+          {expandedSections['affichage'] && (
+          <div className="flex flex-col gap-2 p-3 border-t border-border">
             <label className="flex items-center gap-2 text-sm cursor-pointer">
               <input
                 type="checkbox"
@@ -264,19 +272,17 @@ export const RightPanel: React.FC = () => {
 
                             {badge.type !== 'none' && badge.type !== 'team' && (
                               <div className="flex items-center gap-1 shrink-0">
-                                <input
-                                  type="color"
-                                  value={badge.bgColor}
-                                  onChange={(e) => updateBadge({ bgColor: e.target.value })}
-                                  className="w-4 h-4 p-0 border-0 rounded cursor-pointer"
-                                  title="Couleur de fond"
+                                <ColorPicker
+                                  color={badge.bgColor}
+                                  onChange={(c) => updateBadge({ bgColor: c })}
+                                  label="Couleur de fond"
+                                  className="!w-4 !h-4"
                                 />
-                                <input
-                                  type="color"
-                                  value={badge.textColor}
-                                  onChange={(e) => updateBadge({ textColor: e.target.value })}
-                                  className="w-4 h-4 p-0 border-0 rounded cursor-pointer"
-                                  title="Couleur du texte"
+                                <ColorPicker
+                                  color={badge.textColor}
+                                  onChange={(c) => updateBadge({ textColor: c })}
+                                  label="Couleur du texte"
+                                  className="!w-4 !h-4"
                                 />
                               </div>
                             )}
@@ -331,14 +337,22 @@ export const RightPanel: React.FC = () => {
               )}
             </div>
           </div>
+          )}
         </section>
 
         {/* Timer */}
-        <section className="flex flex-col gap-3">
-          <h3 className="font-semibold text-sm border-b border-border pb-1 flex items-center gap-2">
-            <Clock size={16} /> Chronomètre
-          </h3>
-          <div className="flex flex-col items-center gap-3">
+        <section className="flex flex-col border border-border rounded-md overflow-hidden bg-background">
+          <button
+            onClick={() => toggleSection('chrono')}
+            className="flex items-center justify-between p-2 bg-muted/50 hover:bg-muted font-semibold text-sm transition-colors"
+          >
+            <div className="flex items-center gap-2">
+              <Clock size={16} /> Chronomètre
+            </div>
+            {expandedSections['chrono'] ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+          </button>
+          {expandedSections['chrono'] && (
+          <div className="flex flex-col items-center gap-3 p-3 border-t border-border">
             <div className="text-3xl font-mono font-bold">
               {String(timerMinutes).padStart(2, '0')}:{String(timerSeconds).padStart(2, '0')}
             </div>
@@ -365,6 +379,7 @@ export const RightPanel: React.FC = () => {
               </button>
             </div>
           </div>
+          )}
         </section>
 
         {/* Magnetic Grid */}
@@ -487,11 +502,10 @@ export const RightPanel: React.FC = () => {
             <div className="flex flex-col gap-1">
               <label className="text-xs text-muted-foreground">Couleur de fond</label>
               <div className="flex gap-2 items-center">
-                <input
-                  type="color"
-                  value={room.backgroundColor}
-                  onChange={(e) => setRoom({ backgroundColor: e.target.value })}
-                  className="w-8 h-8 p-0 border-0 rounded cursor-pointer bg-transparent"
+                <ColorPicker
+                  color={room.backgroundColor}
+                  onChange={(c) => setRoom({ backgroundColor: c })}
+                  label="Couleur de fond"
                 />
                 <span className="text-xs uppercase font-mono">{room.backgroundColor}</span>
               </div>

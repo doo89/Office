@@ -1,6 +1,7 @@
 import { Plus, Trash2, Edit2, Tag, icons } from 'lucide-react';
 import React, { useState } from 'react';
 import { useVttStore } from '../../../store';
+import { ColorPicker } from '../../ColorPicker';
 
 const TAG_ICONS = [
   'Tag', 'Shield', 'Sword', 'Heart', 'Star', 'Flag', 'Skull', 'Ghost',
@@ -176,12 +177,10 @@ export const TagsTab: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-2">
-            <input
-              type="color"
-              value={newTagColor}
-              onChange={(e) => setNewTagColor(e.target.value)}
-              className="w-8 h-8 rounded cursor-pointer bg-transparent border-0 p-0"
-              title="Couleur du tag"
+            <ColorPicker
+              color={newTagColor}
+              onChange={setNewTagColor}
+              label="Couleur du tag"
             />
             <button
               onClick={handleAddTag}

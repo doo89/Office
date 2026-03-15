@@ -75,6 +75,9 @@ interface VttStore extends GameState {
 
   // Settings
   updateDisplaySettings: (updates: Partial<GameState['displaySettings']>) => void;
+
+  // Colors
+  addRecentColor: (color: string) => void;
 }
 
 const initialState = {
@@ -86,6 +89,7 @@ const initialState = {
   markers: [],
   markerParameters: [],
   teams: [],
+  recentColors: ['#ef4444', '#f97316', '#eab308', '#22c55e', '#3b82f6', '#8b5cf6', '#ec4899', '#ffffff', '#000000', '#6b7280'], // default colors
   isNight: false,
   cycleNumber: 1,
   walls: [],
@@ -234,6 +238,22 @@ export const useVttStore = create<VttStore>()(
       updateDisplaySettings: (updates) => set((state) => ({
         displaySettings: { ...state.displaySettings, ...updates }
       })),
+
+      // Colors
+      addRecentColor: (color) => set((state) => {
+        const uppercaseColor = color.toUpperCase();
+        const existingIndex = state.recentColors.indexOf(uppercaseColor);
+        if (existingIndex > -1) {
+          // Move to front
+          const newColors = [...state.recentColors];
+          newColors.splice(existingIndex, 1);
+          newColors.unshift(uppercaseColor);
+          return { recentColors: newColors };
+        } else {
+          // Add to front, keep max 16
+          return { recentColors: [uppercaseColor, ...state.recentColors].slice(0, 16) };
+        }
+      }),
     }),
     {
       name: 'vtt-storage',

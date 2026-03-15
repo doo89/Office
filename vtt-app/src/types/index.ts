@@ -85,6 +85,7 @@ export interface GameState {
   markerParameters: MarkerParameter[];
   teams: Team[];
   tags: TagModel[]; // Added tags property here
+  recentColors: string[];
   isNight: boolean;
   cycleNumber: number;
   walls: Wall[];

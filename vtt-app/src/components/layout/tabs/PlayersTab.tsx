@@ -1,6 +1,7 @@
 import { Plus, Trash2, Edit2, Shield, Users, Sword, Heart, Star, Flag, icons } from 'lucide-react';
 import React, { useState } from 'react';
 import { useVttStore } from '../../../store';
+import { ColorPicker } from '../../ColorPicker';
 
 const TEAM_ICONS = [
   'Users', 'Shield', 'Sword', 'Heart', 'Star', 'Flag', 'Skull', 'Ghost',
@@ -45,11 +46,10 @@ export const PlayersTab: React.FC = () => {
             className="w-full bg-input border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
           />
           <div className="flex items-center gap-2">
-            <input
-              type="color"
-              value={newPlayerColor}
-              onChange={(e) => setNewPlayerColor(e.target.value)}
-              className="w-8 h-8 rounded cursor-pointer bg-transparent border-0 p-0"
+            <ColorPicker
+              color={newPlayerColor}
+              onChange={setNewPlayerColor}
+              label="Couleur du joueur"
             />
             <button
               onClick={handleAddPlayer}
@@ -153,11 +153,10 @@ export const PlayersTab: React.FC = () => {
             </div>
           </div>
           <div className="flex items-center gap-2 mt-1">
-            <input
-              type="color"
-              value={newTeamColor}
-              onChange={(e) => setNewTeamColor(e.target.value)}
-              className="w-8 h-8 rounded cursor-pointer bg-transparent border-0 p-0"
+            <ColorPicker
+              color={newTeamColor}
+              onChange={setNewTeamColor}
+              label="Couleur de l'équipe"
             />
             <button
               onClick={() => {

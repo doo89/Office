@@ -1,6 +1,7 @@
 import React from 'react';
 import { useVttStore } from '../store';
 import { X, Trash2, icons } from 'lucide-react';
+import { ColorPicker } from './ColorPicker';
 
 const TEAM_ICONS = [
   'Users', 'Shield', 'Sword', 'Heart', 'Star', 'Flag', 'Skull', 'Ghost',
@@ -44,11 +45,11 @@ export const EditingModal: React.FC = () => {
           <div className="flex flex-col gap-1 flex-1">
             <label className="text-sm font-medium">Couleur</label>
             <div className="flex items-center gap-3">
-              <input
-                type="color"
-                value={template.color}
-                onChange={(e) => updatePlayerTemplate(template.id, { color: e.target.value })}
-                className="w-10 h-10 rounded cursor-pointer bg-transparent border-0 p-0"
+              <ColorPicker
+                color={template.color}
+                onChange={(c) => updatePlayerTemplate(template.id, { color: c })}
+                label="Couleur"
+                className="!w-10 !h-10"
               />
             </div>
           </div>
@@ -127,11 +128,11 @@ export const EditingModal: React.FC = () => {
           <div className="flex flex-col gap-1 flex-1">
             <label className="text-sm font-medium">Couleur</label>
             <div className="flex items-center gap-3">
-              <input
-                type="color"
-                value={player.color}
-                onChange={(e) => updatePlayer(player.id, { color: e.target.value })}
-                className="w-10 h-10 rounded cursor-pointer bg-transparent border-0 p-0"
+              <ColorPicker
+                color={player.color}
+                onChange={(c) => updatePlayer(player.id, { color: c })}
+                label="Couleur"
+                className="!w-10 !h-10"
               />
             </div>
           </div>
@@ -241,11 +242,11 @@ export const EditingModal: React.FC = () => {
           </div>
           <div className="flex flex-col gap-1">
             <label className="text-sm font-medium">Couleur</label>
-            <input
-              type="color"
-              value={role.color}
-              onChange={(e) => updateRole(role.id, { color: e.target.value })}
-              className="w-10 h-10 rounded cursor-pointer bg-transparent border-0 p-0"
+            <ColorPicker
+              color={role.color}
+              onChange={(c) => updateRole(role.id, { color: c })}
+              label="Couleur"
+              className="!w-10 !h-10"
             />
           </div>
         </div>
@@ -423,11 +424,11 @@ export const EditingModal: React.FC = () => {
         </div>
         <div className="flex flex-col gap-1">
           <label className="text-sm font-medium">Couleur</label>
-          <input
-            type="color"
-            value={team.color}
-            onChange={(e) => updateTeam(team.id, { color: e.target.value })}
-            className="w-10 h-10 rounded cursor-pointer bg-transparent border-0 p-0"
+          <ColorPicker
+            color={team.color}
+            onChange={(c) => updateTeam(team.id, { color: c })}
+            label="Couleur"
+            className="!w-10 !h-10"
           />
         </div>
       </div>
@@ -610,11 +611,11 @@ export const EditingModal: React.FC = () => {
         <div className="flex flex-col gap-1 mt-2">
           <label className="text-sm font-medium">Couleur</label>
           <div className="flex items-center gap-3">
-            <input
-              type="color"
-              value={tag.color}
-              onChange={(e) => updateTagModel(tag.id, { color: e.target.value })}
-              className="w-10 h-10 rounded cursor-pointer bg-transparent border-0 p-0"
+            <ColorPicker
+              color={tag.color}
+              onChange={(c) => updateTagModel(tag.id, { color: c })}
+              label="Couleur"
+              className="!w-10 !h-10"
             />
           </div>
         </div>
@@ -821,11 +822,11 @@ export const EditingModal: React.FC = () => {
         <div className="flex flex-col gap-1 mt-2">
           <label className="text-sm font-medium">Couleur</label>
           <div className="flex items-center gap-3">
-            <input
-              type="color"
-              value={tag.color}
-              onChange={(e) => updateTagInstance({ color: e.target.value })}
-              className="w-10 h-10 rounded cursor-pointer bg-transparent border-0 p-0"
+            <ColorPicker
+              color={tag.color}
+              onChange={(c) => updateTagInstance({ color: c })}
+              label="Couleur"
+              className="!w-10 !h-10"
             />
           </div>
         </div>
