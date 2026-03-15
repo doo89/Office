@@ -12,8 +12,27 @@ def test_features():
         # Wait for the app to load
         page.wait_for_selector('input[value="Ma Salle"]')
 
-        # In RightPanel, section Murs & Dessin is open by default.
-        # But just in case, check if the button is visible, if not click accordion.
+        # Add a player so we can test the z-index
+        page.fill('input[placeholder="Nom du joueur"]', 'Z-IndexTest')
+        page.click('button:has-text("Ajouter")')
+        page.wait_for_timeout(500)
+
+        # Drop the player in the middle
+        page.mouse.click(500, 500, button="right")
+        page.wait_for_timeout(500)
+        add_player_btn = page.locator('button:has-text("Ajouter un Joueur")')
+        add_player_btn.hover()
+        page.wait_for_timeout(500)
+        page.click('button:has-text("Z-IndexTest")')
+        page.wait_for_timeout(500)
+
+        # Enable Grid Magnetism
+        page.locator('button', has_text="Grille Magnétique").click()
+        page.wait_for_timeout(500)
+        page.locator('input[type="checkbox"]').nth(3).click() # 1st: Nuit, 2nd: Center, 3rd: Cycle, 4th: Grid
+        page.wait_for_timeout(500)
+
+        # In RightPanel, section Murs & Dessin
         activate_btn = page.locator('button', has_text="Activer le mode dessin")
         if not activate_btn.is_visible():
             page.locator('button', has_text="Murs & Dessin").click()
@@ -23,24 +42,22 @@ def test_features():
         activate_btn.click()
         page.wait_for_timeout(500)
 
-        # Draw a line on the canvas
+        # Draw a big line OVER the player (it should appear BEHIND the player due to z-index)
         page.mouse.move(300, 300)
         page.mouse.down()
-        page.mouse.move(500, 500)
+        page.mouse.move(700, 700)
         page.mouse.up()
         page.wait_for_timeout(500)
 
-        # Click the rectangle button to switch tools
+        # Switch to rectangle
         rect_btn = page.locator('button[title="Dessiner des rectangles"]')
         rect_btn.click()
         page.wait_for_timeout(500)
 
-        # Ensure fill color is transparent initially according to our store
-
-        # Draw a rectangle on the canvas
-        page.mouse.move(600, 300)
+        # Draw a big rectangle OVER the player
+        page.mouse.move(400, 400)
         page.mouse.down()
-        page.mouse.move(800, 500)
+        page.mouse.move(600, 600)
         page.mouse.up()
         page.wait_for_timeout(500)
 

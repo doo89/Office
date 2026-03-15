@@ -147,6 +147,14 @@ export const Canvas: React.FC = () => {
     return { x, y };
   };
 
+  const getSnappedCoordinates = (coords: { x: number, y: number }) => {
+    if (!grid.enabled) return coords;
+    return {
+      x: snapToGrid(coords.x, grid.sizeX),
+      y: snapToGrid(coords.y, grid.sizeY),
+    };
+  };
+
   const handleMouseDown = (e: React.MouseEvent) => {
     closeContextMenu();
     // Only start panning if clicking directly on the canvas background, not on entities
@@ -154,7 +162,8 @@ export const Canvas: React.FC = () => {
 
     if (isDrawingMode && e.button === 0) {
       e.preventDefault();
-      const coords = getCanvasCoordinates(e);
+      let coords = getCanvasCoordinates(e);
+      if (grid.enabled) coords = getSnappedCoordinates(coords);
       setDrawingStart(coords);
       setDrawingCurrent(coords);
       return;
@@ -169,7 +178,9 @@ export const Canvas: React.FC = () => {
 
   const handleMouseMove = (e: React.MouseEvent) => {
     if (isDrawingMode && drawingStart) {
-      setDrawingCurrent(getCanvasCoordinates(e));
+      let coords = getCanvasCoordinates(e);
+      if (grid.enabled) coords = getSnappedCoordinates(coords);
+      setDrawingCurrent(coords);
       return;
     }
 
@@ -184,7 +195,9 @@ export const Canvas: React.FC = () => {
   const handleMouseUp = (e: React.MouseEvent) => {
     if (isDrawingMode && drawingStart && drawingCurrent) {
       const startCoord = drawingStart;
-      const endCoord = getCanvasCoordinates(e);
+      let endCoord = getCanvasCoordinates(e);
+      if (grid.enabled) endCoord = getSnappedCoordinates(endCoord);
+
       // Only add wall if it has some length
       if (Math.hypot(endCoord.x - startCoord.x, endCoord.y - startCoord.y) > 5) {
         addWall({
@@ -343,75 +356,6 @@ export const Canvas: React.FC = () => {
         />
       )}
 
-      {/* Controls */}
-      <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 5, overflow: 'visible' }}>
-        {walls.map(wall => {
-          const startXScreen = (wall.startX * canvas.zoom) + containerSize.width / 2 + canvas.panX;
-          const startYScreen = (wall.startY * canvas.zoom) + containerSize.height / 2 + canvas.panY;
-          const endXScreen = (wall.endX * canvas.zoom) + containerSize.width / 2 + canvas.panX;
-          const endYScreen = (wall.endY * canvas.zoom) + containerSize.height / 2 + canvas.panY;
-
-          if (wall.type === 'rectangle') {
-            const minX = Math.min(startXScreen, endXScreen);
-            const minY = Math.min(startYScreen, endYScreen);
-            const width = Math.abs(endXScreen - startXScreen);
-            const height = Math.abs(endYScreen - startYScreen);
-            return (
-              <rect
-                key={wall.id}
-                x={minX}
-                y={minY}
-                width={width}
-                height={height}
-                stroke={wall.color}
-                strokeWidth={(wall.thickness || 5) * canvas.zoom}
-                fill={wall.fillColor === 'transparent' ? 'none' : (wall.fillColor || 'transparent')}
-                opacity={0.8}
-              />
-            );
-          } else {
-            return (
-              <line
-                key={wall.id}
-                x1={startXScreen}
-                y1={startYScreen}
-                x2={endXScreen}
-                y2={endYScreen}
-                stroke={wall.color || "hsl(var(--foreground))"}
-                strokeWidth={(wall.thickness || 5) * canvas.zoom}
-                strokeLinecap="round"
-              />
-            );
-          }
-        })}
-        {isDrawingMode && drawingStart && drawingCurrent && (
-          drawingSettings.tool === 'rectangle' ? (
-            <rect
-              x={Math.min((drawingStart.x * canvas.zoom) + containerSize.width / 2 + canvas.panX, (drawingCurrent.x * canvas.zoom) + containerSize.width / 2 + canvas.panX)}
-              y={Math.min((drawingStart.y * canvas.zoom) + containerSize.height / 2 + canvas.panY, (drawingCurrent.y * canvas.zoom) + containerSize.height / 2 + canvas.panY)}
-              width={Math.abs(((drawingCurrent.x - drawingStart.x) * canvas.zoom))}
-              height={Math.abs(((drawingCurrent.y - drawingStart.y) * canvas.zoom))}
-              stroke={drawingSettings.color}
-              strokeWidth={drawingSettings.thickness * canvas.zoom}
-              fill={drawingSettings.fillTransparent ? 'none' : drawingSettings.fillColor}
-              opacity={0.5}
-              strokeDasharray="5,5"
-            />
-          ) : (
-            <line
-              x1={(drawingStart.x * canvas.zoom) + containerSize.width / 2 + canvas.panX}
-              y1={(drawingStart.y * canvas.zoom) + containerSize.height / 2 + canvas.panY}
-              x2={(drawingCurrent.x * canvas.zoom) + containerSize.width / 2 + canvas.panX}
-              y2={(drawingCurrent.y * canvas.zoom) + containerSize.height / 2 + canvas.panY}
-              stroke={drawingSettings.color}
-              strokeWidth={drawingSettings.thickness * canvas.zoom}
-              strokeLinecap="round"
-              opacity={0.5}
-              strokeDasharray="5,5"
-            />
-          )
-        )}
-      </svg>
       <div className="absolute bottom-4 left-4 z-40 flex gap-2 bg-card p-2 rounded-lg border border-border shadow-md">
         <button onClick={() => setZoom(Math.max(0.1, canvas.zoom - 0.1))} className="p-1 hover:bg-accent rounded-md"><ZoomOut size={20} /></button>
         <span className="w-12 text-center text-sm flex items-center justify-center font-mono">{(canvas.zoom * 100).toFixed(0)}%</span>
@@ -451,6 +395,81 @@ export const Canvas: React.FC = () => {
         {displaySettings.showCenter && (
           <div className="absolute w-4 h-4 rounded-full bg-red-500/50 -ml-2 -mt-2" />
         )}
+
+        {/* Drawn Walls & Shapes (Layered below entities) */}
+        <svg
+          className="absolute pointer-events-none"
+          style={{
+            zIndex: 1,
+            overflow: 'visible',
+            left: 0,
+            top: 0,
+            width: '100%',
+            height: '100%'
+          }}
+        >
+          {walls.map(wall => {
+            if (wall.type === 'rectangle') {
+              const minX = Math.min(wall.startX, wall.endX);
+              const minY = Math.min(wall.startY, wall.endY);
+              const width = Math.abs(wall.endX - wall.startX);
+              const height = Math.abs(wall.endY - wall.startY);
+              return (
+                <rect
+                  key={wall.id}
+                  x={minX}
+                  y={minY}
+                  width={width}
+                  height={height}
+                  stroke={wall.color}
+                  strokeWidth={wall.thickness || 5}
+                  fill={wall.fillColor === 'transparent' ? 'none' : (wall.fillColor || 'transparent')}
+                  opacity={0.8}
+                />
+              );
+            } else {
+              return (
+                <line
+                  key={wall.id}
+                  x1={wall.startX}
+                  y1={wall.startY}
+                  x2={wall.endX}
+                  y2={wall.endY}
+                  stroke={wall.color || "hsl(var(--foreground))"}
+                  strokeWidth={wall.thickness || 5}
+                  strokeLinecap="round"
+                />
+              );
+            }
+          })}
+          {isDrawingMode && drawingStart && drawingCurrent && (
+            drawingSettings.tool === 'rectangle' ? (
+              <rect
+                x={Math.min(drawingStart.x, drawingCurrent.x)}
+                y={Math.min(drawingStart.y, drawingCurrent.y)}
+                width={Math.abs(drawingCurrent.x - drawingStart.x)}
+                height={Math.abs(drawingCurrent.y - drawingStart.y)}
+                stroke={drawingSettings.color}
+                strokeWidth={drawingSettings.thickness}
+                fill={drawingSettings.fillTransparent ? 'none' : drawingSettings.fillColor}
+                opacity={0.5}
+                strokeDasharray="5,5"
+              />
+            ) : (
+              <line
+                x1={drawingStart.x}
+                y1={drawingStart.y}
+                x2={drawingCurrent.x}
+                y2={drawingCurrent.y}
+                stroke={drawingSettings.color}
+                strokeWidth={drawingSettings.thickness}
+                strokeLinecap="round"
+                opacity={0.5}
+                strokeDasharray="5,5"
+              />
+            )
+          )}
+        </svg>
 
         {/* Render Players */}
         {displaySettings.showPlayers && players.map(player => {
@@ -784,7 +803,7 @@ export const Canvas: React.FC = () => {
                 className="w-full text-left px-4 py-2 text-sm hover:bg-accent hover:text-accent-foreground flex items-center gap-2"
                 onMouseDown={(e) => {
                   e.stopPropagation();
-                  useVttStore.getState().setEditingEntity({ type: 'player', id: contextMenu.entityId });
+                  useVttStore.getState().setEditingEntity({ type: 'player', id: contextMenu.entityId! });
                   closeContextMenu();
                 }}
               >
@@ -810,7 +829,7 @@ export const Canvas: React.FC = () => {
                             className="p-1 hover:text-primary"
                             onMouseDown={(e) => {
                               e.stopPropagation();
-                              useVttStore.getState().setEditingEntity({ type: 'tagInstance', id: tag.instanceId, parentId: contextMenu.entityId });
+                              useVttStore.getState().setEditingEntity({ type: 'tagInstance', id: tag.instanceId, parentId: contextMenu.entityId || undefined });
                               closeContextMenu();
                             }}
                           >
@@ -844,7 +863,7 @@ export const Canvas: React.FC = () => {
                 className="w-full text-left px-4 py-2 text-sm hover:bg-destructive/10 text-destructive flex items-center gap-2"
                 onMouseDown={(e) => {
                   e.stopPropagation();
-                  deletePlayer(contextMenu.entityId);
+                  if (contextMenu.entityId) deletePlayer(contextMenu.entityId);
                   closeContextMenu();
                 }}
               >
@@ -896,7 +915,7 @@ export const Canvas: React.FC = () => {
                 className="w-full text-left px-4 py-2 text-sm text-destructive hover:bg-destructive hover:text-destructive-foreground flex items-center gap-2"
                 onMouseDown={(e) => {
                   e.stopPropagation();
-                  deleteMarker(contextMenu.entityId);
+                  if (contextMenu.entityId) deleteMarker(contextMenu.entityId);
                   closeContextMenu();
                 }}
               >
@@ -936,8 +955,7 @@ export const Canvas: React.FC = () => {
                             isDead: false,
                             tags: [],
                             x: canvasX,
-                            y: canvasY,
-                            id: undefined
+                            y: canvasY
                           });
                           closeContextMenu();
                         }}
