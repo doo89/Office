@@ -80,6 +80,7 @@ export interface BadgeConfig {
 export interface GameState {
   roomName: string;
   selectedEntityIds: EntityId[];
+  interactionMode: 'pan' | 'select';
   players: Player[];
   roles: Role[];
   markers: Marker[];

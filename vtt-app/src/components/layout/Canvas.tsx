@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { useVttStore } from '../../store';
-import { ZoomIn, ZoomOut, Maximize, Tag, Skull, Trash2, Settings, ChevronRight, Sun, Moon, Copy, Heart, icons, Users } from 'lucide-react';
+import { ZoomIn, ZoomOut, Maximize, Tag, Skull, Trash2, Settings, ChevronRight, Sun, Moon, Copy, Heart, icons, Users, Hand, MousePointer2 } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 import type { Marker } from '../../types';
 
@@ -13,7 +13,8 @@ export const Canvas: React.FC = () => {
     markers, updateMarker, addMarker, deleteMarker,
     roles, teams, grid, room, displaySettings,
     isDrawingMode, drawingSettings, walls, addWall,
-    selectedEntityIds, setSelectedEntityIds, clearSelection
+    selectedEntityIds, setSelectedEntityIds, clearSelection,
+    interactionMode, setInteractionMode
   } = useVttStore();
   const [isPanning, setIsPanning] = useState(false);
   const [startPan, setStartPan] = useState({ x: 0, y: 0 });
@@ -206,15 +207,14 @@ export const Canvas: React.FC = () => {
     if (e.button === 1 || (e.button === 0 && e.altKey) || (!isDrawingMode && e.button === 0)) {
       e.preventDefault();
 
-      if (!e.altKey && e.button === 0) {
-        // Start selection rectangle instead of pan
+      if (e.button === 1 || (e.button === 0 && e.altKey) || (e.button === 0 && interactionMode === 'pan')) {
+        setIsPanning(true);
+        setStartPan({ x: e.clientX, y: e.clientY });
+      } else if (e.button === 0 && interactionMode === 'select') {
         setIsSelecting(true);
         const coords = getCanvasCoordinates(e);
         setSelectionBoxStart(coords);
         setSelectionBoxCurrent(coords);
-      } else {
-        setIsPanning(true);
-        setStartPan({ x: e.clientX, y: e.clientY });
       }
     }
   };
@@ -444,6 +444,21 @@ export const Canvas: React.FC = () => {
         <button onClick={() => setZoom(Math.min(5, canvas.zoom + 0.1))} className="p-1 hover:bg-accent rounded-md"><ZoomIn size={20} /></button>
         <div className="w-px h-6 bg-border mx-1" />
         <button onClick={() => { setZoom(1); setPan(0, 0); }} className="p-1 hover:bg-accent rounded-md" title="Reset View"><Maximize size={20} /></button>
+        <div className="w-px h-6 bg-border mx-1" />
+        <button
+          onClick={() => setInteractionMode('pan')}
+          className={`p-1 rounded-md ${interactionMode === 'pan' && !isDrawingMode ? 'bg-primary text-primary-foreground' : 'hover:bg-accent'}`}
+          title="Mode Déplacement (Pan)"
+        >
+          <Hand size={20} />
+        </button>
+        <button
+          onClick={() => setInteractionMode('select')}
+          className={`p-1 rounded-md ${interactionMode === 'select' && !isDrawingMode ? 'bg-primary text-primary-foreground' : 'hover:bg-accent'}`}
+          title="Mode Sélection Multiple"
+        >
+          <MousePointer2 size={20} />
+        </button>
       </div>
 
       {/* The actual infinite canvas */}
