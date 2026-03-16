@@ -26,6 +26,8 @@ export interface Role {
   seenAsRoleId?: EntityId | null;
   seenInTeamId?: EntityId | null;
   description?: string;
+  isSelectableForDistribution?: boolean;
+  distributionQuantity?: number;
 }
 
 export interface MarkerParameter {

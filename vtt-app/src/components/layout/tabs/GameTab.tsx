@@ -1,12 +1,13 @@
-import { Moon, Sun, FastForward, RotateCcw, ChevronDown, ChevronRight } from 'lucide-react';
+import { Moon, Sun, FastForward, RotateCcw, ChevronDown, ChevronRight, Shuffle } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 import { useVttStore } from '../../../store';
-import type { Player, Marker, TagInstance } from '../../../types';
+import type { Player, Marker, TagInstance, Role } from '../../../types';
 
 export const GameTab: React.FC = () => {
-  const { isNight, cycleNumber, nextCycle, resetCycle, players, markers, updatePlayer, updateMarker } = useVttStore();
+  const { isNight, cycleNumber, nextCycle, resetCycle, players, markers, updatePlayer, updateMarker, roles, updateRole } = useVttStore();
 
   const [expandedCalledTags, setExpandedCalledTags] = useState<Record<string, boolean>>({});
+  const [isDistributionExpanded, setIsDistributionExpanded] = useState<boolean>(true);
   const [expandedOtherTags, setExpandedOtherTags] = useState<Record<string, boolean>>({});
 
   const toggleCalledTag = (id: string) => {
@@ -56,8 +57,8 @@ export const GameTab: React.FC = () => {
 
   // Generate Call Order List dynamically
   const { calledEntities, otherEntities } = useMemo(() => {
-    const called: Array<{ type: 'player' | 'marker', entity: any, order: number, reason: string }> = [];
-    const others: Array<{ type: 'player' | 'marker', entity: any }> = [];
+    const called: Array<{ type: 'player' | 'marker', entity: Player | Marker, order: number, reason: string }> = [];
+    const others: Array<{ type: 'player' | 'marker', entity: Player | Marker }> = [];
 
     // Check Players
     players.forEach(player => {
@@ -115,9 +116,134 @@ export const GameTab: React.FC = () => {
     return { calledEntities: called, otherEntities: others };
   }, [players, markers, isNight]);
 
+  // Role distribution logic
+  const selectedRolesForDistribution = useMemo(() => {
+    return roles.filter(r => r.isSelectableForDistribution);
+  }, [roles]);
+
+  const totalRolesToDistribute = useMemo(() => {
+    return selectedRolesForDistribution.reduce((total, role) => {
+      if (role.isUnique) {
+        return total + 1;
+      }
+      return total + (role.distributionQuantity || 1);
+    }, 0);
+  }, [selectedRolesForDistribution]);
+
+  const totalPlayersInRoom = players.length;
+
+  const canDistribute = totalRolesToDistribute === totalPlayersInRoom && totalPlayersInRoom > 0;
+
+  const handleDistributeRoles = () => {
+    if (!canDistribute) return;
+
+    // Create array of roles to distribute
+    const rolesPool: Role[] = [];
+    selectedRolesForDistribution.forEach(role => {
+      const quantity = role.isUnique ? 1 : (role.distributionQuantity || 1);
+      for (let i = 0; i < quantity; i++) {
+        rolesPool.push(role);
+      }
+    });
+
+    // Shuffle the roles pool using Fisher-Yates
+    for (let i = rolesPool.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [rolesPool[i], rolesPool[j]] = [rolesPool[j], rolesPool[i]];
+    }
+
+    // Assign to players
+    players.forEach((player, index) => {
+      const assignedRole = rolesPool[index];
+      if (assignedRole) {
+        // Only update the role, keep existing player tags (or should we add role's default tags?
+        // Usually assigning a role replaces their tags with the role's tags, or adds them.
+        // Let's add the role's default tags as local tags to the player, or just set the roleId.
+        // The role's default tags will be available via the roleId automatically.
+        updatePlayer(player.id, {
+          roleId: assignedRole.id,
+          teamId: assignedRole.teamId // Usually assigning a role also assigns the role's default team
+        });
+      }
+    });
+  };
 
   return (
     <div className="flex flex-col gap-6">
+      {/* Distribution des rôles */}
+      <section className="flex flex-col gap-2">
+        <button
+          onClick={() => setIsDistributionExpanded(!isDistributionExpanded)}
+          className="flex items-center justify-between font-semibold text-sm border-b border-border pb-1 hover:text-primary transition-colors"
+        >
+          <span>Distribution des Rôles</span>
+          {isDistributionExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+        </button>
+
+        {isDistributionExpanded && (
+          <div className="flex flex-col gap-3 p-3 bg-muted/30 rounded-lg border border-border">
+            <div className="flex justify-between items-center text-sm">
+              <span className="text-muted-foreground">Joueurs en salle :</span>
+              <span className="font-bold">{totalPlayersInRoom}</span>
+            </div>
+
+            <div className="flex justify-between items-center text-sm">
+              <span className="text-muted-foreground">Rôles sélectionnés :</span>
+              <span className={`font-bold ${totalRolesToDistribute !== totalPlayersInRoom ? 'text-destructive' : 'text-primary'}`}>
+                {totalRolesToDistribute}
+              </span>
+            </div>
+
+            {selectedRolesForDistribution.length > 0 && (
+              <div className="flex flex-col gap-2 mt-2 pt-2 border-t border-border/50">
+                {selectedRolesForDistribution.map(role => (
+                  <div key={role.id} className="flex items-center justify-between gap-2 text-sm">
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                      <div className="w-3 h-3 rounded-sm shrink-0" style={{ backgroundColor: role.color }} />
+                      <span className="truncate">{role.name}</span>
+                    </div>
+
+                    {!role.isUnique ? (
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-muted-foreground">Qté:</span>
+                        <input
+                          type="number"
+                          min="1"
+                          value={role.distributionQuantity || 1}
+                          onChange={(e) => updateRole(role.id, { distributionQuantity: Math.max(1, parseInt(e.target.value) || 1) })}
+                          className="w-16 bg-background border border-border rounded px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-ring text-center"
+                        />
+                      </div>
+                    ) : (
+                      <span className="text-xs text-muted-foreground italic mr-6">Unique</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <button
+              onClick={handleDistributeRoles}
+              disabled={!canDistribute}
+              className={`mt-2 flex items-center justify-center gap-2 w-full py-2 rounded-md text-sm font-medium transition-colors ${
+                canDistribute
+                  ? 'bg-primary text-primary-foreground hover:bg-primary/90'
+                  : 'bg-muted text-muted-foreground cursor-not-allowed'
+              }`}
+            >
+              <Shuffle size={16} />
+              Distribuer Aléatoirement
+            </button>
+
+            {!canDistribute && totalPlayersInRoom > 0 && (
+              <p className="text-[10px] text-destructive text-center mt-1">
+                Le nombre de rôles ({totalRolesToDistribute}) doit être égal au nombre de joueurs ({totalPlayersInRoom}).
+              </p>
+            )}
+          </div>
+        )}
+      </section>
+
       <section className="flex flex-col gap-3">
         <h3 className="font-semibold text-sm border-b border-border pb-1">Phase Actuelle</h3>
         <div className="p-4 border border-border rounded-lg bg-card text-center flex flex-col items-center justify-center gap-3">
@@ -160,7 +286,7 @@ export const GameTab: React.FC = () => {
                       {item.order}
                     </span>
                     <span className="font-medium text-sm">
-                      {item.type === 'player' ? item.entity.name : `Marqueur: ${item.entity.tag.name}`}
+                      {item.type === 'player' ? (item.entity as Player).name : `Marqueur: ${(item.entity as Marker).tag.name}`}
                     </span>
                   </div>
                   <span className="text-[10px] text-muted-foreground bg-accent px-1.5 py-0.5 rounded">
@@ -169,17 +295,17 @@ export const GameTab: React.FC = () => {
                 </div>
 
                 {/* Quick actions for players */}
-                {item.type === 'player' && item.entity.tags.filter((t: TagInstance) => t.showInGameTab !== false).length > 0 && (
+                {item.type === 'player' && (item.entity as Player).tags.filter((t: TagInstance) => t.showInGameTab !== false).length > 0 && (
                   <div className="flex flex-col gap-1 mt-1">
                     <button
                       onClick={() => toggleCalledTag(item.entity.id)}
                       className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors w-max"
                     >
                       {expandedCalledTags[item.entity.id] !== false ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
-                      Tags ({item.entity.tags.filter((t: TagInstance) => t.showInGameTab !== false).length})
+                      Tags ({(item.entity as Player).tags.filter((t: TagInstance) => t.showInGameTab !== false).length})
                     </button>
 
-                    {expandedCalledTags[item.entity.id] !== false && item.entity.tags.filter((t: TagInstance) => t.showInGameTab !== false).map((tag: TagInstance) => (
+                    {expandedCalledTags[item.entity.id] !== false && (item.entity as Player).tags.filter((t: TagInstance) => t.showInGameTab !== false).map((tag: TagInstance) => (
                       <div key={tag.instanceId} className="flex flex-col gap-1 pl-7 pr-2 bg-background/30 rounded p-1">
                         <span className="text-xs font-semibold text-muted-foreground" title={tag.name}>Tag: {tag.name}</span>
 
@@ -187,9 +313,9 @@ export const GameTab: React.FC = () => {
                           <div className="flex items-center justify-between pl-2">
                             <span className="text-[10px] text-muted-foreground">Utilisations</span>
                             <div className="flex items-center gap-1">
-                              <button onClick={() => handleModifyTagField(item.entity, tag, 'uses', -1)} className="w-4 h-4 flex items-center justify-center bg-accent rounded text-[10px] hover:bg-accent/80">-</button>
+                              <button onClick={() => handleModifyTagField((item.entity as Player), tag, 'uses', -1)} className="w-4 h-4 flex items-center justify-center bg-accent rounded text-[10px] hover:bg-accent/80">-</button>
                               <span className="text-[10px] w-4 text-center">{tag.uses}</span>
-                              <button onClick={() => handleModifyTagField(item.entity, tag, 'uses', 1)} className="w-4 h-4 flex items-center justify-center bg-accent rounded text-[10px] hover:bg-accent/80">+</button>
+                              <button onClick={() => handleModifyTagField((item.entity as Player), tag, 'uses', 1)} className="w-4 h-4 flex items-center justify-center bg-accent rounded text-[10px] hover:bg-accent/80">+</button>
                             </div>
                           </div>
                         )}
@@ -197,9 +323,9 @@ export const GameTab: React.FC = () => {
                           <div className="flex items-center justify-between pl-2">
                             <span className="text-[10px] text-muted-foreground">Vies</span>
                             <div className="flex items-center gap-1">
-                              <button onClick={() => handleModifyTagField(item.entity, tag, 'lives', -1)} className="w-4 h-4 flex items-center justify-center bg-accent rounded text-[10px] hover:bg-accent/80">-</button>
+                              <button onClick={() => handleModifyTagField((item.entity as Player), tag, 'lives', -1)} className="w-4 h-4 flex items-center justify-center bg-accent rounded text-[10px] hover:bg-accent/80">-</button>
                               <span className="text-[10px] w-4 text-center">{tag.lives}</span>
-                              <button onClick={() => handleModifyTagField(item.entity, tag, 'lives', 1)} className="w-4 h-4 flex items-center justify-center bg-accent rounded text-[10px] hover:bg-accent/80">+</button>
+                              <button onClick={() => handleModifyTagField((item.entity as Player), tag, 'lives', 1)} className="w-4 h-4 flex items-center justify-center bg-accent rounded text-[10px] hover:bg-accent/80">+</button>
                             </div>
                           </div>
                         )}
@@ -207,9 +333,9 @@ export const GameTab: React.FC = () => {
                           <div className="flex items-center justify-between pl-2">
                             <span className="text-[10px] text-muted-foreground">Votes</span>
                             <div className="flex items-center gap-1">
-                              {tag.votes !== -1 && <button onClick={() => handleModifyTagField(item.entity, tag, 'votes', -1)} className="w-4 h-4 flex items-center justify-center bg-accent rounded text-[10px] hover:bg-accent/80">-</button>}
+                              {tag.votes !== -1 && <button onClick={() => handleModifyTagField((item.entity as Player), tag, 'votes', -1)} className="w-4 h-4 flex items-center justify-center bg-accent rounded text-[10px] hover:bg-accent/80">-</button>}
                               <span className="text-[10px] w-10 text-center">{tag.votes === -1 ? 'Illimité' : tag.votes}</span>
-                              {tag.votes !== -1 && <button onClick={() => handleModifyTagField(item.entity, tag, 'votes', 1)} className="w-4 h-4 flex items-center justify-center bg-accent rounded text-[10px] hover:bg-accent/80">+</button>}
+                              {tag.votes !== -1 && <button onClick={() => handleModifyTagField((item.entity as Player), tag, 'votes', 1)} className="w-4 h-4 flex items-center justify-center bg-accent rounded text-[10px] hover:bg-accent/80">+</button>}
                             </div>
                           </div>
                         )}
@@ -217,9 +343,9 @@ export const GameTab: React.FC = () => {
                           <div className="flex items-center justify-between pl-2">
                             <span className="text-[10px] text-muted-foreground">Points</span>
                             <div className="flex items-center gap-1">
-                              <button onClick={() => handleModifyTagField(item.entity, tag, 'points', -1)} className="w-4 h-4 flex items-center justify-center bg-accent rounded text-[10px] hover:bg-accent/80">-</button>
+                              <button onClick={() => handleModifyTagField((item.entity as Player), tag, 'points', -1)} className="w-4 h-4 flex items-center justify-center bg-accent rounded text-[10px] hover:bg-accent/80">-</button>
                               <span className="text-[10px] w-4 text-center">{tag.points}</span>
-                              <button onClick={() => handleModifyTagField(item.entity, tag, 'points', 1)} className="w-4 h-4 flex items-center justify-center bg-accent rounded text-[10px] hover:bg-accent/80">+</button>
+                              <button onClick={() => handleModifyTagField((item.entity as Player), tag, 'points', 1)} className="w-4 h-4 flex items-center justify-center bg-accent rounded text-[10px] hover:bg-accent/80">+</button>
                             </div>
                           </div>
                         )}
@@ -229,45 +355,45 @@ export const GameTab: React.FC = () => {
                 )}
 
                 {/* Quick actions for markers */}
-                {item.type === 'marker' && item.entity.tag.showInGameTab !== false && (
+                {item.type === 'marker' && (item.entity as Marker).tag.showInGameTab !== false && (
                   <div className="flex flex-col gap-1 pl-7 pr-2">
-                    {item.entity.tag.uses !== null && (
+                    {(item.entity as Marker).tag.uses !== null && (
                       <div className="flex items-center justify-between">
                         <span className="text-[10px] text-muted-foreground">Utilisations</span>
                         <div className="flex items-center gap-1">
-                          <button onClick={() => handleModifyMarkerTagField(item.entity, 'uses', -1)} className="w-4 h-4 flex items-center justify-center bg-accent rounded text-[10px] hover:bg-accent/80">-</button>
-                          <span className="text-[10px] w-4 text-center">{item.entity.tag.uses}</span>
-                          <button onClick={() => handleModifyMarkerTagField(item.entity, 'uses', 1)} className="w-4 h-4 flex items-center justify-center bg-accent rounded text-[10px] hover:bg-accent/80">+</button>
+                          <button onClick={() => handleModifyMarkerTagField((item.entity as Marker), 'uses', -1)} className="w-4 h-4 flex items-center justify-center bg-accent rounded text-[10px] hover:bg-accent/80">-</button>
+                          <span className="text-[10px] w-4 text-center">{(item.entity as Marker).tag.uses}</span>
+                          <button onClick={() => handleModifyMarkerTagField((item.entity as Marker), 'uses', 1)} className="w-4 h-4 flex items-center justify-center bg-accent rounded text-[10px] hover:bg-accent/80">+</button>
                         </div>
                       </div>
                     )}
-                    {item.entity.tag.lives !== null && (
+                    {(item.entity as Marker).tag.lives !== null && (
                       <div className="flex items-center justify-between">
                         <span className="text-[10px] text-muted-foreground">Vies</span>
                         <div className="flex items-center gap-1">
-                          <button onClick={() => handleModifyMarkerTagField(item.entity, 'lives', -1)} className="w-4 h-4 flex items-center justify-center bg-accent rounded text-[10px] hover:bg-accent/80">-</button>
-                          <span className="text-[10px] w-4 text-center">{item.entity.tag.lives}</span>
-                          <button onClick={() => handleModifyMarkerTagField(item.entity, 'lives', 1)} className="w-4 h-4 flex items-center justify-center bg-accent rounded text-[10px] hover:bg-accent/80">+</button>
+                          <button onClick={() => handleModifyMarkerTagField((item.entity as Marker), 'lives', -1)} className="w-4 h-4 flex items-center justify-center bg-accent rounded text-[10px] hover:bg-accent/80">-</button>
+                          <span className="text-[10px] w-4 text-center">{(item.entity as Marker).tag.lives}</span>
+                          <button onClick={() => handleModifyMarkerTagField((item.entity as Marker), 'lives', 1)} className="w-4 h-4 flex items-center justify-center bg-accent rounded text-[10px] hover:bg-accent/80">+</button>
                         </div>
                       </div>
                     )}
-                    {item.entity.tag.votes !== null && (
+                    {(item.entity as Marker).tag.votes !== null && (
                       <div className="flex items-center justify-between">
                         <span className="text-[10px] text-muted-foreground">Votes</span>
                         <div className="flex items-center gap-1">
-                          {item.entity.tag.votes !== -1 && <button onClick={() => handleModifyMarkerTagField(item.entity, 'votes', -1)} className="w-4 h-4 flex items-center justify-center bg-accent rounded text-[10px] hover:bg-accent/80">-</button>}
-                          <span className="text-[10px] w-10 text-center">{item.entity.tag.votes === -1 ? 'Illimité' : item.entity.tag.votes}</span>
-                          {item.entity.tag.votes !== -1 && <button onClick={() => handleModifyMarkerTagField(item.entity, 'votes', 1)} className="w-4 h-4 flex items-center justify-center bg-accent rounded text-[10px] hover:bg-accent/80">+</button>}
+                          {(item.entity as Marker).tag.votes !== -1 && <button onClick={() => handleModifyMarkerTagField((item.entity as Marker), 'votes', -1)} className="w-4 h-4 flex items-center justify-center bg-accent rounded text-[10px] hover:bg-accent/80">-</button>}
+                          <span className="text-[10px] w-10 text-center">{(item.entity as Marker).tag.votes === -1 ? 'Illimité' : (item.entity as Marker).tag.votes}</span>
+                          {(item.entity as Marker).tag.votes !== -1 && <button onClick={() => handleModifyMarkerTagField((item.entity as Marker), 'votes', 1)} className="w-4 h-4 flex items-center justify-center bg-accent rounded text-[10px] hover:bg-accent/80">+</button>}
                         </div>
                       </div>
                     )}
-                    {item.entity.tag.points !== null && (
+                    {(item.entity as Marker).tag.points !== null && (
                       <div className="flex items-center justify-between">
                         <span className="text-[10px] text-muted-foreground">Points</span>
                         <div className="flex items-center gap-1">
-                          <button onClick={() => handleModifyMarkerTagField(item.entity, 'points', -1)} className="w-4 h-4 flex items-center justify-center bg-accent rounded text-[10px] hover:bg-accent/80">-</button>
-                          <span className="text-[10px] w-4 text-center">{item.entity.tag.points}</span>
-                          <button onClick={() => handleModifyMarkerTagField(item.entity, 'points', 1)} className="w-4 h-4 flex items-center justify-center bg-accent rounded text-[10px] hover:bg-accent/80">+</button>
+                          <button onClick={() => handleModifyMarkerTagField((item.entity as Marker), 'points', -1)} className="w-4 h-4 flex items-center justify-center bg-accent rounded text-[10px] hover:bg-accent/80">-</button>
+                          <span className="text-[10px] w-4 text-center">{(item.entity as Marker).tag.points}</span>
+                          <button onClick={() => handleModifyMarkerTagField((item.entity as Marker), 'points', 1)} className="w-4 h-4 flex items-center justify-center bg-accent rounded text-[10px] hover:bg-accent/80">+</button>
                         </div>
                       </div>
                     )}
@@ -286,17 +412,17 @@ export const GameTab: React.FC = () => {
              <p className="text-xs text-muted-foreground text-center">Aucune autre entité.</p>
           ) : (
             otherEntities.map((item, index) => {
-              const hasTags = item.type === 'player' && item.entity.tags.filter((t: TagInstance) => t.showInGameTab !== false).length > 0;
-              const isExpanded = expandedOtherTags[item.type === 'player' ? item.entity.id : item.entity.id] === true;
+              const hasTags = item.type === 'player' && (item.entity as Player).tags.filter((t: TagInstance) => t.showInGameTab !== false).length > 0;
+              const isExpanded = expandedOtherTags[item.entity.id] === true;
 
               return (
                 <div key={`other-${index}`} className="flex flex-col p-1.5 rounded bg-muted/30">
                   <div className="flex items-center justify-between text-xs">
                      <span className="truncate flex-1 font-medium">
-                        {item.type === 'player' ? item.entity.name : `Marqueur: ${item.entity.tag.name}`}
+                        {item.type === 'player' ? (item.entity as Player).name : `Marqueur: ${(item.entity as Marker).tag.name}`}
                      </span>
                      <span className="text-[10px] text-muted-foreground w-12 text-right">
-                       {item.type === 'player' && item.entity.isDead ? '(Mort)' : ''}
+                       {item.type === 'player' && (item.entity as Player).isDead ? '(Mort)' : ''}
                      </span>
                   </div>
 
@@ -307,10 +433,10 @@ export const GameTab: React.FC = () => {
                         className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground transition-colors w-max"
                       >
                         {isExpanded ? <ChevronDown size={10} /> : <ChevronRight size={10} />}
-                        Tags ({item.entity.tags.filter((t: TagInstance) => t.showInGameTab !== false).length})
+                        Tags ({(item.entity as Player).tags.filter((t: TagInstance) => t.showInGameTab !== false).length})
                       </button>
 
-                      {isExpanded && item.entity.tags.filter((t: TagInstance) => t.showInGameTab !== false).map((tag: TagInstance) => (
+                      {isExpanded && (item.entity as Player).tags.filter((t: TagInstance) => t.showInGameTab !== false).map((tag: TagInstance) => (
                         <div key={tag.instanceId} className="flex flex-col gap-1 pl-4 pr-1 bg-background/50 rounded py-1 mt-1">
                           <span className="text-[10px] font-semibold text-muted-foreground" title={tag.name}>Tag: {tag.name}</span>
 
@@ -318,9 +444,9 @@ export const GameTab: React.FC = () => {
                             <div className="flex items-center justify-between pl-2">
                               <span className="text-[9px] text-muted-foreground">Utilisations</span>
                               <div className="flex items-center gap-0.5">
-                                <button onClick={() => handleModifyTagField(item.entity, tag, 'uses', -1)} className="w-3.5 h-3.5 flex items-center justify-center bg-accent rounded text-[9px] hover:bg-accent/80">-</button>
+                                <button onClick={() => handleModifyTagField((item.entity as Player), tag, 'uses', -1)} className="w-3.5 h-3.5 flex items-center justify-center bg-accent rounded text-[9px] hover:bg-accent/80">-</button>
                                 <span className="text-[9px] w-3 text-center">{tag.uses}</span>
-                                <button onClick={() => handleModifyTagField(item.entity, tag, 'uses', 1)} className="w-3.5 h-3.5 flex items-center justify-center bg-accent rounded text-[9px] hover:bg-accent/80">+</button>
+                                <button onClick={() => handleModifyTagField((item.entity as Player), tag, 'uses', 1)} className="w-3.5 h-3.5 flex items-center justify-center bg-accent rounded text-[9px] hover:bg-accent/80">+</button>
                               </div>
                             </div>
                           )}
@@ -328,9 +454,9 @@ export const GameTab: React.FC = () => {
                             <div className="flex items-center justify-between pl-2">
                               <span className="text-[9px] text-muted-foreground">Vies</span>
                               <div className="flex items-center gap-0.5">
-                                <button onClick={() => handleModifyTagField(item.entity, tag, 'lives', -1)} className="w-3.5 h-3.5 flex items-center justify-center bg-accent rounded text-[9px] hover:bg-accent/80">-</button>
+                                <button onClick={() => handleModifyTagField((item.entity as Player), tag, 'lives', -1)} className="w-3.5 h-3.5 flex items-center justify-center bg-accent rounded text-[9px] hover:bg-accent/80">-</button>
                                 <span className="text-[9px] w-3 text-center">{tag.lives}</span>
-                                <button onClick={() => handleModifyTagField(item.entity, tag, 'lives', 1)} className="w-3.5 h-3.5 flex items-center justify-center bg-accent rounded text-[9px] hover:bg-accent/80">+</button>
+                                <button onClick={() => handleModifyTagField((item.entity as Player), tag, 'lives', 1)} className="w-3.5 h-3.5 flex items-center justify-center bg-accent rounded text-[9px] hover:bg-accent/80">+</button>
                               </div>
                             </div>
                           )}
@@ -338,9 +464,9 @@ export const GameTab: React.FC = () => {
                             <div className="flex items-center justify-between pl-2">
                               <span className="text-[9px] text-muted-foreground">Votes</span>
                               <div className="flex items-center gap-0.5">
-                                {tag.votes !== -1 && <button onClick={() => handleModifyTagField(item.entity, tag, 'votes', -1)} className="w-3.5 h-3.5 flex items-center justify-center bg-accent rounded text-[9px] hover:bg-accent/80">-</button>}
+                                {tag.votes !== -1 && <button onClick={() => handleModifyTagField((item.entity as Player), tag, 'votes', -1)} className="w-3.5 h-3.5 flex items-center justify-center bg-accent rounded text-[9px] hover:bg-accent/80">-</button>}
                                 <span className="text-[9px] w-8 text-center">{tag.votes === -1 ? 'Illimité' : tag.votes}</span>
-                                {tag.votes !== -1 && <button onClick={() => handleModifyTagField(item.entity, tag, 'votes', 1)} className="w-3.5 h-3.5 flex items-center justify-center bg-accent rounded text-[9px] hover:bg-accent/80">+</button>}
+                                {tag.votes !== -1 && <button onClick={() => handleModifyTagField((item.entity as Player), tag, 'votes', 1)} className="w-3.5 h-3.5 flex items-center justify-center bg-accent rounded text-[9px] hover:bg-accent/80">+</button>}
                               </div>
                             </div>
                           )}
@@ -348,9 +474,9 @@ export const GameTab: React.FC = () => {
                             <div className="flex items-center justify-between pl-2">
                               <span className="text-[9px] text-muted-foreground">Points</span>
                               <div className="flex items-center gap-0.5">
-                                <button onClick={() => handleModifyTagField(item.entity, tag, 'points', -1)} className="w-3.5 h-3.5 flex items-center justify-center bg-accent rounded text-[9px] hover:bg-accent/80">-</button>
+                                <button onClick={() => handleModifyTagField((item.entity as Player), tag, 'points', -1)} className="w-3.5 h-3.5 flex items-center justify-center bg-accent rounded text-[9px] hover:bg-accent/80">-</button>
                                 <span className="text-[9px] w-3 text-center">{tag.points}</span>
-                                <button onClick={() => handleModifyTagField(item.entity, tag, 'points', 1)} className="w-3.5 h-3.5 flex items-center justify-center bg-accent rounded text-[9px] hover:bg-accent/80">+</button>
+                                <button onClick={() => handleModifyTagField((item.entity as Player), tag, 'points', 1)} className="w-3.5 h-3.5 flex items-center justify-center bg-accent rounded text-[9px] hover:bg-accent/80">+</button>
                               </div>
                             </div>
                           )}

@@ -4,7 +4,7 @@ import { useVttStore } from '../../../store';
 import { ColorPicker } from '../../ColorPicker';
 
 export const RolesTab: React.FC = () => {
-  const { roles, teams, tags, setEditingEntity, addRole, deleteRole } = useVttStore();
+  const { roles, teams, tags, setEditingEntity, addRole, updateRole, deleteRole } = useVttStore();
   const [newRoleName, setNewRoleName] = useState('');
   const [newRoleColor, setNewRoleColor] = useState('#3b82f6');
   const [newRoleLives, setNewRoleLives] = useState(1);
@@ -47,6 +47,8 @@ export const RolesTab: React.FC = () => {
       isUnique: newRoleUnique,
       teamId: newRoleTeamId || null,
       tags: selectedTags,
+      isSelectableForDistribution: false,
+      distributionQuantity: 1,
     });
     setNewRoleName('');
     setNewRoleLives(1);
@@ -191,6 +193,13 @@ export const RolesTab: React.FC = () => {
                             className="flex items-center justify-between p-2 rounded-md border border-border bg-card hover:bg-accent/50 group"
                           >
                             <div className="flex items-center gap-3">
+                              <input
+                                type="checkbox"
+                                checked={role.isSelectableForDistribution || false}
+                                onChange={(e) => updateRole(role.id, { isSelectableForDistribution: e.target.checked })}
+                                className="w-4 h-4 rounded border-border text-primary focus:ring-ring cursor-pointer"
+                                title="Sélectionner pour la distribution aléatoire"
+                              />
                               <div
                                 className="w-4 h-4 rounded-sm border border-border"
                                 style={{ backgroundColor: role.color }}
