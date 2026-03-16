@@ -12,12 +12,16 @@ export const Canvas: React.FC = () => {
     players, updatePlayer, addPlayer, deletePlayer,
     markers, updateMarker, addMarker, deleteMarker,
     roles, teams, grid, room, displaySettings,
-    isDrawingMode, drawingSettings, walls, addWall
+    isDrawingMode, drawingSettings, walls, addWall,
+    selectedEntityIds, setSelectedEntityIds, clearSelection
   } = useVttStore();
   const [isPanning, setIsPanning] = useState(false);
   const [startPan, setStartPan] = useState({ x: 0, y: 0 });
   const [drawingStart, setDrawingStart] = useState<{ x: number, y: number } | null>(null);
   const [drawingCurrent, setDrawingCurrent] = useState<{ x: number, y: number } | null>(null);
+  const [selectionBoxStart, setSelectionBoxStart] = useState<{ x: number, y: number } | null>(null);
+  const [selectionBoxCurrent, setSelectionBoxCurrent] = useState<{ x: number, y: number } | null>(null);
+  const [isSelecting, setIsSelecting] = useState(false);
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
 
   useEffect(() => {
@@ -31,9 +35,9 @@ export const Canvas: React.FC = () => {
     setContainerSize({ width: containerRef.current.clientWidth, height: containerRef.current.clientHeight });
     return () => observer.disconnect();
   }, []);
-  const [contextMenu, setContextMenu] = useState<{ x: number, y: number, type: 'player' | 'marker' | 'canvas', entityId: string | null } | null>(null);
+  const [contextMenu, setContextMenu] = useState<{ x: number, y: number, type: 'player' | 'marker' | 'canvas' | 'group', entityId: string | null } | null>(null);
 
-  const handleContextMenu = (e: React.MouseEvent, type: 'player' | 'marker' | 'canvas', entityId: string | null = null) => {
+  const handleContextMenu = (e: React.MouseEvent, type: 'player' | 'marker' | 'canvas' | 'group', entityId: string | null = null) => {
     e.preventDefault();
     e.stopPropagation();
     setContextMenu({ x: e.clientX, y: e.clientY, type, entityId });
@@ -117,6 +121,30 @@ export const Canvas: React.FC = () => {
 
         // If not merged, just update position
         updateMarker(marker.id, { x: canvasX, y: canvasY });
+      } else if (payload.type === 'group_move') {
+        const anchorId = payload.anchorId;
+        const anchorPlayer = players.find(p => p.id === anchorId);
+        const anchorMarker = markers.find(m => m.id === anchorId);
+
+        const anchorEntity = anchorPlayer || anchorMarker;
+        if (!anchorEntity) return;
+
+        // Calculate delta
+        const dx = canvasX - anchorEntity.x;
+        const dy = canvasY - anchorEntity.y;
+
+        // Apply delta to all selected entities
+        selectedEntityIds.forEach(id => {
+          const player = players.find(p => p.id === id);
+          if (player) {
+            updatePlayer(player.id, { x: player.x + dx, y: player.y + dy });
+          } else {
+            const marker = markers.find(m => m.id === id);
+            if (marker) {
+              updateMarker(marker.id, { x: marker.x + dx, y: marker.y + dy });
+            }
+          }
+        });
       }
     } catch (err) {
       console.error("Drop error", err);
@@ -158,7 +186,13 @@ export const Canvas: React.FC = () => {
   const handleMouseDown = (e: React.MouseEvent) => {
     closeContextMenu();
     // Only start panning if clicking directly on the canvas background, not on entities
-    if ((e.target as HTMLElement).closest('.canvas-entity')) return;
+    if ((e.target as HTMLElement).closest('.canvas-entity')) {
+      return;
+    }
+
+    if (!e.shiftKey) {
+      clearSelection();
+    }
 
     if (isDrawingMode && e.button === 0) {
       e.preventDefault();
@@ -169,10 +203,19 @@ export const Canvas: React.FC = () => {
       return;
     }
 
-    if (e.button === 1 || (e.button === 0 && e.altKey) || e.button === 0) { // Allow left click pan for now if not on entity
+    if (e.button === 1 || (e.button === 0 && e.altKey) || (!isDrawingMode && e.button === 0)) {
       e.preventDefault();
-      setIsPanning(true);
-      setStartPan({ x: e.clientX, y: e.clientY });
+
+      if (!e.altKey && e.button === 0) {
+        // Start selection rectangle instead of pan
+        setIsSelecting(true);
+        const coords = getCanvasCoordinates(e);
+        setSelectionBoxStart(coords);
+        setSelectionBoxCurrent(coords);
+      } else {
+        setIsPanning(true);
+        setStartPan({ x: e.clientX, y: e.clientY });
+      }
     }
   };
 
@@ -181,6 +224,11 @@ export const Canvas: React.FC = () => {
       let coords = getCanvasCoordinates(e);
       if (grid.enabled) coords = getSnappedCoordinates(coords);
       setDrawingCurrent(coords);
+      return;
+    }
+
+    if (isSelecting && selectionBoxStart) {
+      setSelectionBoxCurrent(getCanvasCoordinates(e));
       return;
     }
 
@@ -214,6 +262,40 @@ export const Canvas: React.FC = () => {
       setDrawingStart(null);
       setDrawingCurrent(null);
     }
+
+    if (isSelecting && selectionBoxStart && selectionBoxCurrent) {
+      // Calculate selected entities
+      const minX = Math.min(selectionBoxStart.x, selectionBoxCurrent.x);
+      const maxX = Math.max(selectionBoxStart.x, selectionBoxCurrent.x);
+      const minY = Math.min(selectionBoxStart.y, selectionBoxCurrent.y);
+      const maxY = Math.max(selectionBoxStart.y, selectionBoxCurrent.y);
+
+      const newlySelectedIds: string[] = [];
+
+      players.forEach(p => {
+        // simple box check for center of player
+        if (p.x >= minX && p.x <= maxX && p.y >= minY && p.y <= maxY) {
+          newlySelectedIds.push(p.id);
+        }
+      });
+
+      markers.forEach(m => {
+        if (m.x >= minX && m.x <= maxX && m.y >= minY && m.y <= maxY) {
+          newlySelectedIds.push(m.id);
+        }
+      });
+
+      if (e.shiftKey) {
+        setSelectedEntityIds([...new Set([...selectedEntityIds, ...newlySelectedIds])]);
+      } else {
+        setSelectedEntityIds(newlySelectedIds);
+      }
+
+      setIsSelecting(false);
+      setSelectionBoxStart(null);
+      setSelectionBoxCurrent(null);
+    }
+
     setIsPanning(false);
   };
 
@@ -469,6 +551,19 @@ export const Canvas: React.FC = () => {
               />
             )
           )}
+
+          {isSelecting && selectionBoxStart && selectionBoxCurrent && (
+            <rect
+              x={Math.min(selectionBoxStart.x, selectionBoxCurrent.x)}
+              y={Math.min(selectionBoxStart.y, selectionBoxCurrent.y)}
+              width={Math.abs(selectionBoxCurrent.x - selectionBoxStart.x)}
+              height={Math.abs(selectionBoxCurrent.y - selectionBoxStart.y)}
+              fill="rgba(59, 130, 246, 0.2)"
+              stroke="rgba(59, 130, 246, 0.8)"
+              strokeWidth={2}
+              pointerEvents="none"
+            />
+          )}
         </svg>
 
         {/* Render Players */}
@@ -596,7 +691,7 @@ export const Canvas: React.FC = () => {
           return (
             <div
               key={player.id}
-              className="absolute canvas-entity group"
+              className={`absolute canvas-entity group ${selectedEntityIds.includes(player.id) ? 'ring-4 ring-blue-500 rounded-full' : ''}`}
               style={{
                 left: player.x,
                 top: player.y,
@@ -608,9 +703,22 @@ export const Canvas: React.FC = () => {
               onDragStart={(e) => {
                 e.stopPropagation();
                 closeContextMenu();
-                e.dataTransfer.setData('application/json', JSON.stringify({ type: 'existing_player', data: player }));
+
+                // If dragging a selected player, we will handle group drag logic inside handleDrop or onDrag
+                // For now, if dragging a selected one, pass special group drag payload
+                if (selectedEntityIds.includes(player.id) && selectedEntityIds.length > 1) {
+                  e.dataTransfer.setData('application/json', JSON.stringify({ type: 'group_move', anchorId: player.id }));
+                } else {
+                  e.dataTransfer.setData('application/json', JSON.stringify({ type: 'existing_player', data: player }));
+                }
               }}
-              onContextMenu={(e) => handleContextMenu(e, 'player', player.id)}
+              onContextMenu={(e) => {
+                if (selectedEntityIds.includes(player.id) && selectedEntityIds.length > 1) {
+                   handleContextMenu(e, 'group');
+                } else {
+                   handleContextMenu(e, 'player', player.id);
+                }
+              }}
               onDoubleClick={() => useVttStore.getState().setEditingEntity({ type: 'player', id: player.id })}
             >
               <div className="relative flex flex-col items-center justify-center">
@@ -733,7 +841,7 @@ export const Canvas: React.FC = () => {
           return (
           <div
             key={marker.id}
-            className="absolute canvas-entity group"
+            className={`absolute canvas-entity group ${selectedEntityIds.includes(marker.id) ? 'ring-4 ring-blue-500 rounded-lg' : ''}`}
             style={{
               left: marker.x,
               top: marker.y,
@@ -745,9 +853,20 @@ export const Canvas: React.FC = () => {
             onDragStart={(e) => {
               e.stopPropagation();
               closeContextMenu();
-              e.dataTransfer.setData('application/json', JSON.stringify({ type: 'existing_marker', data: marker }));
+
+              if (selectedEntityIds.includes(marker.id) && selectedEntityIds.length > 1) {
+                e.dataTransfer.setData('application/json', JSON.stringify({ type: 'group_move', anchorId: marker.id }));
+              } else {
+                e.dataTransfer.setData('application/json', JSON.stringify({ type: 'existing_marker', data: marker }));
+              }
             }}
-            onContextMenu={(e) => handleContextMenu(e, 'marker', marker.id)}
+            onContextMenu={(e) => {
+              if (selectedEntityIds.includes(marker.id) && selectedEntityIds.length > 1) {
+                 handleContextMenu(e, 'group');
+              } else {
+                 handleContextMenu(e, 'marker', marker.id);
+              }
+            }}
             onDoubleClick={() => useVttStore.getState().setEditingEntity({ type: 'tagInstance', id: marker.tag.instanceId })}
           >
              <div
@@ -1016,6 +1135,121 @@ export const Canvas: React.FC = () => {
               </div>
             </>
           )}
+
+          {contextMenu.type === 'group' && (
+            <>
+              <div className="px-4 py-2 text-xs font-semibold text-muted-foreground border-b border-border mb-1">
+                {selectedEntityIds.length} éléments sélectionnés
+              </div>
+
+              {/* Equipe Submenu for group */}
+              <div className="relative group">
+                <button className="w-full text-left px-4 py-2 text-sm hover:bg-accent hover:text-accent-foreground flex items-center justify-between gap-2">
+                  <span className="flex items-center gap-2">Équipe</span>
+                  <ChevronRight size={14} />
+                </button>
+                <div className="absolute left-full top-0 ml-1 bg-popover text-popover-foreground border border-border rounded-md shadow-xl py-1 min-w-[150px] hidden group-hover:block z-[101]">
+                  <button
+                    className="w-full text-left px-4 py-2 text-sm hover:bg-accent hover:text-accent-foreground italic"
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                      selectedEntityIds.forEach(id => {
+                        const player = players.find(p => p.id === id);
+                        if (player) updatePlayer(player.id, { teamId: null });
+                      });
+                      closeContextMenu();
+                    }}
+                  >
+                    Aucune
+                  </button>
+                  {teams.map(team => (
+                    <button
+                      key={team.id}
+                      className="w-full text-left px-4 py-2 text-sm hover:bg-accent hover:text-accent-foreground flex items-center gap-2"
+                      onMouseDown={(e) => {
+                        e.stopPropagation();
+                        selectedEntityIds.forEach(id => {
+                          const player = players.find(p => p.id === id);
+                          if (player) updatePlayer(player.id, { teamId: team.id });
+                        });
+                        closeContextMenu();
+                      }}
+                    >
+                      <div className="w-3 h-3 rounded-full border border-border" style={{ backgroundColor: team.color }} />
+                      {team.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Tags Submenu for group */}
+              <div className="relative group">
+                <button className="w-full text-left px-4 py-2 text-sm hover:bg-accent hover:text-accent-foreground flex items-center justify-between gap-2">
+                  <span className="flex items-center gap-2"><Tag size={14} /> Ajouter Tag</span>
+                  <ChevronRight size={14} />
+                </button>
+                <div className="absolute left-full top-0 ml-1 bg-popover text-popover-foreground border border-border rounded-md shadow-xl py-1 min-w-[150px] hidden group-hover:block z-[101] max-h-64 overflow-y-auto custom-scrollbar">
+                  {useVttStore.getState().tags.length === 0 ? (
+                    <div className="px-4 py-2 text-xs text-muted-foreground italic">Aucun modèle de tag</div>
+                  ) : (
+                    useVttStore.getState().tags.map(tagModel => {
+                      const IconComponent = icons[tagModel.icon as keyof typeof icons] || Tag;
+                      return (
+                        <button
+                          key={tagModel.id}
+                          className="w-full text-left px-4 py-2 text-sm hover:bg-accent hover:text-accent-foreground flex items-center gap-2"
+                          onMouseDown={(e) => {
+                            e.stopPropagation();
+                            selectedEntityIds.forEach(id => {
+                              const player = players.find(p => p.id === id);
+                              if (player) {
+                                updatePlayer(player.id, {
+                                  tags: [...player.tags, { ...tagModel, instanceId: uuidv4() }]
+                                });
+                              }
+                            });
+                            closeContextMenu();
+                          }}
+                        >
+                          <div className="flex items-center justify-center w-4 h-4 rounded-sm border border-border overflow-hidden" style={{ backgroundColor: `${tagModel.color}20`, borderColor: tagModel.color }}>
+                            {tagModel.imageUrl ? (
+                              <img src={tagModel.imageUrl} alt={tagModel.name} className="w-full h-full object-cover" />
+                            ) : (
+                              <IconComponent size={10} style={{ color: tagModel.color }} />
+                            )}
+                          </div>
+                          {tagModel.name}
+                        </button>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+
+              <div className="h-px bg-border my-1" />
+
+              <button
+                className="w-full text-left px-4 py-2 text-sm text-destructive hover:bg-destructive hover:text-destructive-foreground flex items-center gap-2"
+                onMouseDown={(e) => {
+                  e.stopPropagation();
+                  selectedEntityIds.forEach(id => {
+                    const player = players.find(p => p.id === id);
+                    if (player) deletePlayer(id);
+                    else {
+                      const marker = markers.find(m => m.id === id);
+                      if (marker) deleteMarker(id);
+                    }
+                  });
+                  clearSelection();
+                  closeContextMenu();
+                }}
+              >
+                <Trash2 size={14} /> Supprimer la sélection
+              </button>
+
+            </>
+          )}
+
         </div>
       )}
 

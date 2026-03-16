@@ -79,6 +79,7 @@ export interface BadgeConfig {
 
 export interface GameState {
   roomName: string;
+  selectedEntityIds: EntityId[];
   players: Player[];
   roles: Role[];
   markers: Marker[];

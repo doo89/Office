@@ -16,6 +16,10 @@ export interface PlayerTemplate {
 interface VttStore extends GameState {
   playerTemplates: PlayerTemplate[];
 
+  // Selection
+  setSelectedEntityIds: (ids: string[]) => void;
+  clearSelection: () => void;
+
   // Room
   setRoomName: (name: string) => void;
 
@@ -83,6 +87,7 @@ interface VttStore extends GameState {
 
 const initialState = {
   roomName: 'Ma Salle',
+  selectedEntityIds: [],
   playerTemplates: [],
   players: [],
   roles: [],
@@ -148,6 +153,10 @@ export const useVttStore = create<VttStore>()(
   persist(
     (set) => ({
       ...initialState,
+
+  // Selection
+  setSelectedEntityIds: (ids) => set({ selectedEntityIds: ids }),
+  clearSelection: () => set({ selectedEntityIds: [] }),
 
   setRoomName: (name) => set({ roomName: name }),
 
