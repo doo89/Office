@@ -92,14 +92,6 @@ export interface GameState {
   recentColors: string[];
   isNight: boolean;
   cycleNumber: number;
-  walls: Wall[];
-  drawingSettings: {
-    tool: 'line' | 'rectangle';
-    color: string;
-    thickness: number;
-    fillColor: string;
-    fillTransparent: boolean;
-  };
   activeLeftTab: 'players' | 'roles' | 'tags' | 'game';
   editingEntity: { type: 'player' | 'playerTemplate' | 'role' | 'tagModel' | 'tagInstance' | 'team', id: EntityId, parentId?: EntityId } | null;
   canvas: {
@@ -116,7 +108,8 @@ export interface GameState {
     width: number;
     height: number;
     backgroundColor: string;
-    texture: string;
+    backgroundImage: string | null;
+    backgroundStyle: 'mosaic' | 'center' | 'stretch';
   };
   displaySettings: {
     showTooltip: boolean;
@@ -138,16 +131,4 @@ export interface GameState {
       bottomRight: BadgeConfig;
     };
   };
-}
-
-export interface Wall {
-  id: string;
-  type: 'line' | 'rectangle';
-  startX: number;
-  startY: number;
-  endX: number;
-  endY: number;
-  color: string;
-  thickness: number;
-  fillColor?: string | 'transparent';
 }

@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { GameState, EntityId, Player, Role, TagModel, Marker, Team, Wall } from '../types';
+import type { GameState, EntityId, Player, Role, TagModel, Marker, Team } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 
 export interface PlayerTemplate {
@@ -35,13 +35,8 @@ interface VttStore extends GameState {
   isRightPanelOpen: boolean;
 
   // Tools
-  isDrawingMode: boolean;
-  toggleDrawingMode: () => void;
-  updateDrawingSettings: (updates: Partial<GameState['drawingSettings']>) => void;
   setGrid: (grid: GameState['grid']) => void;
   setRoom: (room: Partial<GameState['room']>) => void;
-  addWall: (wall: Omit<Wall, 'id'>) => void;
-  clearWalls: () => void;
 
   // Player Templates
   addPlayerTemplate: (templateData: Omit<PlayerTemplate, 'id'>) => void;
@@ -100,14 +95,6 @@ const initialState = {
   recentColors: ['#ef4444', '#f97316', '#eab308', '#22c55e', '#3b82f6', '#8b5cf6', '#ec4899', '#ffffff', '#000000', '#6b7280'], // default colors
   isNight: false,
   cycleNumber: 1,
-  walls: [],
-  drawingSettings: {
-    tool: 'line' as const,
-    color: '#000000',
-    thickness: 5,
-    fillColor: '#ef4444',
-    fillTransparent: true,
-  },
   activeLeftTab: 'players' as const,
   editingEntity: null,
   canvas: {
@@ -124,7 +111,8 @@ const initialState = {
     width: 2000,
     height: 1500,
     backgroundColor: '#ffffff',
-    texture: 'none',
+    backgroundImage: null,
+    backgroundStyle: 'mosaic' as const,
   },
   displaySettings: {
     showTooltip: true,
@@ -148,7 +136,6 @@ const initialState = {
   },
   isLeftPanelOpen: true,
   isRightPanelOpen: true,
-  isDrawingMode: false,
 };
 
 export const useVttStore = create<VttStore>()(
@@ -171,14 +158,8 @@ export const useVttStore = create<VttStore>()(
   toggleRightPanel: () => set((state) => ({ isRightPanelOpen: !state.isRightPanelOpen })),
 
   // Tools
-  toggleDrawingMode: () => set((state) => ({ isDrawingMode: !state.isDrawingMode })),
-  updateDrawingSettings: (updates) => set((state) => ({
-    drawingSettings: { ...state.drawingSettings, ...updates }
-  })),
   setGrid: (grid) => set({ grid }),
   setRoom: (roomUpdates) => set((state) => ({ room: { ...state.room, ...roomUpdates } })),
-  addWall: (wallData) => set((state) => ({ walls: [...state.walls, { id: uuidv4(), ...wallData }] })),
-  clearWalls: () => set({ walls: [] }),
 
   // Player Templates
   addPlayerTemplate: (templateData) => set((state) => ({

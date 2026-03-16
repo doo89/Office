@@ -12,14 +12,11 @@ export const Canvas: React.FC = () => {
     players, updatePlayer, addPlayer, deletePlayer,
     markers, updateMarker, addMarker, deleteMarker,
     roles, teams, grid, room, displaySettings,
-    isDrawingMode, drawingSettings, walls, addWall,
     selectedEntityIds, setSelectedEntityIds, clearSelection,
     interactionMode, setInteractionMode
   } = useVttStore();
   const [isPanning, setIsPanning] = useState(false);
   const [startPan, setStartPan] = useState({ x: 0, y: 0 });
-  const [drawingStart, setDrawingStart] = useState<{ x: number, y: number } | null>(null);
-  const [drawingCurrent, setDrawingCurrent] = useState<{ x: number, y: number } | null>(null);
   const [selectionBoxStart, setSelectionBoxStart] = useState<{ x: number, y: number } | null>(null);
   const [selectionBoxCurrent, setSelectionBoxCurrent] = useState<{ x: number, y: number } | null>(null);
   const [isSelecting, setIsSelecting] = useState(false);
@@ -176,14 +173,6 @@ export const Canvas: React.FC = () => {
     return { x, y };
   };
 
-  const getSnappedCoordinates = (coords: { x: number, y: number }) => {
-    if (!grid.enabled) return coords;
-    return {
-      x: snapToGrid(coords.x, grid.sizeX),
-      y: snapToGrid(coords.y, grid.sizeY),
-    };
-  };
-
   const handleMouseDown = (e: React.MouseEvent) => {
     closeContextMenu();
     // Only start panning if clicking directly on the canvas background, not on entities
@@ -195,16 +184,7 @@ export const Canvas: React.FC = () => {
       clearSelection();
     }
 
-    if (isDrawingMode && e.button === 0) {
-      e.preventDefault();
-      let coords = getCanvasCoordinates(e);
-      if (grid.enabled) coords = getSnappedCoordinates(coords);
-      setDrawingStart(coords);
-      setDrawingCurrent(coords);
-      return;
-    }
-
-    if (e.button === 1 || (e.button === 0 && e.altKey) || (!isDrawingMode && e.button === 0)) {
+    if (e.button === 1 || (e.button === 0 && e.altKey) || e.button === 0) {
       e.preventDefault();
 
       if (e.button === 1 || (e.button === 0 && e.altKey) || (e.button === 0 && interactionMode === 'pan')) {
@@ -220,13 +200,6 @@ export const Canvas: React.FC = () => {
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
-    if (isDrawingMode && drawingStart) {
-      let coords = getCanvasCoordinates(e);
-      if (grid.enabled) coords = getSnappedCoordinates(coords);
-      setDrawingCurrent(coords);
-      return;
-    }
-
     if (isSelecting && selectionBoxStart) {
       setSelectionBoxCurrent(getCanvasCoordinates(e));
       return;
@@ -241,28 +214,6 @@ export const Canvas: React.FC = () => {
   };
 
   const handleMouseUp = (e: React.MouseEvent) => {
-    if (isDrawingMode && drawingStart && drawingCurrent) {
-      const startCoord = drawingStart;
-      let endCoord = getCanvasCoordinates(e);
-      if (grid.enabled) endCoord = getSnappedCoordinates(endCoord);
-
-      // Only add wall if it has some length
-      if (Math.hypot(endCoord.x - startCoord.x, endCoord.y - startCoord.y) > 5) {
-        addWall({
-          type: drawingSettings.tool,
-          startX: startCoord.x,
-          startY: startCoord.y,
-          endX: endCoord.x,
-          endY: endCoord.y,
-          color: drawingSettings.color,
-          thickness: drawingSettings.thickness,
-          fillColor: drawingSettings.fillTransparent ? 'transparent' : drawingSettings.fillColor,
-        });
-      }
-      setDrawingStart(null);
-      setDrawingCurrent(null);
-    }
-
     if (isSelecting && selectionBoxStart && selectionBoxCurrent) {
       // Calculate selected entities
       const minX = Math.min(selectionBoxStart.x, selectionBoxCurrent.x);
@@ -364,7 +315,6 @@ export const Canvas: React.FC = () => {
                 teams: state.teams,
                 isNight: state.isNight,
                 cycleNumber: state.cycleNumber,
-                walls: state.walls,
                 activeLeftTab: state.activeLeftTab,
                 canvas: state.canvas,
                 grid: state.grid,
@@ -408,7 +358,7 @@ export const Canvas: React.FC = () => {
         }
       }}
       tabIndex={0}
-      style={{ cursor: isDrawingMode ? 'crosshair' : (isPanning ? 'grabbing' : 'grab') }}
+      style={{ cursor: isPanning ? 'grabbing' : 'grab' }}
     >
       {/* Cycle Icon */}
       {displaySettings.showCycleIcon && (
@@ -447,14 +397,14 @@ export const Canvas: React.FC = () => {
         <div className="w-px h-6 bg-border mx-1" />
         <button
           onClick={() => setInteractionMode('pan')}
-          className={`p-1 rounded-md ${interactionMode === 'pan' && !isDrawingMode ? 'bg-primary text-primary-foreground' : 'hover:bg-accent'}`}
+          className={`p-1 rounded-md ${interactionMode === 'pan' ? 'bg-primary text-primary-foreground' : 'hover:bg-accent'}`}
           title="Mode Déplacement (Pan)"
         >
           <Hand size={20} />
         </button>
         <button
           onClick={() => setInteractionMode('select')}
-          className={`p-1 rounded-md ${interactionMode === 'select' && !isDrawingMode ? 'bg-primary text-primary-foreground' : 'hover:bg-accent'}`}
+          className={`p-1 rounded-md ${interactionMode === 'select' ? 'bg-primary text-primary-foreground' : 'hover:bg-accent'}`}
           title="Mode Sélection Multiple"
         >
           <MousePointer2 size={20} />
@@ -481,7 +431,10 @@ export const Canvas: React.FC = () => {
             left: -room.width / 2,
             top: -room.height / 2,
             backgroundColor: room.backgroundColor,
-            backgroundImage: room.texture !== 'none' ? `url(${room.texture})` : 'none',
+            backgroundImage: room.backgroundImage ? `url(${room.backgroundImage})` : 'none',
+            backgroundRepeat: room.backgroundStyle === 'mosaic' ? 'repeat' : 'no-repeat',
+            backgroundPosition: room.backgroundStyle === 'center' ? 'center' : '0 0',
+            backgroundSize: room.backgroundStyle === 'stretch' ? '100% 100%' : 'auto',
             border: '2px solid rgba(0,0,0,0.1)',
             borderRadius: '8px',
             pointerEvents: 'none', // Allow clicking through to canvas for panning
@@ -493,7 +446,7 @@ export const Canvas: React.FC = () => {
           <div className="absolute w-4 h-4 rounded-full bg-red-500/50 -ml-2 -mt-2" />
         )}
 
-        {/* Drawn Walls & Shapes (Layered below entities) */}
+        {/* Selection Box (Layered below entities) */}
         <svg
           className="absolute pointer-events-none"
           style={{
@@ -505,68 +458,6 @@ export const Canvas: React.FC = () => {
             height: '100%'
           }}
         >
-          {walls.map(wall => {
-            if (wall.type === 'rectangle') {
-              const minX = Math.min(wall.startX, wall.endX);
-              const minY = Math.min(wall.startY, wall.endY);
-              const width = Math.abs(wall.endX - wall.startX);
-              const height = Math.abs(wall.endY - wall.startY);
-              return (
-                <rect
-                  key={wall.id}
-                  x={minX}
-                  y={minY}
-                  width={width}
-                  height={height}
-                  stroke={wall.color}
-                  strokeWidth={wall.thickness || 5}
-                  fill={wall.fillColor === 'transparent' ? 'none' : (wall.fillColor || 'transparent')}
-                  opacity={0.8}
-                />
-              );
-            } else {
-              return (
-                <line
-                  key={wall.id}
-                  x1={wall.startX}
-                  y1={wall.startY}
-                  x2={wall.endX}
-                  y2={wall.endY}
-                  stroke={wall.color || "hsl(var(--foreground))"}
-                  strokeWidth={wall.thickness || 5}
-                  strokeLinecap="round"
-                />
-              );
-            }
-          })}
-          {isDrawingMode && drawingStart && drawingCurrent && (
-            drawingSettings.tool === 'rectangle' ? (
-              <rect
-                x={Math.min(drawingStart.x, drawingCurrent.x)}
-                y={Math.min(drawingStart.y, drawingCurrent.y)}
-                width={Math.abs(drawingCurrent.x - drawingStart.x)}
-                height={Math.abs(drawingCurrent.y - drawingStart.y)}
-                stroke={drawingSettings.color}
-                strokeWidth={drawingSettings.thickness}
-                fill={drawingSettings.fillTransparent ? 'none' : drawingSettings.fillColor}
-                opacity={0.5}
-                strokeDasharray="5,5"
-              />
-            ) : (
-              <line
-                x1={drawingStart.x}
-                y1={drawingStart.y}
-                x2={drawingCurrent.x}
-                y2={drawingCurrent.y}
-                stroke={drawingSettings.color}
-                strokeWidth={drawingSettings.thickness}
-                strokeLinecap="round"
-                opacity={0.5}
-                strokeDasharray="5,5"
-              />
-            )
-          )}
-
           {isSelecting && selectionBoxStart && selectionBoxCurrent && (
             <rect
               x={Math.min(selectionBoxStart.x, selectionBoxCurrent.x)}

@@ -1,4 +1,4 @@
-import { Settings, ChevronLeft, ChevronRight, Upload, Grid3X3, Clock, Eye, PaintBucket, CircleDashed, Eraser, ChevronDown, Square, Minus } from 'lucide-react';
+import { Settings, ChevronLeft, ChevronRight, Upload, Grid3X3, Clock, Eye, PaintBucket, CircleDashed, ChevronDown, Image as ImageIcon, Trash2 } from 'lucide-react';
 import React, { useState, useEffect, useRef } from 'react';
 import { useVttStore } from '../../store';
 import type { BadgeConfig, BadgeType } from '../../types';
@@ -10,9 +10,6 @@ export const RightPanel: React.FC = () => {
     grid, setGrid,
     isNight, setNight,
     displaySettings, updateDisplaySettings,
-    clearWalls,
-    isDrawingMode, toggleDrawingMode,
-    drawingSettings, updateDrawingSettings,
     room, setRoom
   } = useVttStore();
 
@@ -21,7 +18,6 @@ export const RightPanel: React.FC = () => {
     chrono: true,
     grille: true,
     salle: true,
-    dessin: true,
   });
 
   const toggleSection = (section: string) => {
@@ -30,17 +26,6 @@ export const RightPanel: React.FC = () => {
       [section]: !prev[section]
     }));
   };
-
-  const textures = [
-    { value: 'none', label: 'Aucun motif' },
-    { value: 'https://www.transparenttextures.com/patterns/cubes.png', label: 'Cubes' },
-    { value: 'https://www.transparenttextures.com/patterns/diagonal-stripes.png', label: 'Rayures diagonales' },
-    { value: 'https://www.transparenttextures.com/patterns/dots.png', label: 'Points' },
-    { value: 'https://www.transparenttextures.com/patterns/carbon-fibre.png', label: 'Fibre de carbone' },
-    { value: 'https://www.transparenttextures.com/patterns/wood-pattern.png', label: 'Bois' },
-    { value: 'https://www.transparenttextures.com/patterns/stardust.png', label: 'Poussière d\'étoiles' },
-    { value: 'https://www.transparenttextures.com/patterns/hexellence.png', label: 'Hexagones' },
-  ];
 
   const [timerMinutes, setTimerMinutes] = useState(5);
   const [timerSeconds, setTimerSeconds] = useState(0);
@@ -76,6 +61,8 @@ export const RightPanel: React.FC = () => {
   };
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
+
   const handleImportClick = () => {
     fileInputRef.current?.click();
   };
@@ -93,6 +80,17 @@ export const RightPanel: React.FC = () => {
         }
       };
       reader.readAsText(file);
+    }
+  };
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setRoom({ backgroundImage: e.target?.result as string });
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -438,100 +436,6 @@ export const RightPanel: React.FC = () => {
           )}
         </section>
 
-         {/* Walls & Drawing Placeholder */}
-         <section className="flex flex-col border border-border rounded-md overflow-hidden bg-background">
-          <button
-            onClick={() => toggleSection('dessin')}
-            className="flex items-center justify-between p-2 bg-muted/50 hover:bg-muted font-semibold text-sm transition-colors"
-          >
-            <div className="flex items-center gap-2">
-              <Eraser size={16} /> Murs & Dessin
-            </div>
-            {expandedSections['dessin'] ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-          </button>
-          {expandedSections['dessin'] && (
-          <div className="flex flex-col gap-3 p-3 border-t border-border">
-            <button
-              onClick={toggleDrawingMode}
-              className={`text-xs py-2 rounded w-full flex items-center justify-center gap-2 font-medium transition-colors ${isDrawingMode ? 'bg-primary text-primary-foreground shadow-inner' : 'bg-accent hover:bg-accent/80'}`}
-            >
-              <Eraser size={14} /> {isDrawingMode ? 'Désactiver le mode dessin' : 'Activer le mode dessin'}
-            </button>
-
-            {isDrawingMode && (
-              <div className="flex flex-col gap-3 mt-1 p-2 bg-muted/30 rounded-md border border-border/50">
-                <div className="flex gap-2 p-1 bg-background rounded-md border border-border">
-                  <button
-                    onClick={() => updateDrawingSettings({ tool: 'line' })}
-                    className={`flex-1 flex justify-center py-1.5 rounded ${drawingSettings.tool === 'line' ? 'bg-primary text-primary-foreground shadow-sm' : 'hover:bg-accent text-muted-foreground hover:text-foreground'}`}
-                    title="Tracer des lignes"
-                  >
-                    <Minus size={16} />
-                  </button>
-                  <button
-                    onClick={() => updateDrawingSettings({ tool: 'rectangle' })}
-                    className={`flex-1 flex justify-center py-1.5 rounded ${drawingSettings.tool === 'rectangle' ? 'bg-primary text-primary-foreground shadow-sm' : 'hover:bg-accent text-muted-foreground hover:text-foreground'}`}
-                    title="Dessiner des rectangles"
-                  >
-                    <Square size={16} />
-                  </button>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[10px] font-semibold text-muted-foreground uppercase">Couleur trait</label>
-                    <ColorPicker
-                      color={drawingSettings.color}
-                      onChange={(c) => updateDrawingSettings({ color: c })}
-                      label="Couleur du trait"
-                      className="!w-full h-8"
-                    />
-                  </div>
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[10px] font-semibold text-muted-foreground uppercase">Épaisseur</label>
-                    <input
-                      type="number"
-                      value={drawingSettings.thickness}
-                      onChange={(e) => updateDrawingSettings({ thickness: Math.max(1, parseInt(e.target.value) || 5) })}
-                      className="w-full bg-input border border-border rounded h-8 px-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
-                    />
-                  </div>
-                </div>
-
-                {drawingSettings.tool === 'rectangle' && (
-                  <div className="flex flex-col gap-2 pt-2 border-t border-border/50">
-                     <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={drawingSettings.fillTransparent}
-                        onChange={(e) => updateDrawingSettings({ fillTransparent: e.target.checked })}
-                        className="rounded border-border w-3 h-3"
-                      />
-                      Fond transparent
-                    </label>
-                    {!drawingSettings.fillTransparent && (
-                      <div className="flex items-center justify-between">
-                         <span className="text-[10px] font-semibold text-muted-foreground uppercase">Couleur remplissage</span>
-                         <ColorPicker
-                          color={drawingSettings.fillColor}
-                          onChange={(c) => updateDrawingSettings({ fillColor: c })}
-                          label="Couleur de remplissage"
-                          className="!w-8 h-8"
-                        />
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
-
-            <div className="h-px bg-border my-1"></div>
-            <button onClick={clearWalls} className="text-xs bg-destructive text-destructive-foreground hover:bg-destructive/90 py-1.5 rounded w-full transition-colors">Effacer tous les dessins</button>
-          </div>
-          )}
-        </section>
-
-
         {/* Background Config */}
          <section className="flex flex-col border border-border rounded-md overflow-hidden bg-background">
           <button
@@ -579,17 +483,57 @@ export const RightPanel: React.FC = () => {
               </div>
             </div>
 
-            <div className="flex flex-col gap-1">
-              <label className="text-xs text-muted-foreground">Motif (Texture)</label>
-              <select
-                value={room.texture}
-                onChange={(e) => setRoom({ texture: e.target.value })}
-                className="bg-input border border-border rounded-md px-2 py-1 text-sm w-full"
-              >
-                {textures.map((t) => (
-                  <option key={t.value} value={t.value}>{t.label}</option>
-                ))}
-              </select>
+            <div className="flex flex-col gap-2 mt-2 pt-2 border-t border-border/50">
+              <span className="text-xs font-semibold text-muted-foreground">Image de fond</span>
+
+              {!room.backgroundImage ? (
+                <div
+                  onClick={() => imageInputRef.current?.click()}
+                  className="w-full h-24 border-2 border-dashed border-border rounded-md flex flex-col items-center justify-center text-muted-foreground hover:text-foreground hover:border-primary/50 hover:bg-primary/5 cursor-pointer transition-colors"
+                >
+                  <ImageIcon size={24} className="mb-2" />
+                  <span className="text-xs">Charger une image</span>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-2">
+                  <div className="relative w-full h-24 rounded-md overflow-hidden border border-border group">
+                    <div
+                      className="absolute inset-0 bg-contain bg-center bg-no-repeat"
+                      style={{ backgroundImage: `url(${room.backgroundImage})` }}
+                    />
+                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                      <button
+                        onClick={() => setRoom({ backgroundImage: null })}
+                        className="p-2 bg-destructive text-destructive-foreground rounded-full hover:bg-destructive/90 transition-colors"
+                        title="Supprimer l'image"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col gap-1 mt-1">
+                    <label className="text-xs text-muted-foreground">Style d'affichage</label>
+                    <select
+                      value={room.backgroundStyle}
+                      onChange={(e) => setRoom({ backgroundStyle: e.target.value as any })}
+                      className="bg-input border border-border rounded-md px-2 py-1 text-sm w-full outline-none focus:ring-1 focus:ring-ring"
+                    >
+                      <option value="mosaic">Mosaïque (Répéter)</option>
+                      <option value="center">Centrer (Taille réelle)</option>
+                      <option value="stretch">Étendre (Occuper tout l'espace)</option>
+                    </select>
+                  </div>
+                </div>
+              )}
+
+              <input
+                type="file"
+                ref={imageInputRef}
+                onChange={handleImageUpload}
+                accept="image/*"
+                className="hidden"
+              />
             </div>
           </div>
           )}
