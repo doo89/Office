@@ -13,18 +13,10 @@ export const RightPanel: React.FC = () => {
     room, setRoom
   } = useVttStore();
 
-  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
-    affichage: true,
-    chrono: true,
-    grille: true,
-    salle: true,
-  });
+  const [activeSection, setActiveSection] = useState<string | null>('affichage');
 
   const toggleSection = (section: string) => {
-    setExpandedSections(prev => ({
-      ...prev,
-      [section]: !prev[section]
-    }));
+    setActiveSection(prev => prev === section ? null : section);
   };
 
   const [timerMinutes, setTimerMinutes] = useState(5);
@@ -115,10 +107,10 @@ export const RightPanel: React.FC = () => {
         <h2 className="text-xl font-bold">Outils</h2>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-6 custom-scrollbar">
+      <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-6 custom-scrollbar min-h-0">
 
         {/* Display Settings */}
-        <section className="flex flex-col border border-border rounded-md overflow-hidden bg-background">
+        <section className="flex flex-col border border-border rounded-md bg-background">
           <button
             onClick={() => toggleSection('affichage')}
             className="flex items-center justify-between p-2 bg-muted/50 hover:bg-muted font-semibold text-sm transition-colors"
@@ -126,9 +118,9 @@ export const RightPanel: React.FC = () => {
             <div className="flex items-center gap-2">
               <Eye size={16} /> Affichage
             </div>
-            {expandedSections['affichage'] ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+            {activeSection === 'affichage' ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
           </button>
-          {expandedSections['affichage'] && (
+          {activeSection === 'affichage' && (
           <div className="flex flex-col gap-2 p-3 border-t border-border">
             <label className="flex items-center gap-2 text-sm cursor-pointer">
               <input
@@ -340,7 +332,7 @@ export const RightPanel: React.FC = () => {
         </section>
 
         {/* Timer */}
-        <section className="flex flex-col border border-border rounded-md overflow-hidden bg-background">
+        <section className="flex flex-col border border-border rounded-md bg-background">
           <button
             onClick={() => toggleSection('chrono')}
             className="flex items-center justify-between p-2 bg-muted/50 hover:bg-muted font-semibold text-sm transition-colors"
@@ -348,9 +340,9 @@ export const RightPanel: React.FC = () => {
             <div className="flex items-center gap-2">
               <Clock size={16} /> Chronomètre
             </div>
-            {expandedSections['chrono'] ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+            {activeSection === 'chrono' ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
           </button>
-          {expandedSections['chrono'] && (
+          {activeSection === 'chrono' && (
           <div className="flex flex-col items-center gap-3 p-3 border-t border-border">
             <div className="text-3xl font-mono font-bold">
               {String(timerMinutes).padStart(2, '0')}:{String(timerSeconds).padStart(2, '0')}
@@ -382,7 +374,7 @@ export const RightPanel: React.FC = () => {
         </section>
 
         {/* Magnetic Grid */}
-        <section className="flex flex-col border border-border rounded-md overflow-hidden bg-background">
+        <section className="flex flex-col border border-border rounded-md bg-background">
           <button
             onClick={() => toggleSection('grille')}
             className="flex items-center justify-between p-2 bg-muted/50 hover:bg-muted font-semibold text-sm transition-colors"
@@ -390,9 +382,9 @@ export const RightPanel: React.FC = () => {
             <div className="flex items-center gap-2">
               <Grid3X3 size={16} /> Grille Magnétique
             </div>
-            {expandedSections['grille'] ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+            {activeSection === 'grille' ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
           </button>
-          {expandedSections['grille'] && (
+          {activeSection === 'grille' && (
           <div className="flex flex-col gap-2 p-3 border-t border-border">
             <label className="flex items-center gap-2 text-sm cursor-pointer">
               <input
@@ -419,7 +411,7 @@ export const RightPanel: React.FC = () => {
         </section>
 
         {/* Magnetic Circle Placeholder */}
-         <section className="flex flex-col border border-border rounded-md overflow-hidden bg-background opacity-50">
+         <section className="flex flex-col border border-border rounded-md bg-background opacity-50">
           <button
             onClick={() => toggleSection('cercle')}
             className="flex items-center justify-between p-2 bg-muted/50 hover:bg-muted font-semibold text-sm transition-colors"
@@ -427,9 +419,9 @@ export const RightPanel: React.FC = () => {
             <div className="flex items-center gap-2">
               <CircleDashed size={16} /> Cercle Magnétique
             </div>
-            {expandedSections['cercle'] ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+            {activeSection === 'cercle' ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
           </button>
-          {expandedSections['cercle'] && (
+          {activeSection === 'cercle' && (
           <div className="flex flex-col gap-2 p-3 border-t border-border">
             <p className="text-xs text-muted-foreground">Outil de disposition circulaire en cours de développement.</p>
           </div>
@@ -437,7 +429,7 @@ export const RightPanel: React.FC = () => {
         </section>
 
         {/* Background Config */}
-         <section className="flex flex-col border border-border rounded-md overflow-hidden bg-background">
+         <section className="flex flex-col border border-border rounded-md bg-background">
           <button
             onClick={() => toggleSection('salle')}
             className="flex items-center justify-between p-2 bg-muted/50 hover:bg-muted font-semibold text-sm transition-colors"
@@ -445,9 +437,9 @@ export const RightPanel: React.FC = () => {
             <div className="flex items-center gap-2">
               <PaintBucket size={16} /> Salle
             </div>
-            {expandedSections['salle'] ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+            {activeSection === 'salle' ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
           </button>
-          {expandedSections['salle'] && (
+          {activeSection === 'salle' && (
           <div className="flex flex-col gap-3 p-3 border-t border-border">
 
             <div className="flex gap-2">
