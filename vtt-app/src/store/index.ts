@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { temporal } from 'zundo';
 import type { GameState, EntityId, Player, Role, TagModel, Marker, Team } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -140,10 +141,11 @@ const initialState = {
 
 export const useVttStore = create<VttStore>()(
   persist(
-    (set) => ({
-      ...initialState,
+    temporal(
+      (set) => ({
+        ...initialState,
 
-  // Selection & Interaction
+    // Selection & Interaction
   setSelectedEntityIds: (ids) => set({ selectedEntityIds: ids }),
   clearSelection: () => set({ selectedEntityIds: [] }),
   setInteractionMode: (mode) => set({ interactionMode: mode }),
@@ -243,24 +245,36 @@ export const useVttStore = create<VttStore>()(
         displaySettings: { ...state.displaySettings, ...updates }
       })),
 
-      // Colors
-      addRecentColor: (color) => set((state) => {
-        const uppercaseColor = color.toUpperCase();
-        const existingIndex = state.recentColors.indexOf(uppercaseColor);
-        if (existingIndex > -1) {
-          // Move to front
-          const newColors = [...state.recentColors];
-          newColors.splice(existingIndex, 1);
-          newColors.unshift(uppercaseColor);
-          return { recentColors: newColors };
-        } else {
-          // Add to front, keep max 16
-          return { recentColors: [uppercaseColor, ...state.recentColors].slice(0, 16) };
-        }
+        // Colors
+        addRecentColor: (color) => set((state) => {
+          const uppercaseColor = color.toUpperCase();
+          const existingIndex = state.recentColors.indexOf(uppercaseColor);
+          if (existingIndex > -1) {
+            // Move to front
+            const newColors = [...state.recentColors];
+            newColors.splice(existingIndex, 1);
+            newColors.unshift(uppercaseColor);
+            return { recentColors: newColors };
+          } else {
+            // Add to front, keep max 16
+            return { recentColors: [uppercaseColor, ...state.recentColors].slice(0, 16) };
+          }
+        }),
       }),
-    }),
+      {
+        partialize: (state) => ({
+          players: state.players,
+          markers: state.markers,
+          isNight: state.isNight,
+          cycleNumber: state.cycleNumber,
+        }),
+        limit: 50, // Keep last 50 states to prevent memory issues
+      }
+    ),
     {
       name: 'vtt-storage',
+      // Optional: you can ignore certain fields from being persisted if needed.
+      // But for temporal, we configure that separately.
     }
   )
 );
