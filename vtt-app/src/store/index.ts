@@ -131,7 +131,7 @@ const initialState = {
     centerY: 0,
     radius: 200,
     points: 8,
-    isDrawing: false,
+    drawingState: 'idle' as const,
   },
   room: {
     width: 2000,

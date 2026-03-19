@@ -103,7 +103,7 @@ export const Canvas: React.FC = () => {
     if (grid.enabled) {
       canvasX = snapToGrid(canvasX, grid.sizeX);
       canvasY = snapToGrid(canvasY, grid.sizeY);
-    } else if (circleGrid.enabled && !circleGrid.isDrawing) {
+    } else if (circleGrid.enabled && circleGrid.drawingState === 'idle') {
       const snapped = snapToCircle(canvasX, canvasY);
       canvasX = snapped.x;
       canvasY = snapped.y;
@@ -217,15 +217,13 @@ export const Canvas: React.FC = () => {
   const handleMouseDown = (e: React.MouseEvent) => {
     closeContextMenu();
 
-    if (circleGrid.isDrawing && e.button === 0) {
+    if (circleGrid.drawingState === 'center' && e.button === 0) {
       const coords = getCanvasCoordinates(e);
-      // Wait, is it the first click? If we are drawing and radius is 0 or it's just starting
-      // Actually, let's track the drawing phase.
-      // If we just clicked "Tracer", we want to set center and then drag for radius.
-      // We can reset radius to 0, set center to current mouse, and keep isDrawing active.
-      // But we need a way to distinguish mousedown and mouseup.
-      setCircleGrid({ centerX: coords.x, centerY: coords.y, radius: 0 });
-      return; // return so we don't trigger panning
+      setCircleGrid({ centerX: coords.x, centerY: coords.y, radius: 0, drawingState: 'radius' });
+      return;
+    } else if (circleGrid.drawingState === 'radius' && e.button === 0) {
+      setCircleGrid({ drawingState: 'idle' });
+      return;
     }
 
     // Only start panning if clicking directly on the canvas background, not on entities
@@ -259,10 +257,11 @@ export const Canvas: React.FC = () => {
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
-    if (circleGrid.isDrawing && e.buttons === 1) {
+    if (circleGrid.drawingState === 'radius') {
       const coords = getCanvasCoordinates(e);
       const radius = Math.hypot(coords.x - circleGrid.centerX, coords.y - circleGrid.centerY);
       setCircleGrid({ radius });
+      // Don't return, we want to allow mouse move to update radius while panning? No panning while drawing.
       return;
     }
 
@@ -286,10 +285,6 @@ export const Canvas: React.FC = () => {
   };
 
   const handleMouseUp = (e: React.MouseEvent) => {
-    if (circleGrid.isDrawing) {
-      setCircleGrid({ isDrawing: false });
-      return;
-    }
 
     if (isDraggingCircleCenter) {
       setIsDraggingCircleCenter(false);
@@ -468,7 +463,7 @@ export const Canvas: React.FC = () => {
         }
       }}
       tabIndex={0}
-      style={{ cursor: circleGrid.isDrawing ? 'crosshair' : (isPanning ? 'grabbing' : 'grab') }}
+      style={{ cursor: circleGrid.drawingState !== 'idle' ? 'crosshair' : (isPanning ? 'grabbing' : 'grab') }}
     >
       {/* Cycle Icon */}
       {displaySettings.showCycleIcon && (
@@ -586,16 +581,30 @@ export const Canvas: React.FC = () => {
                 r={circleGrid.radius}
                 fill="none"
                 stroke="rgba(59, 130, 246, 0.4)" // blue-500 with opacity
-                strokeWidth={2}
+                strokeWidth={5}
                 strokeDasharray="10,10"
               />
               {getMagneticCirclePoints().map((p, i) => (
-                <path
-                  key={`circle-pt-${i}`}
-                  d={`M ${p.x - 8} ${p.y - 8} L ${p.x + 8} ${p.y + 8} M ${p.x + 8} ${p.y - 8} L ${p.x - 8} ${p.y + 8}`}
-                  stroke="rgba(59, 130, 246, 0.8)"
-                  strokeWidth={2}
-                />
+                <g key={`circle-pt-${i}`}>
+                  <path
+                    d={`M ${p.x - 8} ${p.y - 8} L ${p.x + 8} ${p.y + 8} M ${p.x + 8} ${p.y - 8} L ${p.x - 8} ${p.y + 8}`}
+                    stroke="rgba(59, 130, 246, 0.8)"
+                    strokeWidth={2}
+                  />
+                  <text
+                    x={p.x}
+                    y={p.y}
+                    dy="-15"
+                    textAnchor="middle"
+                    fill="currentColor"
+                    fontSize="12"
+                    fontWeight="bold"
+                    className="select-none mix-blend-difference"
+                    style={{ textShadow: '0 0 2px rgba(255,255,255,0.8)' }}
+                  >
+                    {i + 1}
+                  </text>
+                </g>
               ))}
             </svg>
             <div

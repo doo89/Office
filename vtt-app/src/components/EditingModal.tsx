@@ -553,6 +553,27 @@ export const EditingModal: React.FC = () => {
 
         <div className="grid grid-cols-2 gap-4 mt-2">
           <div className="flex flex-col gap-1">
+            <label className="text-sm font-medium" title="Ordre d'Appel Jour">Appel Jour</label>
+            <input
+              type="number"
+              value={tag.callOrderDay ?? ''}
+              onChange={(e) => updateTagModel(tag.id, { callOrderDay: e.target.value === '' ? null : parseInt(e.target.value) })}
+              className="bg-input border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring text-center"
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-sm font-medium" title="Ordre d'Appel Nuit">Appel Nuit</label>
+            <input
+              type="number"
+              value={tag.callOrderNight ?? ''}
+              onChange={(e) => updateTagModel(tag.id, { callOrderNight: e.target.value === '' ? null : parseInt(e.target.value) })}
+              className="bg-input border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring text-center"
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2 mt-2">
+          <div className="flex flex-col gap-1">
             <label className="text-xs font-medium text-muted-foreground">Ajout Vie</label>
             <input
               type="number"
@@ -760,6 +781,27 @@ export const EditingModal: React.FC = () => {
               <img src={tag.imageUrl} alt={tag.name} className="w-full h-full object-cover" />
             </div>
           )}
+        </div>
+
+        <div className="grid grid-cols-2 gap-4 mt-2">
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-medium text-muted-foreground" title="Ordre d'Appel Jour">Appel Jour</label>
+            <input
+              type="number"
+              value={tag.callOrderDay ?? ''}
+              onChange={(e) => updateTagInstance({ callOrderDay: e.target.value === '' ? null : parseInt(e.target.value) })}
+              className="bg-input border border-border rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-medium text-muted-foreground" title="Ordre d'Appel Nuit">Appel Nuit</label>
+            <input
+              type="number"
+              value={tag.callOrderNight ?? ''}
+              onChange={(e) => updateTagInstance({ callOrderNight: e.target.value === '' ? null : parseInt(e.target.value) })}
+              className="bg-input border border-border rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+            />
+          </div>
         </div>
 
         <div className="grid grid-cols-2 gap-4 mt-2">

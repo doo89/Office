@@ -437,10 +437,10 @@ export const RightPanel: React.FC = () => {
             {circleGrid.enabled && (
               <>
                 <button
-                  onClick={() => setCircleGrid({ isDrawing: !circleGrid.isDrawing })}
-                  className={`text-xs py-2 rounded flex items-center justify-center gap-2 font-medium transition-colors ${circleGrid.isDrawing ? 'bg-primary text-primary-foreground shadow-inner' : 'bg-accent hover:bg-accent/80'}`}
+                  onClick={() => setCircleGrid({ drawingState: circleGrid.drawingState !== 'idle' ? 'idle' : 'center' })}
+                  className={`text-xs py-2 rounded flex items-center justify-center gap-2 font-medium transition-colors ${circleGrid.drawingState !== 'idle' ? 'bg-primary text-primary-foreground shadow-inner' : 'bg-accent hover:bg-accent/80'}`}
                 >
-                  {circleGrid.isDrawing ? 'Cliquez sur le canvas...' : 'Tracer un nouveau cercle'}
+                  {circleGrid.drawingState === 'center' ? 'Cliquez pour placer le centre...' : circleGrid.drawingState === 'radius' ? 'Bougez et cliquez pour le rayon...' : 'Tracer un nouveau cercle'}
                 </button>
 
                 <div className="flex flex-col gap-1 mt-2">

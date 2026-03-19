@@ -17,6 +17,8 @@ export const TagsTab: React.FC = () => {
   const [newTagLives, setNewTagLives] = useState<number | ''>('');
   const [newTagVotes, setNewTagVotes] = useState<number | ''>('');
   const [newTagUses, setNewTagUses] = useState<number | ''>('');
+  const [newTagCallOrderDay, setNewTagCallOrderDay] = useState<number | ''>('');
+  const [newTagCallOrderNight, setNewTagCallOrderNight] = useState<number | ''>('');
   const [newTagAutoDelete, setNewTagAutoDelete] = useState(false);
   const [newTagDesc, setNewTagDesc] = useState('');
   const [newTagIcon, setNewTagIcon] = useState('Tag');
@@ -78,14 +80,16 @@ export const TagsTab: React.FC = () => {
       showInTooltip: newTagShowInTooltip,
       showInGameTab: newTagShowInGameTab,
       categoryId: newTagCategoryId || null,
-      callOrderDay: null,
-      callOrderNight: null,
+      callOrderDay: newTagCallOrderDay === '' ? null : newTagCallOrderDay,
+      callOrderNight: newTagCallOrderNight === '' ? null : newTagCallOrderNight,
     });
     setNewTagName('');
     setNewTagPoints('');
     setNewTagLives('');
     setNewTagVotes('');
     setNewTagUses('');
+    setNewTagCallOrderDay('');
+    setNewTagCallOrderNight('');
     setNewTagAutoDelete(false);
     setNewTagDesc('');
     setNewTagIcon('Tag');
@@ -149,6 +153,26 @@ export const TagsTab: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-2 gap-2">
+            <div className="flex items-center gap-2">
+              <label className="text-xs font-medium text-muted-foreground whitespace-nowrap flex-1" title="Ordre d'Appel Jour">Appel Jour:</label>
+              <input
+                type="number"
+                value={newTagCallOrderDay}
+                onChange={(e) => setNewTagCallOrderDay(e.target.value === '' ? '' : parseInt(e.target.value))}
+                placeholder="-"
+                className="w-16 bg-input border border-border rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-ring text-center"
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <label className="text-xs font-medium text-muted-foreground whitespace-nowrap flex-1" title="Ordre d'Appel Nuit">Appel Nuit:</label>
+              <input
+                type="number"
+                value={newTagCallOrderNight}
+                onChange={(e) => setNewTagCallOrderNight(e.target.value === '' ? '' : parseInt(e.target.value))}
+                placeholder="-"
+                className="w-16 bg-input border border-border rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-ring text-center"
+              />
+            </div>
             <div className="flex items-center gap-2">
               <label className="text-xs font-medium text-muted-foreground whitespace-nowrap flex-1">Ajout Vie:</label>
               <input

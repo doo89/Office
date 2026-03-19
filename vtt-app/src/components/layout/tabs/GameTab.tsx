@@ -132,7 +132,7 @@ export const GameTab: React.FC = () => {
 
   const totalPlayersInRoom = players.length;
 
-  const canDistribute = totalRolesToDistribute === totalPlayersInRoom && totalPlayersInRoom > 0;
+  const canDistribute = totalRolesToDistribute >= totalPlayersInRoom && totalPlayersInRoom > 0;
 
   const handleDistributeRoles = () => {
     if (!canDistribute) return;
@@ -189,7 +189,7 @@ export const GameTab: React.FC = () => {
 
             <div className="flex justify-between items-center text-sm">
               <span className="text-muted-foreground">Rôles sélectionnés :</span>
-              <span className={`font-bold ${totalRolesToDistribute !== totalPlayersInRoom ? 'text-destructive' : 'text-primary'}`}>
+              <span className={`font-bold ${totalRolesToDistribute < totalPlayersInRoom ? 'text-destructive' : 'text-primary'}`}>
                 {totalRolesToDistribute}
               </span>
             </div>
@@ -237,7 +237,7 @@ export const GameTab: React.FC = () => {
 
             {!canDistribute && totalPlayersInRoom > 0 && (
               <p className="text-[10px] text-destructive text-center mt-1">
-                Le nombre de rôles ({totalRolesToDistribute}) doit être égal au nombre de joueurs ({totalPlayersInRoom}).
+                Le nombre de rôles ({totalRolesToDistribute}) doit être supérieur ou égal au nombre de joueurs ({totalPlayersInRoom}).
               </p>
             )}
           </div>

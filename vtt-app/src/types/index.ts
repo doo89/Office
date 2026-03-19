@@ -132,7 +132,7 @@ export interface GameState {
     centerY: number;
     radius: number;
     points: number;
-    isDrawing: boolean;
+    drawingState: 'idle' | 'center' | 'radius';
   };
   room: {
     width: number;
