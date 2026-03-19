@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, Play, Tags, UserCircle2, Users } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Play, Tags, UserCircle2, Users, FileText } from 'lucide-react';
 import React from 'react';
 import { cn } from '../../lib/utils';
 import { useVttStore } from '../../store';
@@ -6,6 +6,7 @@ import { GameTab } from './tabs/GameTab';
 import { PlayersTab } from './tabs/PlayersTab';
 import { RolesTab } from './tabs/RolesTab';
 import { TagsTab } from './tabs/TagsTab';
+import { HandoutsTab } from './tabs/HandoutsTab';
 
 export const LeftPanel: React.FC = () => {
   const { isLeftPanelOpen, activeLeftTab, setActiveLeftTab, toggleLeftPanel } = useVttStore();
@@ -27,6 +28,7 @@ export const LeftPanel: React.FC = () => {
     { id: 'players', icon: Users, label: 'Joueurs' },
     { id: 'roles', icon: UserCircle2, label: 'Rôles' },
     { id: 'tags', icon: Tags, label: 'Tags' },
+    { id: 'handouts', icon: FileText, label: 'Aides' },
     { id: 'game', icon: Play, label: 'Jeu' },
   ] as const;
 
@@ -56,6 +58,7 @@ export const LeftPanel: React.FC = () => {
         {activeLeftTab === 'players' && <PlayersTab />}
         {activeLeftTab === 'roles' && <RolesTab />}
         {activeLeftTab === 'tags' && <TagsTab />}
+        {activeLeftTab === 'handouts' && <HandoutsTab />}
         {activeLeftTab === 'game' && <GameTab />}
       </div>
 

@@ -1,4 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
+import { useStore } from 'zustand';
 import { useVttStore } from '../../store';
 import { ZoomIn, ZoomOut, Maximize, Tag, Skull, Trash2, Settings, ChevronRight, Sun, Moon, Copy, Heart, icons, Users, Hand, MousePointer2, Undo2, Redo2 } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
@@ -16,13 +17,8 @@ export const Canvas: React.FC = () => {
     interactionMode, setInteractionMode
   } = useVttStore();
 
-  const { undo, redo, pastStates, futureStates } = useVttStore.temporal.getState();
+  const { undo, redo, pastStates, futureStates } = useStore(useVttStore.temporal);
 
-  // Force re-render when history changes to update button disabled states
-  const [, setHistoryTick] = useState(0);
-  useEffect(() => {
-    return useVttStore.temporal.subscribe(() => setHistoryTick(t => t + 1));
-  }, []);
   const [isPanning, setIsPanning] = useState(false);
   const [startPan, setStartPan] = useState({ x: 0, y: 0 });
   const [selectionBoxStart, setSelectionBoxStart] = useState<{ x: number, y: number } | null>(null);
@@ -321,6 +317,7 @@ export const Canvas: React.FC = () => {
                 markers: state.markers,
                 markerParameters: state.markerParameters,
                 teams: state.teams,
+                handouts: state.handouts,
                 isNight: state.isNight,
                 cycleNumber: state.cycleNumber,
                 activeLeftTab: state.activeLeftTab,

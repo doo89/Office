@@ -79,6 +79,18 @@ export interface BadgeConfig {
   textColor: string;
 }
 
+export interface Handout {
+  id: EntityId;
+  name: string;
+  imageUrl: string;
+  isOpen: boolean;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  isMaximized?: boolean;
+}
+
 export interface GameState {
   roomName: string;
   selectedEntityIds: EntityId[];
@@ -89,10 +101,11 @@ export interface GameState {
   markerParameters: MarkerParameter[];
   teams: Team[];
   tags: TagModel[]; // Added tags property here
+  handouts: Handout[];
   recentColors: string[];
   isNight: boolean;
   cycleNumber: number;
-  activeLeftTab: 'players' | 'roles' | 'tags' | 'game';
+  activeLeftTab: 'players' | 'roles' | 'tags' | 'game' | 'handouts';
   editingEntity: { type: 'player' | 'playerTemplate' | 'role' | 'tagModel' | 'tagInstance' | 'team', id: EntityId, parentId?: EntityId } | null;
   canvas: {
     panX: number;

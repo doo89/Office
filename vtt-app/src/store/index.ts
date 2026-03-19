@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { temporal } from 'zundo';
-import type { GameState, EntityId, Player, Role, TagModel, Marker, Team } from '../types';
+import type { GameState, EntityId, Player, Role, TagModel, Marker, Team, Handout } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 
 export interface PlayerTemplate {
@@ -70,6 +70,12 @@ interface VttStore extends GameState {
   updateMarker: (id: EntityId, updates: Partial<Marker>) => void;
   deleteMarker: (id: EntityId) => void;
 
+  // Handouts
+  addHandout: (handout: Omit<Handout, 'id'>) => void;
+  updateHandout: (id: EntityId, updates: Partial<Handout>) => void;
+  deleteHandout: (id: EntityId) => void;
+  toggleHandout: (id: EntityId) => void;
+
   // Game Logic
   setNight: (isNight: boolean) => void;
   nextCycle: () => void;
@@ -93,6 +99,7 @@ const initialState = {
   markers: [],
   markerParameters: [],
   teams: [],
+  handouts: [],
   recentColors: ['#ef4444', '#f97316', '#eab308', '#22c55e', '#3b82f6', '#8b5cf6', '#ec4899', '#ffffff', '#000000', '#6b7280'], // default colors
   isNight: false,
   cycleNumber: 1,
@@ -229,6 +236,20 @@ export const useVttStore = create<VttStore>()(
     markers: state.markers.filter(m => m.id !== id)
   })),
 
+  // Handouts
+  addHandout: (handoutData) => set((state) => ({
+    handouts: [...state.handouts, { ...handoutData, id: uuidv4() }]
+  })),
+  updateHandout: (id, updates) => set((state) => ({
+    handouts: state.handouts.map(h => h.id === id ? { ...h, ...updates } : h)
+  })),
+  deleteHandout: (id) => set((state) => ({
+    handouts: state.handouts.filter(h => h.id !== id)
+  })),
+  toggleHandout: (id) => set((state) => ({
+    handouts: state.handouts.map(h => h.id === id ? { ...h, isOpen: !h.isOpen } : h)
+  })),
+
   // Game Logic
   setNight: (isNight) => set({ isNight }),
   nextCycle: () => set((state) => {
@@ -269,6 +290,12 @@ export const useVttStore = create<VttStore>()(
           cycleNumber: state.cycleNumber,
         }),
         limit: 50, // Keep last 50 states to prevent memory issues
+        equality: (pastState, currentState) => {
+          return pastState.players === currentState.players &&
+                 pastState.markers === currentState.markers &&
+                 pastState.isNight === currentState.isNight &&
+                 pastState.cycleNumber === currentState.cycleNumber;
+        },
       }
     ),
     {
