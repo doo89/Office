@@ -48,6 +48,7 @@ interface VttStore extends GameState {
   addPlayer: (playerData: Omit<Player, 'id'>) => void;
   updatePlayer: (id: EntityId, updates: Partial<Player>) => void;
   deletePlayer: (id: EntityId) => void;
+  clearPlayers: () => void;
 
   // Roles
   addRole: (roleData: Omit<Role, 'id'>) => void;
@@ -69,6 +70,7 @@ interface VttStore extends GameState {
   addMarker: (markerData: Omit<Marker, 'id'>) => void;
   updateMarker: (id: EntityId, updates: Partial<Marker>) => void;
   deleteMarker: (id: EntityId) => void;
+  clearMarkers: () => void;
 
   // Handouts
   addHandout: (handout: Omit<Handout, 'id'>) => void;
@@ -191,6 +193,7 @@ export const useVttStore = create<VttStore>()(
   deletePlayer: (id) => set((state) => ({
     players: state.players.filter(p => p.id !== id)
   })),
+  clearPlayers: () => set({ players: [] }),
 
   // Roles
   addRole: (roleData) => set((state) => ({
@@ -235,6 +238,7 @@ export const useVttStore = create<VttStore>()(
   deleteMarker: (id) => set((state) => ({
     markers: state.markers.filter(m => m.id !== id)
   })),
+  clearMarkers: () => set({ markers: [] }),
 
   // Handouts
   addHandout: (handoutData) => set((state) => ({

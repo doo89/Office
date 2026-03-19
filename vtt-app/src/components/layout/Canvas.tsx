@@ -10,8 +10,8 @@ export const Canvas: React.FC = () => {
   const {
     roomName, setRoomName,
     canvas, setPan, setZoom, isNight, nextCycle,
-    players, updatePlayer, addPlayer, deletePlayer,
-    markers, updateMarker, addMarker, deleteMarker,
+    players, updatePlayer, addPlayer, deletePlayer, clearPlayers,
+    markers, updateMarker, addMarker, deleteMarker, clearMarkers,
     roles, teams, grid, room, displaySettings,
     selectedEntityIds, setSelectedEntityIds, clearSelection,
     interactionMode, setInteractionMode
@@ -272,12 +272,37 @@ export const Canvas: React.FC = () => {
       if (player.isDead) return null; // Already dead, ignore
 
       const role = roles.find(r => r.id === player.roleId);
-      const baseLives = role?.lives || 0;
+      const baseLives = role?.lives ?? null;
+
+      // If the player has no role, or the role has 0 or null base lives, they shouldn't auto-die
+      // unless a negative tag explicitly kills them.
+      // A tag life modifier acts on the base. If base is not defined, we assume it's "not tracked" (null).
+      // However, roles default to 1 live usually. If base is 0, and no tags affect it, it means it doesn't use lives.
+
+      const hasBaseLives = role !== undefined && baseLives !== null && baseLives > 0;
+
       const tagLives = player.tags.reduce((sum, t) => sum + (t.lives || 0), 0);
       const roleTagLives = role?.tags?.reduce((sum, t) => sum + (t.lives || 0), 0) || 0;
-      const totalLives = baseLives + tagLives + roleTagLives;
 
-      if (totalLives <= 0) {
+      const totalTagModifiers = tagLives + roleTagLives;
+
+      // We auto-kill if:
+      // 1. They have base lives, and the modifiers bring total to <= 0.
+      // 2. They don't have base lives, but a negative modifier brings the sum to <= 0.
+      // Wait, if they don't have base lives (like 0), they shouldn't start dead.
+      // So if (baseLives === 0 && totalTagModifiers === 0), they are NOT dead.
+      // If (baseLives === 0 && totalTagModifiers < 0), they ARE dead.
+      // If (baseLives > 0 && baseLives + totalTagModifiers <= 0), they ARE dead.
+
+      let shouldDie = false;
+
+      if (hasBaseLives) {
+        shouldDie = (baseLives + totalTagModifiers) <= 0;
+      } else {
+        shouldDie = totalTagModifiers < 0;
+      }
+
+      if (shouldDie) {
         hasChanges = true;
         return player.id;
       }
@@ -1059,6 +1084,41 @@ export const Canvas: React.FC = () => {
                       );
                     })
                   )}
+                </div>
+              </div>
+
+              <div className="h-px bg-border my-1" />
+
+              <div className="relative group">
+                <button className="w-full text-left px-4 py-2 text-sm hover:bg-destructive/10 text-destructive flex items-center justify-between gap-2">
+                  <span className="flex items-center gap-2"><Trash2 size={14} /> Supprimer</span>
+                  <ChevronRight size={14} />
+                </button>
+                <div className="absolute left-full top-0 ml-1 bg-popover text-popover-foreground border border-border rounded-md shadow-xl py-1 min-w-[150px] hidden group-hover:block z-[101]">
+                  <button
+                    className="w-full text-left px-4 py-2 text-sm hover:bg-destructive text-destructive hover:text-destructive-foreground flex items-center gap-2"
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                      if (window.confirm("Êtes-vous sûr de vouloir supprimer tous les joueurs du plateau ?")) {
+                        clearPlayers();
+                      }
+                      closeContextMenu();
+                    }}
+                  >
+                    Tous les joueurs
+                  </button>
+                  <button
+                    className="w-full text-left px-4 py-2 text-sm hover:bg-destructive text-destructive hover:text-destructive-foreground flex items-center gap-2"
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                      if (window.confirm("Êtes-vous sûr de vouloir supprimer tous les tags (marqueurs) du plateau ?")) {
+                        clearMarkers();
+                      }
+                      closeContextMenu();
+                    }}
+                  >
+                    Tous les tags
+                  </button>
                 </div>
               </div>
             </>
