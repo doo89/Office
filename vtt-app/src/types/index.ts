@@ -126,6 +126,14 @@ export interface GameState {
     sizeX: number;
     sizeY: number;
   };
+  circleGrid: {
+    enabled: boolean;
+    centerX: number;
+    centerY: number;
+    radius: number;
+    points: number;
+    isDrawing: boolean;
+  };
   room: {
     width: number;
     height: number;

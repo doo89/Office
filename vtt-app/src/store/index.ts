@@ -37,6 +37,7 @@ interface VttStore extends GameState {
 
   // Tools
   setGrid: (grid: GameState['grid']) => void;
+  setCircleGrid: (updates: Partial<GameState['circleGrid']>) => void;
   setRoom: (room: Partial<GameState['room']>) => void;
 
   // Player Templates
@@ -124,6 +125,14 @@ const initialState = {
     sizeX: 50,
     sizeY: 50,
   },
+  circleGrid: {
+    enabled: false,
+    centerX: 0,
+    centerY: 0,
+    radius: 200,
+    points: 8,
+    isDrawing: false,
+  },
   room: {
     width: 2000,
     height: 1500,
@@ -176,7 +185,17 @@ export const useVttStore = create<VttStore>()(
   toggleRightPanel: () => set((state) => ({ isRightPanelOpen: !state.isRightPanelOpen })),
 
   // Tools
-  setGrid: (grid) => set({ grid }),
+  setGrid: (grid) => set((state) => ({
+    grid,
+    circleGrid: grid.enabled ? { ...state.circleGrid, enabled: false } : state.circleGrid
+  })),
+  setCircleGrid: (updates) => set((state) => {
+    const newCircleGrid = { ...state.circleGrid, ...updates };
+    return {
+      circleGrid: newCircleGrid,
+      grid: newCircleGrid.enabled ? { ...state.grid, enabled: false } : state.grid
+    };
+  }),
   setRoom: (roomUpdates) => set((state) => ({ room: { ...state.room, ...roomUpdates } })),
 
   // Player Templates

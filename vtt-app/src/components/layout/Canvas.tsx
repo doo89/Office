@@ -12,7 +12,7 @@ export const Canvas: React.FC = () => {
     canvas, setPan, setZoom, isNight, nextCycle,
     players, updatePlayer, addPlayer, deletePlayer, clearPlayers,
     markers, updateMarker, addMarker, deleteMarker, clearMarkers,
-    roles, teams, grid, room, displaySettings,
+    roles, teams, grid, circleGrid, setCircleGrid, room, displaySettings,
     selectedEntityIds, setSelectedEntityIds, clearSelection,
     interactionMode, setInteractionMode
   } = useVttStore();
@@ -24,6 +24,7 @@ export const Canvas: React.FC = () => {
   const [selectionBoxStart, setSelectionBoxStart] = useState<{ x: number, y: number } | null>(null);
   const [selectionBoxCurrent, setSelectionBoxCurrent] = useState<{ x: number, y: number } | null>(null);
   const [isSelecting, setIsSelecting] = useState(false);
+  const [isDraggingCircleCenter, setIsDraggingCircleCenter] = useState(false);
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
 
   useEffect(() => {
@@ -59,6 +60,38 @@ export const Canvas: React.FC = () => {
     return Math.round(value / gridSize) * gridSize;
   };
 
+  const getMagneticCirclePoints = () => {
+    const points = [];
+    for (let i = 0; i < circleGrid.points; i++) {
+      const angle = (i * 2 * Math.PI) / circleGrid.points - Math.PI / 2; // start at top (-90 deg)
+      points.push({
+        x: circleGrid.centerX + circleGrid.radius * Math.cos(angle),
+        y: circleGrid.centerY + circleGrid.radius * Math.sin(angle),
+      });
+    }
+    return points;
+  };
+
+  const snapToCircle = (x: number, y: number) => {
+    const points = getMagneticCirclePoints();
+    let closestPoint = { x, y };
+    let minDistance = Infinity;
+
+    points.forEach(p => {
+      const dist = Math.hypot(p.x - x, p.y - y);
+      if (dist < minDistance) {
+        minDistance = dist;
+        closestPoint = p;
+      }
+    });
+
+    // Snap threshold: e.g. 100px
+    if (minDistance < 100) {
+      return closestPoint;
+    }
+    return { x, y };
+  };
+
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     if (!containerRef.current) return;
@@ -70,6 +103,10 @@ export const Canvas: React.FC = () => {
     if (grid.enabled) {
       canvasX = snapToGrid(canvasX, grid.sizeX);
       canvasY = snapToGrid(canvasY, grid.sizeY);
+    } else if (circleGrid.enabled && !circleGrid.isDrawing) {
+      const snapped = snapToCircle(canvasX, canvasY);
+      canvasX = snapped.x;
+      canvasY = snapped.y;
     }
 
     try {
@@ -179,8 +216,26 @@ export const Canvas: React.FC = () => {
 
   const handleMouseDown = (e: React.MouseEvent) => {
     closeContextMenu();
+
+    if (circleGrid.isDrawing && e.button === 0) {
+      const coords = getCanvasCoordinates(e);
+      // Wait, is it the first click? If we are drawing and radius is 0 or it's just starting
+      // Actually, let's track the drawing phase.
+      // If we just clicked "Tracer", we want to set center and then drag for radius.
+      // We can reset radius to 0, set center to current mouse, and keep isDrawing active.
+      // But we need a way to distinguish mousedown and mouseup.
+      setCircleGrid({ centerX: coords.x, centerY: coords.y, radius: 0 });
+      return; // return so we don't trigger panning
+    }
+
     // Only start panning if clicking directly on the canvas background, not on entities
     if ((e.target as HTMLElement).closest('.canvas-entity')) {
+      // Check if it's the circle handle
+      if ((e.target as HTMLElement).closest('.circle-center-handle') && e.button === 0) {
+        setIsDraggingCircleCenter(true);
+        e.preventDefault();
+        return;
+      }
       return;
     }
 
@@ -204,6 +259,19 @@ export const Canvas: React.FC = () => {
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
+    if (circleGrid.isDrawing && e.buttons === 1) {
+      const coords = getCanvasCoordinates(e);
+      const radius = Math.hypot(coords.x - circleGrid.centerX, coords.y - circleGrid.centerY);
+      setCircleGrid({ radius });
+      return;
+    }
+
+    if (isDraggingCircleCenter && e.buttons === 1) {
+      const coords = getCanvasCoordinates(e);
+      setCircleGrid({ centerX: coords.x, centerY: coords.y });
+      return;
+    }
+
     if (isSelecting && selectionBoxStart) {
       setSelectionBoxCurrent(getCanvasCoordinates(e));
       return;
@@ -218,6 +286,16 @@ export const Canvas: React.FC = () => {
   };
 
   const handleMouseUp = (e: React.MouseEvent) => {
+    if (circleGrid.isDrawing) {
+      setCircleGrid({ isDrawing: false });
+      return;
+    }
+
+    if (isDraggingCircleCenter) {
+      setIsDraggingCircleCenter(false);
+      return;
+    }
+
     if (isSelecting && selectionBoxStart && selectionBoxCurrent) {
       // Calculate selected entities
       const minX = Math.min(selectionBoxStart.x, selectionBoxCurrent.x);
@@ -349,6 +427,7 @@ export const Canvas: React.FC = () => {
                 activeLeftTab: state.activeLeftTab,
                 canvas: state.canvas,
                 grid: state.grid,
+                circleGrid: state.circleGrid,
                 room: state.room,
                 displaySettings: state.displaySettings,
               };
@@ -389,7 +468,7 @@ export const Canvas: React.FC = () => {
         }
       }}
       tabIndex={0}
-      style={{ cursor: isPanning ? 'grabbing' : 'grab' }}
+      style={{ cursor: circleGrid.isDrawing ? 'crosshair' : (isPanning ? 'grabbing' : 'grab') }}
     >
       {/* Cycle Icon */}
       {displaySettings.showCycleIcon && (
@@ -492,6 +571,44 @@ export const Canvas: React.FC = () => {
         {/* Origin indicator (0,0) */}
         {displaySettings.showCenter && (
           <div className="absolute w-4 h-4 rounded-full bg-red-500/50 -ml-2 -mt-2" />
+        )}
+
+        {/* Magnetic Circle */}
+        {circleGrid.enabled && (
+          <>
+            <svg
+              className="absolute pointer-events-none"
+              style={{ zIndex: 1, overflow: 'visible', left: 0, top: 0, width: '100%', height: '100%' }}
+            >
+              <circle
+                cx={circleGrid.centerX}
+                cy={circleGrid.centerY}
+                r={circleGrid.radius}
+                fill="none"
+                stroke="rgba(59, 130, 246, 0.4)" // blue-500 with opacity
+                strokeWidth={2}
+                strokeDasharray="10,10"
+              />
+              {getMagneticCirclePoints().map((p, i) => (
+                <path
+                  key={`circle-pt-${i}`}
+                  d={`M ${p.x - 8} ${p.y - 8} L ${p.x + 8} ${p.y + 8} M ${p.x + 8} ${p.y - 8} L ${p.x - 8} ${p.y + 8}`}
+                  stroke="rgba(59, 130, 246, 0.8)"
+                  strokeWidth={2}
+                />
+              ))}
+            </svg>
+            <div
+              className="absolute canvas-entity circle-center-handle w-6 h-6 rounded-full bg-blue-500 border-2 border-white shadow-md flex items-center justify-center cursor-move"
+              style={{
+                left: circleGrid.centerX, top: circleGrid.centerY,
+                transform: 'translate(-50%, -50%)', zIndex: 5
+              }}
+              title="Centre du cercle (déplacer)"
+            >
+              <div className="w-2 h-2 bg-white rounded-full pointer-events-none" />
+            </div>
+          </>
         )}
 
         {/* Selection Box (Layered below entities) */}
