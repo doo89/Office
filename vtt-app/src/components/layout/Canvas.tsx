@@ -339,6 +339,7 @@ export const Canvas: React.FC = () => {
                 players: state.players,
                 roles: state.roles,
                 tags: state.tags,
+                tagCategories: state.tagCategories,
                 markers: state.markers,
                 markerParameters: state.markerParameters,
                 teams: state.teams,

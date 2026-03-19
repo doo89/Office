@@ -16,7 +16,7 @@ const TAG_ICONS = [
 ];
 
 export const EditingModal: React.FC = () => {
-  const { editingEntity, setEditingEntity, players, playerTemplates, roles, teams, tags, markers, updatePlayer, updatePlayerTemplate, updateRole, updateTeam, updateTagModel, updateMarker } = useVttStore();
+  const { editingEntity, setEditingEntity, players, playerTemplates, roles, teams, tags, tagCategories, markers, updatePlayer, updatePlayerTemplate, updateRole, updateTeam, updateTagModel, updateTagCategory, updateMarker } = useVttStore();
 
   if (!editingEntity) return null;
 
@@ -25,7 +25,50 @@ export const EditingModal: React.FC = () => {
   let entityTitle = '';
   let entityContent = null;
 
-  if (editingEntity.type === 'playerTemplate') {
+  if (editingEntity.type === 'tagCategory') {
+    const category = tagCategories.find(c => c.id === editingEntity.id);
+    if (!category) return null;
+    entityTitle = "Modifier la Catégorie";
+    entityContent = (
+      <>
+        <div className="flex flex-col gap-1.5">
+          <label className="text-xs font-medium text-muted-foreground">Nom</label>
+          <input
+            type="text"
+            value={category.name}
+            onChange={(e) => updateTagCategory(category.id, { name: e.target.value })}
+            className="w-full bg-input border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+          />
+        </div>
+        <div className="flex flex-col gap-1.5 mt-2">
+          <label className="text-xs font-medium text-muted-foreground">Icône</label>
+          <div className="flex flex-wrap gap-1 bg-input border border-border rounded-md p-1.5 max-h-32 overflow-y-auto custom-scrollbar">
+            {['Folder', 'Bookmark', 'Layers', 'Boxes', 'Library', 'List', 'Hash'].map(iconName => {
+              const IconComponent = icons[iconName as keyof typeof icons];
+              if (!IconComponent) return null;
+              return (
+                <button
+                  key={iconName}
+                  onClick={() => updateTagCategory(category.id, { icon: iconName })}
+                  className={`p-1.5 rounded-md transition-colors flex items-center justify-center ${
+                    category.icon === iconName
+                      ? 'bg-primary text-primary-foreground shadow-sm'
+                      : 'hover:bg-accent hover:text-accent-foreground text-muted-foreground'
+                  }`}
+                  title={iconName}
+                >
+                  {React.createElement(IconComponent, { size: 16 })}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+        <div className="mt-2">
+          <ColorPicker color={category.color} onChange={(c) => updateTagCategory(category.id, { color: c })} label="Couleur de la catégorie" />
+        </div>
+      </>
+    );
+  } else if (editingEntity.type === 'playerTemplate') {
     const template = playerTemplates.find(p => p.id === editingEntity.id);
     if (!template) return null;
 

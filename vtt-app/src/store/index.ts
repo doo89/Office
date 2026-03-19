@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { temporal } from 'zundo';
-import type { GameState, EntityId, Player, Role, TagModel, Marker, Team, Handout } from '../types';
+import type { GameState, EntityId, Player, Role, TagModel, TagCategory, Marker, Team, Handout } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 
 export interface PlayerTemplate {
@@ -66,6 +66,12 @@ interface VttStore extends GameState {
   updateTagModel: (id: EntityId, updates: Partial<TagModel>) => void;
   deleteTagModel: (id: EntityId) => void;
 
+  // Tag Categories
+  tagCategories: TagCategory[];
+  addTagCategory: (categoryData: Omit<TagCategory, 'id'>) => void;
+  updateTagCategory: (id: EntityId, updates: Partial<TagCategory>) => void;
+  deleteTagCategory: (id: EntityId) => void;
+
   // Markers (on canvas)
   addMarker: (markerData: Omit<Marker, 'id'>) => void;
   updateMarker: (id: EntityId, updates: Partial<Marker>) => void;
@@ -101,6 +107,7 @@ const initialState = {
   markers: [],
   markerParameters: [],
   teams: [],
+  tagCategories: [],
   handouts: [],
   recentColors: ['#ef4444', '#f97316', '#eab308', '#22c55e', '#3b82f6', '#8b5cf6', '#ec4899', '#ffffff', '#000000', '#6b7280'], // default colors
   isNight: false,
@@ -226,6 +233,17 @@ export const useVttStore = create<VttStore>()(
   })),
   deleteTagModel: (id) => set((state) => ({
     tags: state.tags.filter(t => t.id !== id)
+  })),
+
+  // Tag Categories
+  addTagCategory: (categoryData) => set((state) => ({
+    tagCategories: [...state.tagCategories, { ...categoryData, id: uuidv4() }]
+  })),
+  updateTagCategory: (id, updates) => set((state) => ({
+    tagCategories: state.tagCategories.map(c => c.id === id ? { ...c, ...updates } : c)
+  })),
+  deleteTagCategory: (id) => set((state) => ({
+    tagCategories: state.tagCategories.filter(c => c.id !== id)
   })),
 
   // Markers

@@ -30,6 +30,13 @@ export interface Role {
   distributionQuantity?: number;
 }
 
+export interface TagCategory {
+  id: EntityId;
+  name: string;
+  icon: string;
+  color: string;
+}
+
 export interface MarkerParameter {
   id: EntityId;
   name: string;
@@ -57,6 +64,7 @@ export interface TagModel extends MarkerParameter {
   color: string;
   icon: string;
   imageUrl?: string;
+  categoryId?: EntityId | null;
 }
 
 // Local Tag Instance (attached to a player or marker)
@@ -101,12 +109,13 @@ export interface GameState {
   markerParameters: MarkerParameter[];
   teams: Team[];
   tags: TagModel[]; // Added tags property here
+  tagCategories: TagCategory[];
   handouts: Handout[];
   recentColors: string[];
   isNight: boolean;
   cycleNumber: number;
   activeLeftTab: 'players' | 'roles' | 'tags' | 'game' | 'handouts';
-  editingEntity: { type: 'player' | 'playerTemplate' | 'role' | 'tagModel' | 'tagInstance' | 'team', id: EntityId, parentId?: EntityId } | null;
+  editingEntity: { type: 'player' | 'playerTemplate' | 'role' | 'tagModel' | 'tagInstance' | 'team' | 'tagCategory', id: EntityId, parentId?: EntityId } | null;
   canvas: {
     panX: number;
     panY: number;

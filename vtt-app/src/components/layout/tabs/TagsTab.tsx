@@ -1,5 +1,5 @@
-import { Plus, Trash2, Edit2, Tag, icons } from 'lucide-react';
-import React, { useState } from 'react';
+import { Plus, Trash2, Edit2, Tag, icons, ChevronDown, ChevronRight } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
 import { useVttStore } from '../../../store';
 import { ColorPicker } from '../../ColorPicker';
 
@@ -10,7 +10,7 @@ const TAG_ICONS = [
 ];
 
 export const TagsTab: React.FC = () => {
-  const { tags, addTagModel, deleteTagModel, setEditingEntity } = useVttStore();
+  const { tags, tagCategories, addTagModel, deleteTagModel, setEditingEntity, addTagCategory, deleteTagCategory } = useVttStore();
   const [newTagName, setNewTagName] = useState('');
   const [newTagColor, setNewTagColor] = useState('#10b981');
   const [newTagPoints, setNewTagPoints] = useState<number | ''>('');
@@ -22,6 +22,46 @@ export const TagsTab: React.FC = () => {
   const [newTagIcon, setNewTagIcon] = useState('Tag');
   const [newTagShowInTooltip, setNewTagShowInTooltip] = useState(true);
   const [newTagShowInGameTab, setNewTagShowInGameTab] = useState(true);
+  const [newTagCategoryId, setNewTagCategoryId] = useState<string>('');
+
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [newCategoryColor, setNewCategoryColor] = useState('#6366f1');
+  const [newCategoryIcon, setNewCategoryIcon] = useState('Folder');
+
+  const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({});
+
+  const tagsByCategory = useMemo(() => {
+    const grouped: Record<string, typeof tags> = {
+      'no-category': []
+    };
+
+    tagCategories.forEach(c => grouped[c.id] = []);
+
+    tags.forEach(tag => {
+      if (tag.categoryId && grouped[tag.categoryId]) {
+        grouped[tag.categoryId].push(tag);
+      } else {
+        grouped['no-category'].push(tag);
+      }
+    });
+
+    return grouped;
+  }, [tags, tagCategories]);
+
+  const toggleCategory = (categoryId: string) => {
+    setExpandedCategories(prev => ({ ...prev, [categoryId]: !prev[categoryId] }));
+  };
+
+  const handleAddCategory = () => {
+    if (!newCategoryName.trim()) return;
+    addTagCategory({
+      name: newCategoryName,
+      color: newCategoryColor,
+      icon: newCategoryIcon,
+    });
+    setNewCategoryName('');
+    setNewCategoryIcon('Folder');
+  };
 
   const handleAddTag = () => {
     if (!newTagName.trim()) return;
@@ -37,6 +77,7 @@ export const TagsTab: React.FC = () => {
       description: newTagDesc,
       showInTooltip: newTagShowInTooltip,
       showInGameTab: newTagShowInGameTab,
+      categoryId: newTagCategoryId || null,
       callOrderDay: null,
       callOrderNight: null,
     });
@@ -65,6 +106,20 @@ export const TagsTab: React.FC = () => {
             onChange={(e) => setNewTagName(e.target.value)}
             className="w-full bg-input border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
           />
+
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-medium text-muted-foreground">Catégorie :</label>
+            <select
+              value={newTagCategoryId}
+              onChange={(e) => setNewTagCategoryId(e.target.value)}
+              className="w-full bg-input border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+            >
+              <option value="">-- Aucune --</option>
+              {tagCategories.map(category => (
+                <option key={category.id} value={category.id}>{category.name}</option>
+              ))}
+            </select>
+          </div>
 
           <div className="flex flex-col gap-1.5 mt-1">
             <label className="text-xs font-medium text-muted-foreground">Icône :</label>
@@ -199,56 +254,175 @@ export const TagsTab: React.FC = () => {
           {tags.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-4">Aucun tag défini.</p>
           ) : (
-            tags.map((tag) => {
-              const IconComponent = icons[tag.icon as keyof typeof icons] || Tag;
-              return (
-              <div
-                key={tag.id}
-                className="flex items-center justify-between p-2 rounded-md border border-border bg-card hover:bg-accent/50 group"
-                draggable
-                onDragStart={(e) => {
-                  e.dataTransfer.setData('application/json', JSON.stringify({ type: 'new_marker', data: tag }));
-                }}
-              >
-                <div className="flex items-center gap-3">
-                  <div
-                    className="flex items-center justify-center w-6 h-6 rounded-md border border-border overflow-hidden"
-                    style={{ backgroundColor: `${tag.color}20`, borderColor: tag.color }}
-                  >
-                    {tag.imageUrl ? (
-                      <img src={tag.imageUrl} alt={tag.name} className="w-full h-full object-cover" draggable={false} />
-                    ) : (
-                      <IconComponent size={12} style={{ color: tag.color }} />
+            <>
+              {Object.entries(tagsByCategory).map(([categoryId, categoryTags]) => {
+                if (categoryTags.length === 0) return null;
+
+                const category = categoryId === 'no-category' ? null : tagCategories.find(c => c.id === categoryId);
+                const isExpanded = expandedCategories[categoryId] !== false; // Default to true
+                const CategoryIcon = category && category.icon ? icons[category.icon as keyof typeof icons] : null;
+
+                return (
+                  <div key={categoryId} className="flex flex-col gap-1">
+                    <button
+                      onClick={() => toggleCategory(categoryId)}
+                      className="flex items-center justify-between w-full p-1.5 rounded bg-muted/50 hover:bg-muted text-sm font-medium transition-colors"
+                    >
+                      <div className="flex items-center gap-2">
+                        {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                        {category ? (
+                          <div className="flex items-center gap-1.5" style={{ color: category.color }}>
+                            {CategoryIcon && React.createElement(CategoryIcon, { size: 14 })}
+                            {category.name}
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground">Sans Catégorie</span>
+                        )}
+                        <span className="text-xs text-muted-foreground ml-1">({categoryTags.length})</span>
+                      </div>
+                    </button>
+
+                    {isExpanded && (
+                      <div className="flex flex-col gap-1.5 pl-4 mt-1 border-l-2 border-border/30 ml-2">
+                        {categoryTags.map((tag) => {
+                          const IconComponent = icons[tag.icon as keyof typeof icons] || Tag;
+                          return (
+                            <div
+                              key={tag.id}
+                              className="flex items-center justify-between p-2 rounded-md border border-border bg-card hover:bg-accent/50 group"
+                              draggable
+                              onDragStart={(e) => {
+                                e.dataTransfer.setData('application/json', JSON.stringify({ type: 'new_marker', data: tag }));
+                              }}
+                            >
+                              <div className="flex items-center gap-3">
+                                <div
+                                  className="flex items-center justify-center w-6 h-6 rounded-md border border-border overflow-hidden"
+                                  style={{ backgroundColor: `${tag.color}20`, borderColor: tag.color }}
+                                >
+                                  {tag.imageUrl ? (
+                                    <img src={tag.imageUrl} alt={tag.name} className="w-full h-full object-cover" draggable={false} />
+                                  ) : (
+                                    <IconComponent size={12} style={{ color: tag.color }} />
+                                  )}
+                                </div>
+                                <div className="flex flex-col">
+                                  <span className="text-sm font-medium leading-none">{tag.name}</span>
+                                  <span className="text-[10px] text-muted-foreground mt-1">
+                                    {tag.uses !== null ? `Uses: ${tag.uses}` : ''} {tag.points !== null ? `Pts: ${tag.points}` : ''}
+                                  </span>
+                                </div>
+                              </div>
+                              <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button
+                                  onClick={() => setEditingEntity({ type: 'tagModel', id: tag.id })}
+                                  className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-accent rounded-md"
+                                  title="Modifier"
+                                >
+                                  <Edit2 size={14} />
+                                </button>
+                                <button
+                                  onClick={() => deleteTagModel(tag.id)}
+                                  className="p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-md"
+                                  title="Supprimer"
+                                >
+                                  <Trash2 size={14} />
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
                     )}
                   </div>
-                  <div className="flex flex-col">
-                    <span className="text-sm font-medium leading-none">{tag.name}</span>
-                    <span className="text-[10px] text-muted-foreground mt-1">
-                      {tag.uses !== null ? `Uses: ${tag.uses}` : ''} {tag.points !== null ? `Pts: ${tag.points}` : ''}
-                    </span>
-                  </div>
-                </div>
-                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button
-                    onClick={() => setEditingEntity({ type: 'tagModel', id: tag.id })}
-                    className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-accent rounded-md"
-                    title="Modifier"
-                  >
-                    <Edit2 size={14} />
-                  </button>
-                  <button
-                    onClick={() => deleteTagModel(tag.id)}
-                    className="p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-md"
-                    title="Supprimer"
-                  >
-                    <Trash2 size={14} />
-                  </button>
-                </div>
-              </div>
-              );
-            })
+                );
+              })}
+            </>
           )}
         </div>
+      </section>
+
+      {/* Create Tag Category Section */}
+      <section className="flex flex-col gap-3">
+        <h3 className="font-semibold text-sm border-b border-border pb-1">Créer une Catégorie</h3>
+        <div className="flex flex-col gap-3">
+          <input
+            type="text"
+            placeholder="Nom de la catégorie"
+            value={newCategoryName}
+            onChange={(e) => setNewCategoryName(e.target.value)}
+            className="w-full bg-input border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+          />
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-medium text-muted-foreground">Icône :</label>
+            <div className="flex flex-wrap gap-1 bg-input border border-border rounded-md p-1.5 max-h-32 overflow-y-auto custom-scrollbar">
+              {['Folder', 'Bookmark', 'Layers', 'Boxes', 'Library', 'List', 'Hash'].map(iconName => {
+                const IconComponent = icons[iconName as keyof typeof icons];
+                if (!IconComponent) return null;
+                return (
+                  <button
+                    key={iconName}
+                    onClick={() => setNewCategoryIcon(iconName)}
+                    className={`p-1.5 rounded-md transition-colors flex items-center justify-center ${
+                      newCategoryIcon === iconName
+                        ? 'bg-primary text-primary-foreground shadow-sm'
+                        : 'hover:bg-accent hover:text-accent-foreground text-muted-foreground'
+                    }`}
+                    title={iconName}
+                  >
+                    {React.createElement(IconComponent, { size: 16 })}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <ColorPicker
+              color={newCategoryColor}
+              onChange={setNewCategoryColor}
+              label="Couleur de la catégorie"
+            />
+            <button
+              onClick={handleAddCategory}
+              className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90 px-3 py-2 rounded-md text-sm font-medium flex items-center justify-center gap-2"
+            >
+              <Plus size={16} /> Ajouter Catégorie
+            </button>
+          </div>
+        </div>
+
+        {/* List of categories */}
+        {tagCategories.length > 0 && (
+          <div className="flex flex-col gap-2 mt-2">
+            {tagCategories.map(category => {
+              const CategoryIcon = icons[category.icon as keyof typeof icons] || Tag;
+              return (
+                <div key={category.id} className="flex items-center justify-between p-2 rounded-md border border-border bg-card group">
+                  <div className="flex items-center gap-2" style={{ color: category.color }}>
+                    <CategoryIcon size={16} />
+                    <span className="text-sm font-medium text-foreground">{category.name}</span>
+                  </div>
+                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button
+                      onClick={() => setEditingEntity({ type: 'tagCategory', id: category.id })}
+                      className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-accent rounded-md"
+                      title="Modifier"
+                    >
+                      <Edit2 size={14} />
+                    </button>
+                    <button
+                      onClick={() => deleteTagCategory(category.id)}
+                      className="p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-md"
+                      title="Supprimer"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </section>
     </div>
   );
