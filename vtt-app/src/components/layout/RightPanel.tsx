@@ -1,4 +1,4 @@
-import { Settings, ChevronLeft, ChevronRight, Upload, Grid3X3, Clock, Eye, PaintBucket, CircleDashed, ChevronDown, Image as ImageIcon, Trash2 } from 'lucide-react';
+import { Settings, ChevronLeft, ChevronRight, Upload, Grid3X3, Clock, Eye, PaintBucket, ChevronDown, Image as ImageIcon, Trash2 } from 'lucide-react';
 import React, { useState, useEffect, useRef } from 'react';
 import { useVttStore } from '../../store';
 import type { BadgeConfig, BadgeType } from '../../types';
@@ -8,7 +8,6 @@ export const RightPanel: React.FC = () => {
   const {
     isRightPanelOpen, toggleRightPanel,
     grid, setGrid,
-    circleGrid, setCircleGrid,
     isNight, setNight,
     displaySettings, updateDisplaySettings,
     room, setRoom
@@ -406,58 +405,6 @@ export const RightPanel: React.FC = () => {
                   className="w-16 bg-input border border-border rounded px-2 py-1 text-sm"
                 />
               </div>
-            )}
-          </div>
-          )}
-        </section>
-
-        {/* Magnetic Circle */}
-         <section className="flex flex-col border border-border rounded-md bg-background">
-          <button
-            onClick={() => toggleSection('cercle')}
-            className="flex items-center justify-between p-2 bg-muted/50 hover:bg-muted font-semibold text-sm transition-colors"
-          >
-            <div className="flex items-center gap-2">
-              <CircleDashed size={16} /> Cercle Magnétique
-            </div>
-            {activeSection === 'cercle' ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-          </button>
-          {activeSection === 'cercle' && (
-          <div className="flex flex-col gap-3 p-3 border-t border-border">
-            <label className="flex items-center gap-2 text-sm cursor-pointer">
-              <input
-                type="checkbox"
-                checked={circleGrid.enabled}
-                onChange={(e) => setCircleGrid({ enabled: e.target.checked })}
-                className="rounded border-border"
-              />
-              Activer le cercle magnétique
-            </label>
-
-            {circleGrid.enabled && (
-              <>
-                <button
-                  onClick={() => setCircleGrid({ drawingState: circleGrid.drawingState !== 'idle' ? 'idle' : 'center' })}
-                  className={`text-xs py-2 rounded flex items-center justify-center gap-2 font-medium transition-colors ${circleGrid.drawingState !== 'idle' ? 'bg-primary text-primary-foreground shadow-inner' : 'bg-accent hover:bg-accent/80'}`}
-                >
-                  {circleGrid.drawingState === 'center' ? 'Cliquez pour placer le centre...' : circleGrid.drawingState === 'radius' ? 'Bougez et cliquez pour le rayon...' : 'Tracer un nouveau cercle'}
-                </button>
-
-                <div className="flex flex-col gap-1 mt-2">
-                  <label className="text-xs text-muted-foreground">Nombre de places :</label>
-                  <input
-                    type="number"
-                    min="1"
-                    max="50"
-                    value={circleGrid.points}
-                    onChange={(e) => setCircleGrid({ points: Math.max(1, parseInt(e.target.value) || 8) })}
-                    className="w-full bg-input border border-border rounded px-2 py-1 text-sm outline-none focus:ring-1 focus:ring-ring"
-                  />
-                  <p className="text-[10px] text-muted-foreground leading-tight mt-1">
-                    Les places sont réparties équitablement sur le périmètre. Le centre peut être déplacé directement sur le plateau (poignée rouge).
-                  </p>
-                </div>
-              </>
             )}
           </div>
           )}
