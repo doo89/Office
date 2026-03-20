@@ -1,27 +1,18 @@
-import { LeftPanel } from './components/layout/LeftPanel';
-import { RightPanel } from './components/layout/RightPanel';
-import { Canvas } from './components/layout/Canvas';
-import { ThemeToggle } from './components/ThemeToggle';
-import { EditingModal } from './components/EditingModal';
-import { HandoutWindow } from './components/HandoutWindow';
-import { useVttStore } from './store';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { GmView } from './pages/GmView';
+import { PlayerJoin } from './pages/PlayerJoin';
+import { PlayerView } from './pages/PlayerView';
 
 function App() {
-  const { isNight, editingEntity, handouts } = useVttStore();
-
   return (
-    <div className={`h-screen w-screen flex overflow-hidden bg-background text-foreground transition-colors duration-300 ${isNight ? 'dark' : ''}`}>
-      <ThemeToggle />
-      <LeftPanel />
-      <Canvas />
-      <RightPanel />
-      {editingEntity && <EditingModal />}
-
-      {/* Render open handouts over everything */}
-      {handouts.filter(h => h.isOpen).map(handout => (
-        <HandoutWindow key={handout.id} handout={handout} />
-      ))}
-    </div>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<GmView />} />
+        <Route path="/join" element={<PlayerJoin />} />
+        <Route path="/player/:roomId/:playerName" element={<PlayerView />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
 

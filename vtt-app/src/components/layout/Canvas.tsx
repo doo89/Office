@@ -1,14 +1,14 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { useStore } from 'zustand';
 import { useVttStore } from '../../store';
-import { ZoomIn, ZoomOut, Maximize, Tag, Skull, Trash2, Settings, ChevronRight, Sun, Moon, Copy, Heart, icons, Users, Hand, MousePointer2, Undo2, Redo2 } from 'lucide-react';
+import { ZoomIn, ZoomOut, Maximize, Tag, Skull, Trash2, Settings, ChevronRight, Sun, Moon, Copy, Heart, icons, Users, Hand, MousePointer2, Undo2, Redo2, Radio, Lock, Globe } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 import type { Marker } from '../../types';
 
 export const Canvas: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const {
-    roomName, setRoomName,
+    roomName, setRoomName, roomCode, generateRoomCode, clearRoomCode, isRoomPublic, toggleRoomPublic,
     canvas, setPan, setZoom, isNight, nextCycle,
     players, updatePlayer, addPlayer, deletePlayer, clearPlayers,
     markers, updateMarker, addMarker, deleteMarker, clearMarkers,
@@ -320,16 +320,53 @@ export const Canvas: React.FC = () => {
   return (
     <div className="flex-1 relative flex flex-col min-w-0">
       {/* Banner */}
-      <div className="h-12 bg-card border-b border-border flex items-center shrink-0 z-40 relative shadow-sm px-4">
-        <div className="flex-1 flex items-center gap-2">
+      <div className="h-12 bg-card border-b border-border flex items-center shrink-0 z-40 relative shadow-sm px-4 justify-between">
+        <div className="flex items-center gap-2">
           <input
             type="text"
             value={roomName}
             onChange={(e) => setRoomName(e.target.value)}
-            className="text-lg font-bold bg-transparent border-none focus:outline-none focus:ring-2 focus:ring-primary/50 rounded px-2"
+            className="text-lg font-bold bg-transparent border-none focus:outline-none focus:ring-2 focus:ring-primary/50 rounded px-2 w-48"
             placeholder="Nom de la salle"
             title="Nom de la salle"
           />
+
+          <div className="h-6 w-px bg-border mx-2" />
+
+          {!roomCode ? (
+            <button
+              onClick={generateRoomCode}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded text-sm font-semibold transition-colors shadow-sm"
+              title="Créer un code pour que les joueurs vous rejoignent avec leur smartphone"
+            >
+              <Radio size={16} /> Héberger
+            </button>
+          ) : (
+            <div className="flex items-center gap-3 bg-zinc-900 border border-zinc-800 rounded px-3 py-1 shadow-inner">
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-zinc-400 uppercase tracking-widest font-bold">Code :</span>
+                <span className="text-lg font-black tracking-widest text-blue-400 select-all">{roomCode}</span>
+              </div>
+              <div className="h-4 w-px bg-zinc-700" />
+              <button
+                onClick={toggleRoomPublic}
+                className={`flex items-center gap-1.5 text-xs font-semibold px-2 py-0.5 rounded transition-colors ${isRoomPublic ? 'bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30' : 'bg-amber-500/20 text-amber-400 hover:bg-amber-500/30'}`}
+                title={isRoomPublic ? "Les joueurs apparaissent directement sur le plateau" : "Vous devrez valider l'entrée des joueurs"}
+              >
+                {isRoomPublic ? <><Globe size={12} /> Publique</> : <><Lock size={12} /> Privée</>}
+              </button>
+              <button
+                onClick={clearRoomCode}
+                className="ml-1 p-1 text-zinc-500 hover:text-red-400 hover:bg-zinc-800 rounded transition-colors"
+                title="Fermer la connexion (Déconnecter tous les joueurs)"
+              >
+                <Trash2 size={14} />
+              </button>
+            </div>
+          )}
+        </div>
+
+        <div className="flex items-center gap-2">
           <button
             onClick={() => {
               const state = useVttStore.getState();

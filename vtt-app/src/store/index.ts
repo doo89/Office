@@ -24,6 +24,9 @@ interface VttStore extends GameState {
 
   // Room
   setRoomName: (name: string) => void;
+  generateRoomCode: () => void;
+  toggleRoomPublic: () => void;
+  clearRoomCode: () => void;
 
   // Navigation
   setPan: (x: number, y: number) => void;
@@ -98,6 +101,8 @@ interface VttStore extends GameState {
 
 const initialState = {
   roomName: 'Ma Salle',
+  roomCode: null,
+  isRoomPublic: true,
   selectedEntityIds: [],
   interactionMode: 'pan' as const,
   playerTemplates: [],
@@ -167,6 +172,17 @@ export const useVttStore = create<VttStore>()(
   setInteractionMode: (mode) => set({ interactionMode: mode }),
 
   setRoomName: (name) => set({ roomName: name }),
+  generateRoomCode: () => {
+    // Generate a 4-letter uppercase code
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    let code = '';
+    for (let i = 0; i < 4; i++) {
+      code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    set({ roomCode: code });
+  },
+  toggleRoomPublic: () => set((state) => ({ isRoomPublic: !state.isRoomPublic })),
+  clearRoomCode: () => set({ roomCode: null }),
 
   setPan: (x, y) => set((state) => ({ canvas: { ...state.canvas, panX: x, panY: y } })),
   setZoom: (zoom) => set((state) => ({ canvas: { ...state.canvas, zoom } })),

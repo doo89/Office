@@ -101,6 +101,8 @@ export interface Handout {
 
 export interface GameState {
   roomName: string;
+  roomCode: string | null;
+  isRoomPublic: boolean;
   selectedEntityIds: EntityId[];
   interactionMode: 'pan' | 'select';
   players: Player[];
