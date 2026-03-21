@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useVttStore } from '../store';
+import { supabase } from '../lib/supabase';
+import type { SyncStatePayload } from '../lib/supabase';
 import { LogOut, UserCircle2, Tag as TagIcon, ShieldAlert } from 'lucide-react';
 import type { Player, Role, Team } from '../types';
 
@@ -8,40 +9,60 @@ export const PlayerView: React.FC = () => {
   const { roomId, playerName } = useParams<{ roomId: string, playerName: string }>();
   const navigate = useNavigate();
 
-  const { players, roles, teams } = useVttStore();
-
   const [localPlayer, setLocalPlayer] = useState<Player | null>(null);
   const [localRole, setLocalRole] = useState<Role | null>(null);
   const [localTeam, setLocalTeam] = useState<Team | null>(null);
+  const [isNight, setIsNight] = useState(false);
+  const [isConnected, setIsConnected] = useState(false);
 
-  // In a real multiplayer setup, this component would subscribe to the Firebase/Supabase
-  // document for the specific `playerId` or `playerName` inside the `roomId`.
-  // For now, we simulate pulling from the local store based on name.
   useEffect(() => {
-    if (!playerName) return;
+    if (!roomId || !playerName || !supabase) return;
 
-    // Find player by name (case-insensitive for robust mock matching)
-    const found = players.find(p => p.name.toLowerCase() === decodeURIComponent(playerName).toLowerCase());
+    const channel = supabase.channel(`room:${roomId}`);
 
-    if (found) {
-      setLocalPlayer(found);
-      const role = roles.find(r => r.id === found.roleId);
-      setLocalRole(role || null);
+    channel
+      .on('broadcast', { event: 'sync_state' }, ({ payload }) => {
+        const data = payload as SyncStatePayload;
 
-      const effectiveTeamId = role?.seenInTeamId || role?.teamId || found.teamId;
-      const team = teams.find(t => t.id === effectiveTeamId);
-      setLocalTeam(team || null);
-    } else {
-      // If player not found, they might be waiting for GM to add them, or they entered wrong name.
-      // We'll just show "Waiting..." state if null.
-      setLocalPlayer(null);
-      setLocalRole(null);
-      setLocalTeam(null);
-    }
-  }, [playerName, players, roles, teams]);
+        setIsNight(data.isNight || false);
+
+        const found = data.players.find(p => p.name.toLowerCase() === decodeURIComponent(playerName).toLowerCase());
+
+        if (found) {
+          setLocalPlayer(found);
+          const role = data.roles.find(r => r.id === found.roleId);
+          setLocalRole(role || null);
+
+          const effectiveTeamId = role?.seenInTeamId || role?.teamId || found.teamId;
+          const team = data.teams.find(t => t.id === effectiveTeamId);
+          setLocalTeam(team || null);
+        } else {
+          setLocalPlayer(null);
+          setLocalRole(null);
+          setLocalTeam(null);
+        }
+      })
+      .subscribe(async (status) => {
+        if (status === 'SUBSCRIBED') {
+          setIsConnected(true);
+          // Announce presence so the GM can add us if we don't exist yet
+          await channel.send({
+            type: 'broadcast',
+            event: 'join_request',
+            payload: { playerName: decodeURIComponent(playerName) }
+          });
+        } else if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
+          setIsConnected(false);
+        }
+      });
+
+    return () => {
+      if (supabase) supabase.removeChannel(channel);
+    };
+  }, [roomId, playerName]);
 
   return (
-    <div className="h-screen w-screen bg-zinc-950 text-zinc-50 flex flex-col p-4 md:p-8 max-w-md mx-auto relative overflow-hidden">
+    <div className={`h-screen w-screen text-zinc-50 flex flex-col p-4 md:p-8 max-w-md mx-auto relative overflow-hidden transition-colors duration-1000 ${isNight ? 'bg-zinc-950' : 'bg-zinc-900'}`}>
       {/* Header */}
       <div className="flex items-center justify-between border-b border-zinc-800 pb-4 mb-6 z-10">
         <div className="flex flex-col">
@@ -57,12 +78,17 @@ export const PlayerView: React.FC = () => {
         </button>
       </div>
 
-      {!localPlayer ? (
+      {!isConnected ? (
         <div className="flex-1 flex flex-col items-center justify-center text-center gap-4 z-10">
-          <div className="w-16 h-16 rounded-full border-4 border-blue-500 border-t-transparent animate-spin" />
+          <div className="w-12 h-12 rounded-full border-4 border-zinc-600 border-t-blue-500 animate-spin" />
+          <p className="text-sm text-zinc-500">Connexion à la salle {roomId}...</p>
+        </div>
+      ) : !localPlayer ? (
+        <div className="flex-1 flex flex-col items-center justify-center text-center gap-4 z-10">
+          <div className="w-16 h-16 rounded-full border-4 border-blue-500 border-t-transparent animate-pulse" />
           <div className="flex flex-col gap-1">
             <h3 className="text-lg font-semibold text-zinc-200">En attente du Maître du Jeu...</h3>
-            <p className="text-sm text-zinc-500">Votre connexion à la salle {roomId} est établie. Le MJ doit vous faire entrer sur le plateau.</p>
+            <p className="text-sm text-zinc-500">Connexion établie. Le MJ doit valider votre entrée sur le plateau.</p>
           </div>
         </div>
       ) : (
@@ -77,7 +103,7 @@ export const PlayerView: React.FC = () => {
           )}
 
           {/* Role Card */}
-          <div className="relative flex flex-col items-center bg-zinc-900 border border-zinc-800 rounded-2xl p-6 shadow-2xl overflow-hidden mt-4">
+          <div className={`relative flex flex-col items-center border rounded-2xl p-6 shadow-2xl overflow-hidden mt-4 transition-colors duration-1000 ${isNight ? 'bg-zinc-900 border-zinc-800' : 'bg-zinc-800 border-zinc-700'}`}>
             {localTeam && (
                <div
                   className="absolute top-0 left-0 w-full h-1.5"

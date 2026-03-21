@@ -6,9 +6,18 @@ import { ThemeToggle } from '../components/ThemeToggle';
 import { EditingModal } from '../components/EditingModal';
 import { HandoutWindow } from '../components/HandoutWindow';
 import { useVttStore } from '../store';
+import { setupHostRealtimeSubscription, cleanupHostRealtime } from '../lib/realtime-host';
 
 export const GmView: React.FC = () => {
   const { isNight, editingEntity, handouts } = useVttStore();
+
+  React.useEffect(() => {
+    const unsubscribe = setupHostRealtimeSubscription();
+    return () => {
+      cleanupHostRealtime();
+      unsubscribe();
+    };
+  }, []);
 
   return (
     <div className={`h-screen w-screen flex overflow-hidden bg-background text-foreground transition-colors duration-300 ${isNight ? 'dark' : ''}`}>
