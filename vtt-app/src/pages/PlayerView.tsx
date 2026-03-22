@@ -18,7 +18,9 @@ export const PlayerView: React.FC = () => {
   useEffect(() => {
     if (!roomId || !playerName || !supabase) return;
 
-    const channel = supabase.channel(`room:${roomId}`);
+    const channel = supabase.channel(`room:${roomId}`, {
+      config: { broadcast: { ack: true } },
+    });
 
     channel
       .on('broadcast', { event: 'sync_state' }, ({ payload }) => {

@@ -331,42 +331,6 @@ export const Canvas: React.FC = () => {
             title="Nom de la salle"
           />
 
-          <div className="h-6 w-px bg-border mx-2" />
-
-          {!roomCode ? (
-            <button
-              onClick={generateRoomCode}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded text-sm font-semibold transition-colors shadow-sm"
-              title="Créer un code pour que les joueurs vous rejoignent avec leur smartphone"
-            >
-              <Radio size={16} /> Héberger
-            </button>
-          ) : (
-            <div className="flex items-center gap-3 bg-zinc-900 border border-zinc-800 rounded px-3 py-1 shadow-inner">
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-zinc-400 uppercase tracking-widest font-bold">Code :</span>
-                <span className="text-lg font-black tracking-widest text-blue-400 select-all">{roomCode}</span>
-              </div>
-              <div className="h-4 w-px bg-zinc-700" />
-              <button
-                onClick={toggleRoomPublic}
-                className={`flex items-center gap-1.5 text-xs font-semibold px-2 py-0.5 rounded transition-colors ${isRoomPublic ? 'bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30' : 'bg-amber-500/20 text-amber-400 hover:bg-amber-500/30'}`}
-                title={isRoomPublic ? "Les joueurs apparaissent directement sur le plateau" : "Vous devrez valider l'entrée des joueurs"}
-              >
-                {isRoomPublic ? <><Globe size={12} /> Publique</> : <><Lock size={12} /> Privée</>}
-              </button>
-              <button
-                onClick={clearRoomCode}
-                className="ml-1 p-1 text-zinc-500 hover:text-red-400 hover:bg-zinc-800 rounded transition-colors"
-                title="Fermer la connexion (Déconnecter tous les joueurs)"
-              >
-                <Trash2 size={14} />
-              </button>
-            </div>
-          )}
-        </div>
-
-        <div className="flex items-center gap-2">
           <button
             onClick={() => {
               const state = useVttStore.getState();
@@ -407,6 +371,42 @@ export const Canvas: React.FC = () => {
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
           </button>
+        </div>
+
+        <div className="flex items-center gap-2">
+          {!roomCode ? (
+            <button
+              onClick={generateRoomCode}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded text-sm font-semibold transition-colors shadow-sm"
+              title="Créer un code pour que les joueurs vous rejoignent avec leur smartphone"
+            >
+              <Radio size={16} /> Héberger
+            </button>
+          ) : (
+            <div className="flex items-center gap-3 bg-zinc-900 border border-zinc-800 rounded px-3 py-1 shadow-inner">
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-zinc-400 uppercase tracking-widest font-bold">Code :</span>
+                <span className="text-lg font-black tracking-widest text-blue-400 select-all">{roomCode}</span>
+              </div>
+              <div className="h-4 w-px bg-zinc-700" />
+              <button
+                onClick={toggleRoomPublic}
+                className={`flex items-center gap-1.5 text-xs font-semibold px-2 py-0.5 rounded transition-colors ${isRoomPublic ? 'bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30' : 'bg-amber-500/20 text-amber-400 hover:bg-amber-500/30'}`}
+                title={isRoomPublic ? "Les joueurs apparaissent directement sur le plateau" : "Vous devrez valider l'entrée des joueurs"}
+              >
+                {isRoomPublic ? <><Globe size={12} /> Publique</> : <><Lock size={12} /> Privée</>}
+              </button>
+              <button
+                onClick={clearRoomCode}
+                className="ml-1 p-1 text-zinc-500 hover:text-red-400 hover:bg-zinc-800 rounded transition-colors"
+                title="Fermer la connexion (Déconnecter tous les joueurs)"
+              >
+                <Trash2 size={14} />
+              </button>
+            </div>
+          )}
+
+          <span className="text-[10px] text-muted-foreground ml-2">v0.600</span>
         </div>
       </div>
 

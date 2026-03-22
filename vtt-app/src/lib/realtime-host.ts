@@ -15,7 +15,7 @@ export const initHostRealtime = (roomCode: string, isRoomPublic: boolean) => {
   }
 
   currentChannel = supabase.channel(`room:${roomCode}`, {
-    config: { broadcast: { self: false } },
+    config: { broadcast: { self: false, ack: true } },
   });
 
   currentChannel
@@ -93,6 +93,12 @@ const forceBroadcastState = () => {
 };
 
 export const setupHostRealtimeSubscription = () => {
+  // Automatically connect if there's already a room code (e.g. after page refresh)
+  const initialState = useVttStore.getState();
+  if (initialState.roomCode) {
+    initHostRealtime(initialState.roomCode, initialState.isRoomPublic);
+  }
+
   return useVttStore.subscribe((state, prevState) => {
     if (!state.roomCode && !prevState.roomCode) return;
 
