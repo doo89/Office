@@ -41,8 +41,8 @@ export const PlayerView: React.FC = () => {
           found = data.players.find(p => p.name.toLowerCase() === decodeURIComponent(playerName).toLowerCase());
           if (found) {
             matchedPlayerIdRef.current = found.id;
-            // Track presence now that we know our ID
-            await channel.track({ playerId: found.id, name: found.name });
+            // Track presence now that we know our ID (do not await to avoid blocking UI update)
+            channel.track({ playerId: found.id, name: found.name }).catch(console.error);
           }
         }
 
@@ -65,7 +65,7 @@ export const PlayerView: React.FC = () => {
           }
         }
       })
-      .subscribe(async (status) => {
+      .subscribe((status) => {
         if (status === 'SUBSCRIBED') {
           setIsConnected(true);
 
@@ -73,22 +73,22 @@ export const PlayerView: React.FC = () => {
           // This way, the host's `presence` sync picks us up immediately, even before `matchedPlayerId` is resolved.
           // Once the host broadcasts the state back to us, we will overwrite this track call with our true `found.id`.
           if (!matchedPlayerIdRef.current) {
-            await channel.track({ playerId: decodeURIComponent(playerName), name: decodeURIComponent(playerName) });
+            channel.track({ playerId: decodeURIComponent(playerName), name: decodeURIComponent(playerName) }).catch(console.error);
           }
 
           // Announce presence so the GM can add us or approve us if we don't exist yet
           // (or force a broadcast if we do exist)
-          await channel.send({
+          channel.send({
             type: 'broadcast',
             event: 'join_request',
             payload: { playerName: decodeURIComponent(playerName) }
-          });
+          }).catch(console.error);
 
           // Request state immediately
-          await channel.send({
+          channel.send({
             type: 'broadcast',
             event: 'get_state',
-          });
+          }).catch(console.error);
 
         } else if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
           setIsConnected(false);
