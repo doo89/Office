@@ -4,7 +4,7 @@ import { useVttStore } from '../store';
 
 let currentChannel: RealtimeChannel | null = null;
 
-export const initHostRealtime = (roomCode: string, isRoomPublic: boolean) => {
+export const initHostRealtime = (roomCode: string) => {
   if (!supabase) return;
 
   // Cleanup existing channel
@@ -25,12 +25,11 @@ export const initHostRealtime = (roomCode: string, isRoomPublic: boolean) => {
       const existingPlayer = state.players.find(p => p.name.toLowerCase() === playerName.toLowerCase());
 
       if (!existingPlayer) {
-        if (isRoomPublic) {
+        if (state.isRoomPublic) {
           // Auto-add player to canvas at center
           const { panX, panY, zoom } = state.canvas;
-          // Simple center calculation (assuming 1000x800 typical view)
-          const centerX = (-panX + 500) / zoom;
-          const centerY = (-panY + 400) / zoom;
+          const centerX = (-panX + (window.innerWidth / 2)) / zoom;
+          const centerY = (-panY + (window.innerHeight / 2)) / zoom;
 
           state.addPlayer({
             name: playerName,
@@ -123,7 +122,7 @@ export const setupHostRealtimeSubscription = () => {
   // Automatically connect if there's already a room code (e.g. after page refresh)
   const initialState = useVttStore.getState();
   if (initialState.roomCode) {
-    initHostRealtime(initialState.roomCode, initialState.isRoomPublic);
+    initHostRealtime(initialState.roomCode);
   }
 
   return useVttStore.subscribe((state, prevState) => {
@@ -140,14 +139,13 @@ export const setupHostRealtimeSubscription = () => {
 
     if (state.roomCode !== prevState.roomCode) {
       if (state.roomCode) {
-        initHostRealtime(state.roomCode, state.isRoomPublic);
+        initHostRealtime(state.roomCode);
       } else {
         cleanupHostRealtime();
       }
-    } else if (state.isRoomPublic !== prevState.isRoomPublic && state.roomCode) {
-      // Re-initialize channel to capture new public/private setting in closure
-      initHostRealtime(state.roomCode, state.isRoomPublic);
     } else if (relevantChanged && currentChannel) {
+      // isRoomPublic changes no longer trigger a full re-init. It's read dynamically in the event handler.
+      // They just trigger a force broadcast so that clients know the current state (if they needed to).
       forceBroadcastState();
     }
   });

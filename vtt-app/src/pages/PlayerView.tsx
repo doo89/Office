@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import type { SyncStatePayload } from '../lib/supabase';
@@ -16,7 +16,8 @@ export const PlayerView: React.FC = () => {
   const [isConnected, setIsConnected] = useState(false);
 
   // Track the actual player ID once found, so if GM renames them, they stay connected
-  const [matchedPlayerId, setMatchedPlayerId] = useState<string | null>(null);
+  // Use a ref so changes don't cause the useEffect to tear down the WebSocket channel
+  const matchedPlayerIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!roomId || !playerName || !supabase) return;
@@ -33,13 +34,13 @@ export const PlayerView: React.FC = () => {
 
         // Find player by previously matched ID, OR by name
         let found = null;
-        if (matchedPlayerId) {
-          found = data.players.find(p => p.id === matchedPlayerId);
+        if (matchedPlayerIdRef.current) {
+          found = data.players.find(p => p.id === matchedPlayerIdRef.current);
         }
         if (!found) {
           found = data.players.find(p => p.name.toLowerCase() === decodeURIComponent(playerName).toLowerCase());
           if (found) {
-            setMatchedPlayerId(found.id);
+            matchedPlayerIdRef.current = found.id;
             // Track presence now that we know our ID
             await channel.track({ playerId: found.id, name: found.name });
           }
@@ -58,8 +59,8 @@ export const PlayerView: React.FC = () => {
           setLocalRole(null);
           setLocalTeam(null);
           // If we lost our ID (e.g. player deleted), reset it
-          if (matchedPlayerId) {
-            setMatchedPlayerId(null);
+          if (matchedPlayerIdRef.current) {
+            matchedPlayerIdRef.current = null;
             channel.untrack();
           }
         }
@@ -71,7 +72,7 @@ export const PlayerView: React.FC = () => {
           // Before sending a join request, we track ourselves using our name as a fallback ID.
           // This way, the host's `presence` sync picks us up immediately, even before `matchedPlayerId` is resolved.
           // Once the host broadcasts the state back to us, we will overwrite this track call with our true `found.id`.
-          if (!matchedPlayerId) {
+          if (!matchedPlayerIdRef.current) {
             await channel.track({ playerId: decodeURIComponent(playerName), name: decodeURIComponent(playerName) });
           }
 
@@ -97,7 +98,7 @@ export const PlayerView: React.FC = () => {
     return () => {
       if (supabase) supabase.removeChannel(channel);
     };
-  }, [roomId, playerName, matchedPlayerId]);
+  }, [roomId, playerName]);
 
   return (
     <div className={`h-screen w-screen text-zinc-50 flex flex-col p-4 md:p-8 max-w-md mx-auto relative overflow-hidden transition-colors duration-1000 ${isNight ? 'bg-zinc-950' : 'bg-zinc-900'}`}>

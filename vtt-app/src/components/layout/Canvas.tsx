@@ -55,8 +55,8 @@ export const Canvas: React.FC = () => {
 
     // Auto-add player to canvas at center
     const { panX, panY, zoom } = canvas;
-    const centerX = (-panX + containerSize.width / 2) / zoom;
-    const centerY = (-panY + containerSize.height / 2) / zoom;
+    const centerX = (-panX + (window.innerWidth / 2)) / zoom;
+    const centerY = (-panY + (window.innerHeight / 2)) / zoom;
 
     addPlayer({
       name: playerName,
