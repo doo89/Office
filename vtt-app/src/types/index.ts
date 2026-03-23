@@ -79,7 +79,7 @@ export interface Team {
   color: string;
 }
 
-export type BadgeType = 'none' | 'team' | 'lives' | 'votes' | 'points' | 'uses' | 'callOrderDay' | 'callOrderNight';
+export type BadgeType = 'none' | 'team' | 'lives' | 'votes' | 'points' | 'uses' | 'callOrderDay' | 'callOrderNight' | 'connection';
 
 export interface BadgeConfig {
   type: BadgeType;

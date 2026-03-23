@@ -712,6 +712,19 @@ export const Canvas: React.FC = () => {
               );
             }
 
+            if (config.type === 'connection') {
+              if (!roomCode || onlinePlayerIds.includes(player.id)) return null;
+              return (
+                <div
+                  key={position}
+                  className={`${baseClasses} ${posClass} !w-6 !min-w-[24px] bg-destructive text-destructive-foreground`}
+                  title="Hors ligne"
+                >
+                  <WifiOff size={12} />
+                </div>
+              );
+            }
+
             // Other generic values (votes, points, uses, call orders)
             const val = customBadgeValues[config.type];
             if (val === null || val === undefined) return null;
@@ -795,23 +808,22 @@ export const Canvas: React.FC = () => {
 
                   {/* Show name inside circle ONLY if there's no image AND setting says 'inside' */}
                   {!imageToShow && displaySettings.playerNamePosition === 'inside' && (
-                    <span className="font-bold text-white text-sm mix-blend-difference drop-shadow-md px-1 text-center leading-tight z-10 pointer-events-none">
-                      {player.name}
+                    <span className="font-bold text-white text-sm mix-blend-difference drop-shadow-md px-1 text-center leading-tight z-10 pointer-events-none flex flex-col items-center">
+                      <span>{player.name}</span>
+                      {roomCode && !onlinePlayerIds.includes(player.id) && (
+                        <span className="text-[9px] text-destructive opacity-90 -mt-1 drop-shadow-sm font-bold">(hors ligne)</span>
+                      )}
                     </span>
                   )}
                 </div>
 
                 {/* Show name below the circle IF there IS an image OR setting says 'bottom' */}
                 {(imageToShow || (!imageToShow && displaySettings.playerNamePosition === 'bottom')) && (
-                  <div className="absolute top-full mt-1 bg-background/80 backdrop-blur-sm px-2 py-0.5 rounded text-xs font-bold whitespace-nowrap border border-border pointer-events-none">
-                    {player.name}
-                  </div>
-                )}
-
-                {/* Presence indicator (if offline) */}
-                {roomCode && !onlinePlayerIds.includes(player.id) && (
-                  <div className="absolute -top-2 -right-2 w-6 h-6 bg-destructive rounded-full border-2 border-background flex items-center justify-center text-destructive-foreground shadow-md z-20" title="Hors ligne">
-                    <WifiOff size={12} />
+                  <div className="absolute top-full mt-1 bg-background/80 backdrop-blur-sm px-2 py-0.5 rounded text-xs font-bold whitespace-nowrap border border-border pointer-events-none text-center flex flex-col items-center">
+                    <span>{player.name}</span>
+                    {roomCode && !onlinePlayerIds.includes(player.id) && (
+                      <span className="text-[9px] text-destructive opacity-80 -mt-1 leading-tight">(hors ligne)</span>
+                    )}
                   </div>
                 )}
 

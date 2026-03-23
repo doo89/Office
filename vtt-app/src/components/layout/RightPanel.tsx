@@ -259,9 +259,10 @@ export const RightPanel: React.FC = () => {
                               <option value="uses">Uses</option>
                               <option value="callOrderDay">Ordre Appel Jour</option>
                               <option value="callOrderNight">Ordre Appel Nuit</option>
+                              <option value="connection">Connexion</option>
                             </select>
 
-                            {badge.type !== 'none' && badge.type !== 'team' && (
+                            {badge.type !== 'none' && badge.type !== 'team' && badge.type !== 'connection' && (
                               <div className="flex items-center gap-1 shrink-0">
                                 <ColorPicker
                                   color={badge.bgColor}
