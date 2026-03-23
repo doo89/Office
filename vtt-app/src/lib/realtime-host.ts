@@ -15,7 +15,7 @@ export const initHostRealtime = (roomCode: string, isRoomPublic: boolean) => {
   }
 
   currentChannel = supabase.channel(`room:${roomCode}`, {
-    config: { broadcast: { self: false, ack: true } },
+    config: { broadcast: { self: false, ack: true }, presence: { key: 'host' } },
   });
 
   currentChannel
@@ -46,17 +46,44 @@ export const initHostRealtime = (roomCode: string, isRoomPublic: boolean) => {
           });
           // State change will automatically trigger a broadcast via the subscriber below
         } else {
-          // Private room logic - maybe queue for approval (out of scope for MVP, just ignore or notify)
-          console.log(`Private room: Join request ignored for ${playerName}`);
+          // Private room logic - queue for approval
+          console.log(`Private room: Join request received for ${playerName}`);
+          if (!state.joinRequests.includes(playerName)) {
+            state.addJoinRequest(playerName);
+          }
         }
       } else {
         // Player exists, force a broadcast so their client syncs immediately
         forceBroadcastState();
       }
     })
-    .subscribe((status) => {
+    .on('presence', { event: 'sync' }, () => {
+      const state = useVttStore.getState();
+      const newState = currentChannel?.presenceState() || {};
+
+      const onlineIds: string[] = [];
+      for (const key in newState) {
+        if (key !== 'host') {
+          const presences = newState[key] as any[];
+          for (const p of presences) {
+            if (p.playerId) {
+              onlineIds.push(p.playerId);
+            }
+          }
+        }
+      }
+      state.setOnlinePlayers(onlineIds);
+    })
+    .on('presence', { event: 'join' }, ({ key, newPresences }) => {
+      console.log('Player joined', key, newPresences);
+    })
+    .on('presence', { event: 'leave' }, ({ key, leftPresences }) => {
+      console.log('Player left', key, leftPresences);
+    })
+    .subscribe(async (status) => {
       if (status === 'SUBSCRIBED') {
         console.log(`Host connected to room:${roomCode}`);
+        await currentChannel?.track({ isHost: true });
         forceBroadcastState();
       }
     });

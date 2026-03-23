@@ -1,7 +1,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { useStore } from 'zustand';
 import { useVttStore } from '../../store';
-import { ZoomIn, ZoomOut, Maximize, Tag, Skull, Trash2, Settings, ChevronRight, Sun, Moon, Copy, Heart, icons, Users, Hand, MousePointer2, Undo2, Redo2, Radio, Lock, Globe } from 'lucide-react';
+import { ZoomIn, ZoomOut, Maximize, Tag, Skull, Trash2, Settings, ChevronRight, Sun, Moon, Copy, Heart, icons, Users, Hand, MousePointer2, Undo2, Redo2, Radio, Lock, Globe, Bell, Check, X, WifiOff } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 import type { Marker } from '../../types';
 
@@ -9,6 +9,7 @@ export const Canvas: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const {
     roomName, setRoomName, roomCode, generateRoomCode, clearRoomCode, isRoomPublic, toggleRoomPublic,
+    joinRequests, removeJoinRequest, onlinePlayerIds,
     canvas, setPan, setZoom, isNight, nextCycle,
     players, updatePlayer, addPlayer, deletePlayer, clearPlayers,
     markers, updateMarker, addMarker, deleteMarker, clearMarkers,
@@ -47,6 +48,31 @@ export const Canvas: React.FC = () => {
 
   const closeContextMenu = () => {
     if (contextMenu) setContextMenu(null);
+  };
+
+  const handleAcceptJoin = (playerName: string) => {
+    removeJoinRequest(playerName);
+
+    // Auto-add player to canvas at center
+    const { panX, panY, zoom } = canvas;
+    const centerX = (-panX + containerSize.width / 2) / zoom;
+    const centerY = (-panY + containerSize.height / 2) / zoom;
+
+    addPlayer({
+      name: playerName,
+      color: useVttStore.getState().recentColors[Math.floor(Math.random() * useVttStore.getState().recentColors.length)] || '#3b82f6',
+      size: 40,
+      x: centerX,
+      y: centerY,
+      roleId: null,
+      teamId: null,
+      isDead: false,
+      tags: [],
+    });
+  };
+
+  const handleRejectJoin = (playerName: string) => {
+    removeJoinRequest(playerName);
   };
 
   // Handle Drag & Drop
@@ -383,7 +409,38 @@ export const Canvas: React.FC = () => {
               <Radio size={16} /> Héberger
             </button>
           ) : (
-            <div className="flex items-center gap-3 bg-zinc-900 border border-zinc-800 rounded px-3 py-1 shadow-inner">
+            <div className="flex items-center gap-3 bg-zinc-900 border border-zinc-800 rounded px-3 py-1 shadow-inner relative">
+
+              {/* Join Requests Notification Dropdown */}
+              {joinRequests.length > 0 && (
+                <div className="absolute right-0 top-full mt-2 w-64 bg-popover border border-border rounded-md shadow-2xl z-50 animate-in fade-in slide-in-from-top-2">
+                  <div className="px-3 py-2 border-b border-border bg-muted flex items-center justify-between">
+                    <span className="text-xs font-semibold flex items-center gap-2 text-primary">
+                      <Bell size={12} className="animate-pulse" />
+                      Demandes de connexion
+                    </span>
+                    <span className="bg-primary text-primary-foreground text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                      {joinRequests.length}
+                    </span>
+                  </div>
+                  <div className="max-h-60 overflow-y-auto custom-scrollbar p-1">
+                    {joinRequests.map(req => (
+                      <div key={req} className="flex items-center justify-between p-2 hover:bg-accent rounded-sm group">
+                        <span className="text-sm font-medium truncate pr-2">{req}</span>
+                        <div className="flex items-center gap-1 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button onClick={() => handleAcceptJoin(req)} className="p-1 bg-emerald-500/20 text-emerald-500 hover:bg-emerald-500 hover:text-white rounded transition-colors" title="Accepter">
+                            <Check size={14} />
+                          </button>
+                          <button onClick={() => handleRejectJoin(req)} className="p-1 bg-red-500/20 text-red-500 hover:bg-red-500 hover:text-white rounded transition-colors" title="Refuser">
+                            <X size={14} />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <div className="flex items-center gap-2">
                 <span className="text-xs text-zinc-400 uppercase tracking-widest font-bold">Code :</span>
                 <span className="text-lg font-black tracking-widest text-blue-400 select-all">{roomCode}</span>
@@ -406,7 +463,7 @@ export const Canvas: React.FC = () => {
             </div>
           )}
 
-          <span className="text-[10px] text-muted-foreground ml-2">v0.600</span>
+          <span className="text-[10px] text-muted-foreground ml-2">v0.601</span>
         </div>
       </div>
 
@@ -748,6 +805,13 @@ export const Canvas: React.FC = () => {
                 {(imageToShow || (!imageToShow && displaySettings.playerNamePosition === 'bottom')) && (
                   <div className="absolute top-full mt-1 bg-background/80 backdrop-blur-sm px-2 py-0.5 rounded text-xs font-bold whitespace-nowrap border border-border pointer-events-none">
                     {player.name}
+                  </div>
+                )}
+
+                {/* Presence indicator (if offline) */}
+                {roomCode && !onlinePlayerIds.includes(player.id) && (
+                  <div className="absolute -top-2 -right-2 w-6 h-6 bg-destructive rounded-full border-2 border-background flex items-center justify-center text-destructive-foreground shadow-md z-20" title="Hors ligne">
+                    <WifiOff size={12} />
                   </div>
                 )}
 

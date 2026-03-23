@@ -103,6 +103,8 @@ export interface GameState {
   roomName: string;
   roomCode: string | null;
   isRoomPublic: boolean;
+  joinRequests: string[];
+  onlinePlayerIds: EntityId[];
   selectedEntityIds: EntityId[];
   interactionMode: 'pan' | 'select';
   players: Player[];

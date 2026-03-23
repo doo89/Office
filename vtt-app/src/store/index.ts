@@ -27,6 +27,9 @@ interface VttStore extends GameState {
   generateRoomCode: () => void;
   toggleRoomPublic: () => void;
   clearRoomCode: () => void;
+  addJoinRequest: (playerName: string) => void;
+  removeJoinRequest: (playerName: string) => void;
+  setOnlinePlayers: (playerIds: EntityId[]) => void;
 
   // Navigation
   setPan: (x: number, y: number) => void;
@@ -103,6 +106,8 @@ const initialState = {
   roomName: 'Ma Salle',
   roomCode: null,
   isRoomPublic: true,
+  joinRequests: [],
+  onlinePlayerIds: [],
   selectedEntityIds: [],
   interactionMode: 'pan' as const,
   playerTemplates: [],
@@ -182,7 +187,10 @@ export const useVttStore = create<VttStore>()(
     set({ roomCode: code });
   },
   toggleRoomPublic: () => set((state) => ({ isRoomPublic: !state.isRoomPublic })),
-  clearRoomCode: () => set({ roomCode: null }),
+  clearRoomCode: () => set({ roomCode: null, joinRequests: [], onlinePlayerIds: [] }),
+  addJoinRequest: (name) => set((state) => ({ joinRequests: [...new Set([...state.joinRequests, name])] })),
+  removeJoinRequest: (name) => set((state) => ({ joinRequests: state.joinRequests.filter(n => n !== name) })),
+  setOnlinePlayers: (ids) => set({ onlinePlayerIds: ids }),
 
   setPan: (x, y) => set((state) => ({ canvas: { ...state.canvas, panX: x, panY: y } })),
   setZoom: (zoom) => set((state) => ({ canvas: { ...state.canvas, zoom } })),

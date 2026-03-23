@@ -15,20 +15,35 @@ export const PlayerView: React.FC = () => {
   const [isNight, setIsNight] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
 
+  // Track the actual player ID once found, so if GM renames them, they stay connected
+  const [matchedPlayerId, setMatchedPlayerId] = useState<string | null>(null);
+
   useEffect(() => {
     if (!roomId || !playerName || !supabase) return;
 
     const channel = supabase.channel(`room:${roomId}`, {
-      config: { broadcast: { ack: true } },
+      config: { broadcast: { ack: true }, presence: { key: playerName } },
     });
 
     channel
-      .on('broadcast', { event: 'sync_state' }, ({ payload }) => {
+      .on('broadcast', { event: 'sync_state' }, async ({ payload }) => {
         const data = payload as SyncStatePayload;
 
         setIsNight(data.isNight || false);
 
-        const found = data.players.find(p => p.name.toLowerCase() === decodeURIComponent(playerName).toLowerCase());
+        // Find player by previously matched ID, OR by name
+        let found = null;
+        if (matchedPlayerId) {
+          found = data.players.find(p => p.id === matchedPlayerId);
+        }
+        if (!found) {
+          found = data.players.find(p => p.name.toLowerCase() === decodeURIComponent(playerName).toLowerCase());
+          if (found) {
+            setMatchedPlayerId(found.id);
+            // Track presence now that we know our ID
+            await channel.track({ playerId: found.id, name: found.name });
+          }
+        }
 
         if (found) {
           setLocalPlayer(found);
@@ -42,12 +57,17 @@ export const PlayerView: React.FC = () => {
           setLocalPlayer(null);
           setLocalRole(null);
           setLocalTeam(null);
+          // If we lost our ID (e.g. player deleted), reset it
+          if (matchedPlayerId) {
+            setMatchedPlayerId(null);
+            channel.untrack();
+          }
         }
       })
       .subscribe(async (status) => {
         if (status === 'SUBSCRIBED') {
           setIsConnected(true);
-          // Announce presence so the GM can add us if we don't exist yet
+          // Announce presence so the GM can add us or approve us if we don't exist yet
           await channel.send({
             type: 'broadcast',
             event: 'join_request',
@@ -61,7 +81,7 @@ export const PlayerView: React.FC = () => {
     return () => {
       if (supabase) supabase.removeChannel(channel);
     };
-  }, [roomId, playerName]);
+  }, [roomId, playerName, matchedPlayerId]);
 
   return (
     <div className={`h-screen w-screen text-zinc-50 flex flex-col p-4 md:p-8 max-w-md mx-auto relative overflow-hidden transition-colors duration-1000 ${isNight ? 'bg-zinc-950' : 'bg-zinc-900'}`}>
