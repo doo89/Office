@@ -53,6 +53,7 @@ interface VttStore extends GameState {
   // Players
   addPlayer: (playerData: Omit<Player, 'id'>) => void;
   updatePlayer: (id: EntityId, updates: Partial<Player>) => void;
+  updatePlayers: (updatesArray: { id: EntityId; updates: Partial<Player> }[]) => void;
   deletePlayer: (id: EntityId) => void;
   clearPlayers: () => void;
 
@@ -218,9 +219,25 @@ export const useVttStore = create<VttStore>()(
   addPlayer: (playerData) => set((state) => ({
     players: [...state.players, { ...playerData, id: uuidv4() }]
   })),
-  updatePlayer: (id, updates) => set((state) => ({
-    players: state.players.map(p => p.id === id ? { ...p, ...updates } : p)
-  })),
+  updatePlayer: (id, updates) => set((state) => {
+    // Check if the player exists, if not, do nothing to avoid unnecessary re-renders
+    const playerIndex = state.players.findIndex(p => p.id === id);
+    if (playerIndex === -1) return state;
+
+    const newPlayers = [...state.players];
+    newPlayers[playerIndex] = { ...newPlayers[playerIndex], ...updates };
+    return { players: newPlayers };
+  }),
+  updatePlayers: (updatesArray) => set((state) => {
+    const newPlayers = [...state.players];
+    updatesArray.forEach(({ id, updates }) => {
+      const playerIndex = newPlayers.findIndex(p => p.id === id);
+      if (playerIndex !== -1) {
+        newPlayers[playerIndex] = { ...newPlayers[playerIndex], ...updates };
+      }
+    });
+    return { players: newPlayers };
+  }),
   deletePlayer: (id) => set((state) => ({
     players: state.players.filter(p => p.id !== id)
   })),

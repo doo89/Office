@@ -463,7 +463,7 @@ export const Canvas: React.FC = () => {
             </div>
           )}
 
-          <span className="text-[10px] text-muted-foreground ml-2">v0.601</span>
+          <span className="text-[10px] text-muted-foreground ml-2">v0.602</span>
         </div>
       </div>
 

@@ -3,7 +3,6 @@ import { supabase } from './supabase';
 import { useVttStore } from '../store';
 
 let currentChannel: RealtimeChannel | null = null;
-let lastBroadcastData = '';
 
 export const initHostRealtime = (roomCode: string, isRoomPublic: boolean) => {
   if (!supabase) return;
@@ -57,6 +56,10 @@ export const initHostRealtime = (roomCode: string, isRoomPublic: boolean) => {
         forceBroadcastState();
       }
     })
+    .on('broadcast', { event: 'get_state' }, () => {
+      // Direct request from a player client to get current state (useful for late joiners)
+      forceBroadcastState();
+    })
     .on('presence', { event: 'sync' }, () => {
       const state = useVttStore.getState();
       const newState = currentChannel?.presenceState() || {};
@@ -108,15 +111,12 @@ const forceBroadcastState = () => {
     isNight: state.isNight,
   };
 
-  const newDataString = JSON.stringify(payload);
-  if (newDataString !== lastBroadcastData) {
-    currentChannel.send({
-      type: 'broadcast',
-      event: 'sync_state',
-      payload: payload,
-    }).catch(err => console.error("Broadcast failed", err));
-    lastBroadcastData = newDataString;
-  }
+  // We must always broadcast if it's forced by a client request, not just on diff.
+  currentChannel.send({
+    type: 'broadcast',
+    event: 'sync_state',
+    payload: payload,
+  }).catch(err => console.error("Broadcast failed", err));
 };
 
 export const setupHostRealtimeSubscription = () => {

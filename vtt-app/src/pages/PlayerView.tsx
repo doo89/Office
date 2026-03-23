@@ -67,12 +67,28 @@ export const PlayerView: React.FC = () => {
       .subscribe(async (status) => {
         if (status === 'SUBSCRIBED') {
           setIsConnected(true);
+
+          // Before sending a join request, we track ourselves using our name as a fallback ID.
+          // This way, the host's `presence` sync picks us up immediately, even before `matchedPlayerId` is resolved.
+          // Once the host broadcasts the state back to us, we will overwrite this track call with our true `found.id`.
+          if (!matchedPlayerId) {
+            await channel.track({ playerId: decodeURIComponent(playerName), name: decodeURIComponent(playerName) });
+          }
+
           // Announce presence so the GM can add us or approve us if we don't exist yet
+          // (or force a broadcast if we do exist)
           await channel.send({
             type: 'broadcast',
             event: 'join_request',
             payload: { playerName: decodeURIComponent(playerName) }
           });
+
+          // Request state immediately
+          await channel.send({
+            type: 'broadcast',
+            event: 'get_state',
+          });
+
         } else if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
           setIsConnected(false);
         }

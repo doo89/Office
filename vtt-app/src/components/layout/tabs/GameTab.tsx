@@ -4,7 +4,7 @@ import { useVttStore } from '../../../store';
 import type { Player, Marker, TagInstance, Role } from '../../../types';
 
 export const GameTab: React.FC = () => {
-  const { isNight, cycleNumber, nextCycle, resetCycle, players, markers, updatePlayer, updateMarker, roles, updateRole } = useVttStore();
+  const { isNight, cycleNumber, nextCycle, resetCycle, players, markers, updatePlayer, updatePlayers, updateMarker, roles, updateRole } = useVttStore();
 
   const [expandedCalledTags, setExpandedCalledTags] = useState<Record<string, boolean>>({});
   const [isDistributionExpanded, setIsDistributionExpanded] = useState<boolean>(true);
@@ -153,19 +153,23 @@ export const GameTab: React.FC = () => {
     }
 
     // Assign to players
-    players.forEach((player, index) => {
+    const updates = players.map((player, index) => {
       const assignedRole = rolesPool[index];
       if (assignedRole) {
-        // Only update the role, keep existing player tags (or should we add role's default tags?
-        // Usually assigning a role replaces their tags with the role's tags, or adds them.
-        // Let's add the role's default tags as local tags to the player, or just set the roleId.
-        // The role's default tags will be available via the roleId automatically.
-        updatePlayer(player.id, {
-          roleId: assignedRole.id,
-          teamId: assignedRole.teamId // Usually assigning a role also assigns the role's default team
-        });
+        return {
+          id: player.id,
+          updates: {
+            roleId: assignedRole.id,
+            teamId: assignedRole.teamId
+          }
+        };
       }
-    });
+      return null;
+    }).filter(Boolean) as { id: string; updates: Partial<Player> }[];
+
+    if (updates.length > 0) {
+      updatePlayers(updates);
+    }
   };
 
   return (
