@@ -23,7 +23,7 @@ export const PlayerView: React.FC = () => {
     if (!roomId || !playerName || !supabase) return;
 
     const channel = supabase.channel(`room:${roomId}`, {
-      config: { broadcast: { ack: true }, presence: { key: playerName } },
+      config: { broadcast: { ack: false }, presence: { key: playerName } },
     });
 
     channel
@@ -38,7 +38,8 @@ export const PlayerView: React.FC = () => {
           found = data.players.find(p => p.id === matchedPlayerIdRef.current);
         }
         if (!found) {
-          found = data.players.find(p => p.name.toLowerCase() === decodeURIComponent(playerName).toLowerCase());
+          const rawName = decodeURIComponent(playerName).trim().toLowerCase();
+          found = data.players.find(p => p.name.trim().toLowerCase() === rawName);
           if (found) {
             matchedPlayerIdRef.current = found.id;
             // Track presence now that we know our ID (do not await to avoid blocking UI update)
@@ -65,7 +66,8 @@ export const PlayerView: React.FC = () => {
           }
         }
       })
-      .subscribe((status) => {
+      .subscribe((status, err) => {
+        console.log('Player connection status:', status, err);
         if (status === 'SUBSCRIBED') {
           setIsConnected(true);
 

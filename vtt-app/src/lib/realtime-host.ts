@@ -14,7 +14,7 @@ export const initHostRealtime = (roomCode: string) => {
   }
 
   currentChannel = supabase.channel(`room:${roomCode}`, {
-    config: { broadcast: { self: false, ack: true }, presence: { key: 'host' } },
+    config: { broadcast: { self: false, ack: false }, presence: { key: 'host' } },
   });
 
   currentChannel
@@ -22,14 +22,15 @@ export const initHostRealtime = (roomCode: string) => {
       const { playerName } = payload;
 
       const state = useVttStore.getState();
-      const existingPlayer = state.players.find(p => p.name.toLowerCase() === playerName.toLowerCase());
+      const rawName = playerName.trim().toLowerCase();
+      const existingPlayer = state.players.find(p => p.name.trim().toLowerCase() === rawName);
 
       if (!existingPlayer) {
         if (state.isRoomPublic) {
           // Auto-add player to canvas at center
           const { panX, panY, zoom } = state.canvas;
-          const centerX = (-panX + (window.innerWidth / 2)) / zoom;
-          const centerY = (-panY + (window.innerHeight / 2)) / zoom;
+          const centerX = (-panX + 500) / zoom;
+          const centerY = (-panY + 400) / zoom;
 
           state.addPlayer({
             name: playerName,
