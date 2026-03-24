@@ -1,7 +1,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { useStore } from 'zustand';
 import { useVttStore } from '../../store';
-import { ZoomIn, ZoomOut, Maximize, Tag, Skull, Trash2, Settings, ChevronRight, Sun, Moon, Copy, Heart, icons, Users, Hand, MousePointer2, Undo2, Redo2, Radio, Lock, Globe, Bell, Check, X, WifiOff } from 'lucide-react';
+import { ZoomIn, ZoomOut, Maximize, Tag, Skull, Trash2, Settings, ChevronRight, Sun, Moon, Copy, Heart, icons, Users, Hand, MousePointer2, Undo2, Redo2, Radio, Lock, Globe, Bell, Check, X, WifiOff, FileText } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 import type { Marker } from '../../types';
 
@@ -995,7 +995,20 @@ export const Canvas: React.FC = () => {
                   closeContextMenu();
                 }}
               >
+                <Settings size={14} />
                 Éditer
+              </button>
+
+              <button
+                className="w-full text-left px-4 py-2 text-sm hover:bg-accent hover:text-accent-foreground flex items-center gap-2"
+                onMouseDown={(e) => {
+                  e.stopPropagation();
+                  useVttStore.getState().setEditingEntity({ type: 'playerNotes', id: contextMenu.entityId! });
+                  closeContextMenu();
+                }}
+              >
+                <FileText size={14} className="text-blue-400" />
+                Note -&gt; Privé
               </button>
 
               {/* Tags Submenu */}

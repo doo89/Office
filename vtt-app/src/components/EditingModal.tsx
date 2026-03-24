@@ -917,6 +917,25 @@ export const EditingModal: React.FC = () => {
         </div>
       </div>
     );
+  } else if (editingEntity.type === 'playerNotes') {
+    const player = players.find(p => p.id === editingEntity.id);
+    if (!player) return null;
+
+    entityTitle = `Notes privées: ${player.name}`;
+    entityContent = (
+      <div className="flex flex-col gap-4 min-h-[300px]">
+        <div className="flex flex-col gap-2 h-full flex-1">
+          <label className="text-sm font-medium text-muted-foreground">Ces notes sont visibles uniquement par vous (MJ)</label>
+          <textarea
+            value={player.privateNotes || ''}
+            onChange={(e) => updatePlayer(player.id, { privateNotes: e.target.value })}
+            placeholder="Ajouter des notes secrètes sur ce joueur..."
+            className="flex-1 min-h-[250px] bg-input border border-border rounded-md p-3 text-sm focus:outline-none focus:ring-1 focus:ring-ring resize-none custom-scrollbar"
+            autoFocus
+          />
+        </div>
+      </div>
+    );
   }
 
   return (
