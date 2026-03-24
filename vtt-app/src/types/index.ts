@@ -13,6 +13,10 @@ export interface Player {
   tags: TagInstance[];
   imageUrl?: string;
   privateNotes?: string;
+  publicNotes?: string;
+  publicNotesSendToPlayer?: boolean;
+  publicNotesVisibleToAll?: boolean;
+  publicNotesNoticeBoard?: boolean;
 }
 
 export interface Role {
@@ -120,7 +124,7 @@ export interface GameState {
   isNight: boolean;
   cycleNumber: number;
   activeLeftTab: 'players' | 'roles' | 'tags' | 'game' | 'handouts';
-  editingEntity: { type: 'player' | 'playerTemplate' | 'role' | 'tagModel' | 'tagInstance' | 'team' | 'tagCategory' | 'playerNotes', id: EntityId, parentId?: EntityId } | null;
+  editingEntity: { type: 'player' | 'playerTemplate' | 'role' | 'tagModel' | 'tagInstance' | 'team' | 'tagCategory' | 'playerNotes' | 'playerPublicNotes', id: EntityId, parentId?: EntityId } | null;
   canvas: {
     panX: number;
     panY: number;

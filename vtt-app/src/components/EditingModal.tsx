@@ -936,6 +936,53 @@ export const EditingModal: React.FC = () => {
         </div>
       </div>
     );
+  } else if (editingEntity.type === 'playerPublicNotes') {
+    const player = players.find(p => p.id === editingEntity.id);
+    if (!player) return null;
+
+    entityTitle = `Notes publiques: ${player.name}`;
+    entityContent = (
+      <div className="flex flex-col gap-4 min-h-[300px]">
+        <div className="flex flex-col gap-2 h-full flex-1">
+          <textarea
+            value={player.publicNotes || ''}
+            onChange={(e) => updatePlayer(player.id, { publicNotes: e.target.value })}
+            placeholder="Ajouter des notes publiques sur ce joueur..."
+            className="flex-1 min-h-[200px] bg-input border border-border rounded-md p-3 text-sm focus:outline-none focus:ring-1 focus:ring-ring resize-none custom-scrollbar"
+            autoFocus
+          />
+        </div>
+        <div className="flex flex-col gap-2 mt-4">
+          <label className="text-sm font-medium flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={player.publicNotesSendToPlayer !== false} // Default to true
+              onChange={(e) => updatePlayer(player.id, { publicNotesSendToPlayer: e.target.checked })}
+              className="rounded border-border bg-input"
+            />
+            Envoyer au joueur (sur smartphone)
+          </label>
+          <label className="text-sm font-medium flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={player.publicNotesVisibleToAll || false}
+              onChange={(e) => updatePlayer(player.id, { publicNotesVisibleToAll: e.target.checked })}
+              className="rounded border-border bg-input"
+            />
+            Visible par tous (clic sur le joueur)
+          </label>
+          <label className="text-sm font-medium flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={player.publicNotesNoticeBoard || false}
+              onChange={(e) => updatePlayer(player.id, { publicNotesNoticeBoard: e.target.checked })}
+              className="rounded border-border bg-input"
+            />
+            Panneau d'affichage (smartphone)
+          </label>
+        </div>
+      </div>
+    );
   }
 
   return (

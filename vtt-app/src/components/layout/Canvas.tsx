@@ -1011,6 +1011,18 @@ export const Canvas: React.FC = () => {
                 Note -&gt; Privé
               </button>
 
+              <button
+                className="w-full text-left px-4 py-2 text-sm hover:bg-accent hover:text-accent-foreground flex items-center gap-2"
+                onMouseDown={(e) => {
+                  e.stopPropagation();
+                  useVttStore.getState().setEditingEntity({ type: 'playerPublicNotes', id: contextMenu.entityId! });
+                  closeContextMenu();
+                }}
+              >
+                <FileText size={14} className="text-green-400" />
+                Note -&gt; Publique
+              </button>
+
               {/* Tags Submenu */}
               {players.find(p => p.id === contextMenu.entityId)!.tags.length > 0 && (
                 <div className="relative group">
