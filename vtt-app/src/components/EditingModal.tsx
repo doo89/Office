@@ -17,6 +17,12 @@ const TAG_ICONS = [
 
 export const EditingModal: React.FC = () => {
   const { editingEntity, setEditingEntity, players, playerTemplates, roles, teams, tags, tagCategories, markers, updatePlayer, updatePlayerTemplate, updateRole, updateTeam, updateTagModel, updateTagCategory, updateMarker } = useVttStore();
+  const [activeTagTab, setActiveTagTab] = React.useState<'general' | 'appearance' | 'fields'>('general');
+
+  // Reset tab when editing entity changes
+  React.useEffect(() => {
+    setActiveTagTab('general');
+  }, [editingEntity?.id]);
 
   if (!editingEntity) return null;
 
@@ -482,183 +488,235 @@ export const EditingModal: React.FC = () => {
 
     entityTitle = `Modifier Tag: ${tag.name}`;
     entityContent = (
-      <div className="flex flex-col gap-4">
-        <div className="flex flex-col gap-1">
-          <label className="text-sm font-medium">Nom</label>
-          <input
-            type="text"
-            value={tag.name}
-            onChange={(e) => updateTagModel(tag.id, { name: e.target.value })}
-            className="bg-input border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
-          />
-        </div>
-        <div className="flex flex-col gap-1 mt-2">
-          <label className="text-sm font-medium">Icône du tag</label>
-          <div className="flex flex-wrap gap-1 bg-input border border-border rounded-md p-2 max-h-32 overflow-y-auto custom-scrollbar">
-            {TAG_ICONS.map(iconName => {
-              const IconComponent = icons[iconName as keyof typeof icons];
-              if (!IconComponent) return null;
-              return (
-                <button
-                  key={iconName}
-                  onClick={() => updateTagModel(tag.id, { icon: iconName })}
-                  className={`p-1.5 rounded-md transition-colors flex items-center justify-center ${
-                    tag.icon === iconName
-                      ? 'bg-primary text-primary-foreground shadow-sm'
-                      : 'hover:bg-accent hover:text-accent-foreground text-muted-foreground'
-                  }`}
-                  title={iconName}
-                >
-                  {React.createElement(IconComponent, { size: 16 })}
-                </button>
-              );
-            })}
-          </div>
+      <div className="flex flex-col h-full w-full">
+        {/* Tabs */}
+        <div className="flex border-b border-border mb-4 sticky top-0 bg-card z-10 shrink-0">
+          <button
+            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors flex-1 ${activeTagTab === 'general' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
+            onClick={() => setActiveTagTab('general')}
+          >
+            Général
+          </button>
+          <button
+            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors flex-1 ${activeTagTab === 'appearance' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
+            onClick={() => setActiveTagTab('appearance')}
+          >
+            Apparence
+          </button>
+          <button
+            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors flex-1 ${activeTagTab === 'fields' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
+            onClick={() => setActiveTagTab('fields')}
+          >
+            Champ
+          </button>
         </div>
 
-        <div className="flex flex-col gap-1">
-          <label className="text-sm font-medium">Image personnalisée</label>
-          <div className="flex items-center gap-2">
-            <input
-              type="file"
-              accept="image/*"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) {
-                  const reader = new FileReader();
-                  reader.onloadend = () => {
-                    updateTagModel(tag.id, { imageUrl: reader.result as string });
-                  };
-                  reader.readAsDataURL(file);
-                }
-              }}
-              className="text-sm flex-1 text-muted-foreground file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90"
-            />
-            {tag.imageUrl && (
-              <button
-                onClick={() => updateTagModel(tag.id, { imageUrl: undefined })}
-                className="p-2 bg-destructive text-destructive-foreground rounded-md hover:bg-destructive/90 transition-colors"
-                title="Supprimer l'image"
-              >
-                <X size={16} />
-              </button>
-            )}
-          </div>
-          {tag.imageUrl && (
-            <div className="mt-2 w-12 h-12 rounded-md overflow-hidden border border-border">
-              <img src={tag.imageUrl} alt={tag.name} className="w-full h-full object-cover" />
+        {/* Tab Content */}
+        <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 min-h-[300px]">
+          {activeTagTab === 'general' && (
+            <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-1">
+                <label className="text-sm font-medium">Nom</label>
+                <input
+                  type="text"
+                  value={tag.name}
+                  onChange={(e) => updateTagModel(tag.id, { name: e.target.value })}
+                  className="bg-input border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-sm font-medium">Catégorie</label>
+                <select
+                  value={tag.categoryId || ''}
+                  onChange={(e) => updateTagModel(tag.id, { categoryId: e.target.value || null })}
+                  className="bg-input border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                >
+                  <option value="">Sans catégorie</option>
+                  {tagCategories.map(cat => (
+                    <option key={cat.id} value={cat.id}>{cat.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex flex-col gap-2 mt-4">
+                <label className="flex items-center gap-2 text-sm text-foreground cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={tag.showInTooltip !== false}
+                    onChange={(e) => updateTagModel(tag.id, { showInTooltip: e.target.checked })}
+                    className="rounded border-border w-4 h-4"
+                  />
+                  Visible dans l'info-bulle (au survol du joueur)
+                </label>
+                <label className="flex items-center gap-2 text-sm text-foreground cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={tag.showInGameTab !== false}
+                    onChange={(e) => updateTagModel(tag.id, { showInGameTab: e.target.checked })}
+                    className="rounded border-border w-4 h-4"
+                  />
+                  Visible dans l'onglet Jeu (sous le joueur)
+                </label>
+              </div>
             </div>
           )}
-        </div>
 
-        <div className="grid grid-cols-2 gap-4 mt-2">
-          <div className="flex flex-col gap-1">
-            <label className="text-sm font-medium" title="Ordre d'Appel Jour">Appel Jour</label>
-            <input
-              type="number"
-              value={tag.callOrderDay ?? ''}
-              onChange={(e) => updateTagModel(tag.id, { callOrderDay: e.target.value === '' ? null : parseInt(e.target.value) })}
-              className="bg-input border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring text-center"
-            />
-          </div>
-          <div className="flex flex-col gap-1">
-            <label className="text-sm font-medium" title="Ordre d'Appel Nuit">Appel Nuit</label>
-            <input
-              type="number"
-              value={tag.callOrderNight ?? ''}
-              onChange={(e) => updateTagModel(tag.id, { callOrderNight: e.target.value === '' ? null : parseInt(e.target.value) })}
-              className="bg-input border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring text-center"
-            />
-          </div>
-        </div>
+          {activeTagTab === 'appearance' && (
+            <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-1">
+                <label className="text-sm font-medium">Icône du tag</label>
+                <div className="flex flex-wrap gap-1 bg-input border border-border rounded-md p-2 max-h-40 overflow-y-auto custom-scrollbar">
+                  {TAG_ICONS.map(iconName => {
+                    const IconComponent = icons[iconName as keyof typeof icons];
+                    if (!IconComponent) return null;
+                    return (
+                      <button
+                        key={iconName}
+                        onClick={() => updateTagModel(tag.id, { icon: iconName })}
+                        className={`p-2 rounded-md transition-colors flex items-center justify-center ${
+                          tag.icon === iconName
+                            ? 'bg-primary text-primary-foreground shadow-sm'
+                            : 'hover:bg-accent hover:text-accent-foreground text-muted-foreground'
+                        }`}
+                        title={iconName}
+                      >
+                        {React.createElement(IconComponent, { size: 20 })}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
 
-        <div className="grid grid-cols-2 gap-2 mt-2">
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-medium text-muted-foreground">Ajout Vie</label>
-            <input
-              type="number"
-              value={tag.lives ?? ''}
-              onChange={(e) => updateTagModel(tag.id, { lives: e.target.value === '' ? null : parseInt(e.target.value) })}
-              className="bg-input border border-border rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
-            />
-          </div>
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-medium text-muted-foreground">Votes</label>
-            <input
-              type="number"
-              value={tag.votes ?? ''}
-              onChange={(e) => updateTagModel(tag.id, { votes: e.target.value === '' ? null : parseInt(e.target.value) })}
-              className="bg-input border border-border rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
-            />
-          </div>
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-medium text-muted-foreground">Points</label>
-            <input
-              type="number"
-              value={tag.points ?? ''}
-              onChange={(e) => updateTagModel(tag.id, { points: e.target.value === '' ? null : parseInt(e.target.value) })}
-              className="bg-input border border-border rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
-            />
-          </div>
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-medium text-muted-foreground">Uses</label>
-            <input
-              type="number"
-              value={tag.uses ?? ''}
-              onChange={(e) => updateTagModel(tag.id, { uses: e.target.value === '' ? null : parseInt(e.target.value) })}
-              className="bg-input border border-border rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
-            />
-            <label className="flex items-center gap-1 text-[10px] text-muted-foreground cursor-pointer mt-1">
-              <input
-                type="checkbox"
-                checked={tag.autoDeleteOnZeroUses || false}
-                onChange={(e) => updateTagModel(tag.id, { autoDeleteOnZeroUses: e.target.checked })}
-                className="rounded border-border w-3 h-3"
-              />
-              Suppr. auto à 0
-            </label>
-          </div>
-        </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-sm font-medium">Image personnalisée</label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        const reader = new FileReader();
+                        reader.onloadend = () => {
+                          updateTagModel(tag.id, { imageUrl: reader.result as string });
+                        };
+                        reader.readAsDataURL(file);
+                      }
+                    }}
+                    className="text-sm flex-1 text-muted-foreground file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90"
+                  />
+                  {tag.imageUrl && (
+                    <button
+                      onClick={() => updateTagModel(tag.id, { imageUrl: undefined })}
+                      className="p-2 bg-destructive text-destructive-foreground rounded-md hover:bg-destructive/90 transition-colors"
+                      title="Supprimer l'image"
+                    >
+                      <X size={16} />
+                    </button>
+                  )}
+                </div>
+                {tag.imageUrl && (
+                  <div className="mt-2 w-16 h-16 rounded-md overflow-hidden border border-border">
+                    <img src={tag.imageUrl} alt={tag.name} className="w-full h-full object-cover" />
+                  </div>
+                )}
+              </div>
 
-        <div className="flex flex-col gap-1">
-          <label className="text-xs font-medium text-muted-foreground">Texte libre</label>
-          <textarea
-            value={tag.description || ''}
-            onChange={(e) => updateTagModel(tag.id, { description: e.target.value })}
-            className="bg-input border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring min-h-[60px]"
-          />
-        </div>
+              <div className="flex flex-col gap-1 mt-2">
+                <label className="text-sm font-medium">Couleur</label>
+                <div className="flex items-center gap-3">
+                  <ColorPicker
+                    color={tag.color}
+                    onChange={(c) => updateTagModel(tag.id, { color: c })}
+                    label="Couleur"
+                    className="!w-10 !h-10"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
 
-        <div className="flex flex-col gap-2 mt-1">
-          <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
-            <input
-              type="checkbox"
-              checked={tag.showInTooltip !== false}
-              onChange={(e) => updateTagModel(tag.id, { showInTooltip: e.target.checked })}
-              className="rounded border-border w-3 h-3"
-            />
-            Visible dans l'info-bulle (au survol du joueur)
-          </label>
-          <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
-            <input
-              type="checkbox"
-              checked={tag.showInGameTab !== false}
-              onChange={(e) => updateTagModel(tag.id, { showInGameTab: e.target.checked })}
-              className="rounded border-border w-3 h-3"
-            />
-            Visible dans l'onglet Jeu (sous le joueur)
-          </label>
-        </div>
-        <div className="flex flex-col gap-1 mt-2">
-          <label className="text-sm font-medium">Couleur</label>
-          <div className="flex items-center gap-3">
-            <ColorPicker
-              color={tag.color}
-              onChange={(c) => updateTagModel(tag.id, { color: c })}
-              label="Couleur"
-              className="!w-10 !h-10"
-            />
-          </div>
+          {activeTagTab === 'fields' && (
+            <div className="flex flex-col gap-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex flex-col gap-1">
+                  <label className="text-sm font-medium" title="Ordre d'Appel Jour">Appel Jour</label>
+                  <input
+                    type="number"
+                    value={tag.callOrderDay ?? ''}
+                    onChange={(e) => updateTagModel(tag.id, { callOrderDay: e.target.value === '' ? null : parseInt(e.target.value) })}
+                    className="bg-input border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring text-center"
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-sm font-medium" title="Ordre d'Appel Nuit">Appel Nuit</label>
+                  <input
+                    type="number"
+                    value={tag.callOrderNight ?? ''}
+                    onChange={(e) => updateTagModel(tag.id, { callOrderNight: e.target.value === '' ? null : parseInt(e.target.value) })}
+                    className="bg-input border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring text-center"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex flex-col gap-1">
+                  <label className="text-sm font-medium text-muted-foreground">Ajout Vie</label>
+                  <input
+                    type="number"
+                    value={tag.lives ?? ''}
+                    onChange={(e) => updateTagModel(tag.id, { lives: e.target.value === '' ? null : parseInt(e.target.value) })}
+                    className="bg-input border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-sm font-medium text-muted-foreground">Votes</label>
+                  <input
+                    type="number"
+                    value={tag.votes ?? ''}
+                    onChange={(e) => updateTagModel(tag.id, { votes: e.target.value === '' ? null : parseInt(e.target.value) })}
+                    className="bg-input border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-sm font-medium text-muted-foreground">Points</label>
+                  <input
+                    type="number"
+                    value={tag.points ?? ''}
+                    onChange={(e) => updateTagModel(tag.id, { points: e.target.value === '' ? null : parseInt(e.target.value) })}
+                    className="bg-input border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-sm font-medium text-muted-foreground">Uses</label>
+                  <input
+                    type="number"
+                    value={tag.uses ?? ''}
+                    onChange={(e) => updateTagModel(tag.id, { uses: e.target.value === '' ? null : parseInt(e.target.value) })}
+                    className="bg-input border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                  />
+                  <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer mt-2">
+                    <input
+                      type="checkbox"
+                      checked={tag.autoDeleteOnZeroUses || false}
+                      onChange={(e) => updateTagModel(tag.id, { autoDeleteOnZeroUses: e.target.checked })}
+                      className="rounded border-border w-3.5 h-3.5"
+                    />
+                    Suppr. auto à 0
+                  </label>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-1 mt-2">
+                <label className="text-sm font-medium text-muted-foreground">Texte libre</label>
+                <textarea
+                  value={tag.description || ''}
+                  onChange={(e) => updateTagModel(tag.id, { description: e.target.value })}
+                  className="bg-input border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring min-h-[100px] resize-y"
+                  placeholder="Saisissez un texte libre ici..."
+                />
+              </div>
+            </div>
+          )}
         </div>
       </div>
     );
@@ -691,183 +749,222 @@ export const EditingModal: React.FC = () => {
     }
 
     entityContent = (
-      <div className="flex flex-col gap-4">
-        <div className="flex flex-col gap-1">
-          <label className="text-sm font-medium">Nom</label>
-          <input
-            type="text"
-            value={tag.name}
-            onChange={(e) => updateTagInstance({ name: e.target.value })}
-            className="bg-input border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
-          />
-        </div>
-        <div className="flex flex-col gap-1 mt-2">
-          <label className="text-sm font-medium">Icône du tag</label>
-          <div className="flex flex-wrap gap-1 bg-input border border-border rounded-md p-2 max-h-32 overflow-y-auto custom-scrollbar">
-            {TAG_ICONS.map(iconName => {
-              const IconComponent = icons[iconName as keyof typeof icons];
-              if (!IconComponent) return null;
-              return (
-                <button
-                  key={iconName}
-                  onClick={() => updateTagInstance({ icon: iconName })}
-                  className={`p-1.5 rounded-md transition-colors flex items-center justify-center ${
-                    tag.icon === iconName
-                      ? 'bg-primary text-primary-foreground shadow-sm'
-                      : 'hover:bg-accent hover:text-accent-foreground text-muted-foreground'
-                  }`}
-                  title={iconName}
-                >
-                  {React.createElement(IconComponent, { size: 16 })}
-                </button>
-              );
-            })}
-          </div>
+      <div className="flex flex-col h-full w-full">
+        {/* Tabs */}
+        <div className="flex border-b border-border mb-4 sticky top-0 bg-card z-10 shrink-0">
+          <button
+            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors flex-1 ${activeTagTab === 'general' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
+            onClick={() => setActiveTagTab('general')}
+          >
+            Général
+          </button>
+          <button
+            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors flex-1 ${activeTagTab === 'appearance' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
+            onClick={() => setActiveTagTab('appearance')}
+          >
+            Apparence
+          </button>
+          <button
+            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors flex-1 ${activeTagTab === 'fields' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
+            onClick={() => setActiveTagTab('fields')}
+          >
+            Champ
+          </button>
         </div>
 
-        <div className="flex flex-col gap-1">
-          <label className="text-sm font-medium">Image personnalisée</label>
-          <div className="flex items-center gap-2">
-            <input
-              type="file"
-              accept="image/*"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) {
-                  const reader = new FileReader();
-                  reader.onloadend = () => {
-                    updateTagInstance({ imageUrl: reader.result as string });
-                  };
-                  reader.readAsDataURL(file);
-                }
-              }}
-              className="text-sm flex-1 text-muted-foreground file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90"
-            />
-            {tag.imageUrl && (
-              <button
-                onClick={() => updateTagInstance({ imageUrl: undefined })}
-                className="p-2 bg-destructive text-destructive-foreground rounded-md hover:bg-destructive/90 transition-colors"
-                title="Supprimer l'image"
-              >
-                <X size={16} />
-              </button>
-            )}
-          </div>
-          {tag.imageUrl && (
-            <div className="mt-2 w-12 h-12 rounded-md overflow-hidden border border-border">
-              <img src={tag.imageUrl} alt={tag.name} className="w-full h-full object-cover" />
+        {/* Tab Content */}
+        <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 min-h-[300px]">
+          {activeTagTab === 'general' && (
+            <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-1">
+                <label className="text-sm font-medium">Nom</label>
+                <input
+                  type="text"
+                  value={tag.name}
+                  onChange={(e) => updateTagInstance({ name: e.target.value })}
+                  className="bg-input border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                />
+              </div>
+              <div className="flex flex-col gap-2 mt-4">
+                <label className="flex items-center gap-2 text-sm text-foreground cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={tag.showInTooltip !== false}
+                    onChange={(e) => updateTagInstance({ showInTooltip: e.target.checked })}
+                    className="rounded border-border w-4 h-4"
+                  />
+                  Visible dans l'info-bulle (au survol du joueur)
+                </label>
+                <label className="flex items-center gap-2 text-sm text-foreground cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={tag.showInGameTab !== false}
+                    onChange={(e) => updateTagInstance({ showInGameTab: e.target.checked })}
+                    className="rounded border-border w-4 h-4"
+                  />
+                  Visible dans l'onglet Jeu (sous le joueur)
+                </label>
+              </div>
             </div>
           )}
-        </div>
 
-        <div className="grid grid-cols-2 gap-4 mt-2">
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-medium text-muted-foreground" title="Ordre d'Appel Jour">Appel Jour</label>
-            <input
-              type="number"
-              value={tag.callOrderDay ?? ''}
-              onChange={(e) => updateTagInstance({ callOrderDay: e.target.value === '' ? null : parseInt(e.target.value) })}
-              className="bg-input border border-border rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
-            />
-          </div>
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-medium text-muted-foreground" title="Ordre d'Appel Nuit">Appel Nuit</label>
-            <input
-              type="number"
-              value={tag.callOrderNight ?? ''}
-              onChange={(e) => updateTagInstance({ callOrderNight: e.target.value === '' ? null : parseInt(e.target.value) })}
-              className="bg-input border border-border rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
-            />
-          </div>
-        </div>
+          {activeTagTab === 'appearance' && (
+            <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-1">
+                <label className="text-sm font-medium">Icône du tag</label>
+                <div className="flex flex-wrap gap-1 bg-input border border-border rounded-md p-2 max-h-40 overflow-y-auto custom-scrollbar">
+                  {TAG_ICONS.map(iconName => {
+                    const IconComponent = icons[iconName as keyof typeof icons];
+                    if (!IconComponent) return null;
+                    return (
+                      <button
+                        key={iconName}
+                        onClick={() => updateTagInstance({ icon: iconName })}
+                        className={`p-2 rounded-md transition-colors flex items-center justify-center ${
+                          tag.icon === iconName
+                            ? 'bg-primary text-primary-foreground shadow-sm'
+                            : 'hover:bg-accent hover:text-accent-foreground text-muted-foreground'
+                        }`}
+                        title={iconName}
+                      >
+                        {React.createElement(IconComponent, { size: 20 })}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
 
-        <div className="grid grid-cols-2 gap-4 mt-2">
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-medium text-muted-foreground">Ajout Vie</label>
-            <input
-              type="number"
-              value={tag.lives ?? ''}
-              onChange={(e) => updateTagInstance({ lives: e.target.value === '' ? null : parseInt(e.target.value) })}
-              className="bg-input border border-border rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
-            />
-          </div>
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-medium text-muted-foreground">Votes</label>
-            <input
-              type="number"
-              value={tag.votes ?? ''}
-              onChange={(e) => updateTagInstance({ votes: e.target.value === '' ? null : parseInt(e.target.value) })}
-              className="bg-input border border-border rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
-            />
-          </div>
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-medium text-muted-foreground">Points</label>
-            <input
-              type="number"
-              value={tag.points ?? ''}
-              onChange={(e) => updateTagInstance({ points: e.target.value === '' ? null : parseInt(e.target.value) })}
-              className="bg-input border border-border rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
-            />
-          </div>
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-medium text-muted-foreground">Uses</label>
-            <input
-              type="number"
-              value={tag.uses ?? ''}
-              onChange={(e) => updateTagInstance({ uses: e.target.value === '' ? null : parseInt(e.target.value) })}
-              className="bg-input border border-border rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
-            />
-            <label className="flex items-center gap-1 text-[10px] text-muted-foreground cursor-pointer mt-1">
-              <input
-                type="checkbox"
-                checked={tag.autoDeleteOnZeroUses || false}
-                onChange={(e) => updateTagInstance({ autoDeleteOnZeroUses: e.target.checked })}
-                className="rounded border-border w-3 h-3"
-              />
-              Suppr. auto à 0
-            </label>
-          </div>
-        </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-sm font-medium">Image personnalisée</label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        const reader = new FileReader();
+                        reader.onloadend = () => {
+                          updateTagInstance({ imageUrl: reader.result as string });
+                        };
+                        reader.readAsDataURL(file);
+                      }
+                    }}
+                    className="text-sm flex-1 text-muted-foreground file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90"
+                  />
+                  {tag.imageUrl && (
+                    <button
+                      onClick={() => updateTagInstance({ imageUrl: undefined })}
+                      className="p-2 bg-destructive text-destructive-foreground rounded-md hover:bg-destructive/90 transition-colors"
+                      title="Supprimer l'image"
+                    >
+                      <X size={16} />
+                    </button>
+                  )}
+                </div>
+                {tag.imageUrl && (
+                  <div className="mt-2 w-16 h-16 rounded-md overflow-hidden border border-border">
+                    <img src={tag.imageUrl} alt={tag.name} className="w-full h-full object-cover" />
+                  </div>
+                )}
+              </div>
 
-        <div className="flex flex-col gap-1">
-          <label className="text-xs font-medium text-muted-foreground">Texte libre</label>
-          <textarea
-            value={tag.description || ''}
-            onChange={(e) => updateTagInstance({ description: e.target.value })}
-            className="bg-input border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring min-h-[60px]"
-          />
-        </div>
+              <div className="flex flex-col gap-1 mt-2">
+                <label className="text-sm font-medium">Couleur</label>
+                <div className="flex items-center gap-3">
+                  <ColorPicker
+                    color={tag.color}
+                    onChange={(c) => updateTagInstance({ color: c })}
+                    label="Couleur"
+                    className="!w-10 !h-10"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
 
-        <div className="flex flex-col gap-2 mt-1">
-          <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
-            <input
-              type="checkbox"
-              checked={tag.showInTooltip !== false}
-              onChange={(e) => updateTagInstance({ showInTooltip: e.target.checked })}
-              className="rounded border-border w-3 h-3"
-            />
-            Visible dans l'info-bulle (au survol du joueur)
-          </label>
-          <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
-            <input
-              type="checkbox"
-              checked={tag.showInGameTab !== false}
-              onChange={(e) => updateTagInstance({ showInGameTab: e.target.checked })}
-              className="rounded border-border w-3 h-3"
-            />
-            Visible dans l'onglet Jeu (sous le joueur)
-          </label>
-        </div>
-        <div className="flex flex-col gap-1 mt-2">
-          <label className="text-sm font-medium">Couleur</label>
-          <div className="flex items-center gap-3">
-            <ColorPicker
-              color={tag.color}
-              onChange={(c) => updateTagInstance({ color: c })}
-              label="Couleur"
-              className="!w-10 !h-10"
-            />
-          </div>
+          {activeTagTab === 'fields' && (
+            <div className="flex flex-col gap-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex flex-col gap-1">
+                  <label className="text-sm font-medium" title="Ordre d'Appel Jour">Appel Jour</label>
+                  <input
+                    type="number"
+                    value={tag.callOrderDay ?? ''}
+                    onChange={(e) => updateTagInstance({ callOrderDay: e.target.value === '' ? null : parseInt(e.target.value) })}
+                    className="bg-input border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring text-center"
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-sm font-medium" title="Ordre d'Appel Nuit">Appel Nuit</label>
+                  <input
+                    type="number"
+                    value={tag.callOrderNight ?? ''}
+                    onChange={(e) => updateTagInstance({ callOrderNight: e.target.value === '' ? null : parseInt(e.target.value) })}
+                    className="bg-input border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring text-center"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex flex-col gap-1">
+                  <label className="text-sm font-medium text-muted-foreground">Ajout Vie</label>
+                  <input
+                    type="number"
+                    value={tag.lives ?? ''}
+                    onChange={(e) => updateTagInstance({ lives: e.target.value === '' ? null : parseInt(e.target.value) })}
+                    className="bg-input border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-sm font-medium text-muted-foreground">Votes</label>
+                  <input
+                    type="number"
+                    value={tag.votes ?? ''}
+                    onChange={(e) => updateTagInstance({ votes: e.target.value === '' ? null : parseInt(e.target.value) })}
+                    className="bg-input border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-sm font-medium text-muted-foreground">Points</label>
+                  <input
+                    type="number"
+                    value={tag.points ?? ''}
+                    onChange={(e) => updateTagInstance({ points: e.target.value === '' ? null : parseInt(e.target.value) })}
+                    className="bg-input border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-sm font-medium text-muted-foreground">Uses</label>
+                  <input
+                    type="number"
+                    value={tag.uses ?? ''}
+                    onChange={(e) => updateTagInstance({ uses: e.target.value === '' ? null : parseInt(e.target.value) })}
+                    className="bg-input border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                  />
+                  <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer mt-2">
+                    <input
+                      type="checkbox"
+                      checked={tag.autoDeleteOnZeroUses || false}
+                      onChange={(e) => updateTagInstance({ autoDeleteOnZeroUses: e.target.checked })}
+                      className="rounded border-border w-3.5 h-3.5"
+                    />
+                    Suppr. auto à 0
+                  </label>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-1 mt-2">
+                <label className="text-sm font-medium text-muted-foreground">Texte libre</label>
+                <textarea
+                  value={tag.description || ''}
+                  onChange={(e) => updateTagInstance({ description: e.target.value })}
+                  className="bg-input border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring min-h-[100px] resize-y"
+                  placeholder="Saisissez un texte libre ici..."
+                />
+              </div>
+            </div>
+          )}
         </div>
       </div>
     );
@@ -933,9 +1030,11 @@ export const EditingModal: React.FC = () => {
     );
   }
 
+  const isWiderModal = editingEntity.type === 'tagModel' || editingEntity.type === 'tagInstance';
+
   return (
     <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4">
-      <div className="bg-card w-full max-w-md rounded-xl shadow-xl border border-border flex flex-col overflow-hidden">
+      <div className={`bg-card w-full ${isWiderModal ? 'max-w-2xl min-h-[400px]' : 'max-w-md'} rounded-xl shadow-xl border border-border flex flex-col overflow-hidden`}>
         <div className="flex items-center justify-between p-4 border-b border-border bg-muted/30">
           <h2 className="font-bold text-lg">{entityTitle}</h2>
           <button
@@ -945,7 +1044,7 @@ export const EditingModal: React.FC = () => {
             <X size={20} />
           </button>
         </div>
-        <div className="p-6">
+        <div className={`p-6 flex-1 flex flex-col ${isWiderModal ? 'overflow-hidden' : ''}`}>
           {entityContent}
         </div>
         <div className="p-4 border-t border-border flex justify-end bg-muted/30">
