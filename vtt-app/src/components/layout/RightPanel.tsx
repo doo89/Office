@@ -1,4 +1,4 @@
-import { Settings, ChevronLeft, ChevronRight, Upload, Grid3X3, Clock, Eye, PaintBucket, ChevronDown, Image as ImageIcon, Trash2 } from 'lucide-react';
+import { Settings, ChevronLeft, ChevronRight, Upload, Grid3X3, Clock, Eye, PaintBucket, ChevronDown, Image as ImageIcon, Trash2, ArrowUpRight } from 'lucide-react';
 import React, { useState, useEffect, useRef } from 'react';
 import { useVttStore } from '../../store';
 import type { BadgeConfig, BadgeType } from '../../types';
@@ -10,7 +10,8 @@ export const RightPanel: React.FC = () => {
     grid, setGrid,
     isNight, setNight,
     displaySettings, updateDisplaySettings,
-    room, setRoom
+    room, setRoom,
+    timer, setTimer
   } = useVttStore();
 
   const [activeSection, setActiveSection] = useState<string | null>('affichage');
@@ -19,37 +20,46 @@ export const RightPanel: React.FC = () => {
     setActiveSection(prev => prev === section ? null : section);
   };
 
-  const [timerMinutes, setTimerMinutes] = useState(5);
-  const [timerSeconds, setTimerSeconds] = useState(0);
-  const [isTimerRunning, setIsTimerRunning] = useState(false);
-
   // Timer Logic
   useEffect(() => {
     let interval: ReturnType<typeof setInterval>;
-    if (isTimerRunning) {
+    if (timer.isRunning) {
       interval = setInterval(() => {
-        setTimerSeconds(s => {
-          if (s === 0) {
-            if (timerMinutes === 0) {
-              clearInterval(interval);
-              setIsTimerRunning(false);
-              return 0;
+        let newS = timer.seconds - 1;
+        let newM = timer.minutes;
+
+        if (newS < 0) {
+          if (newM === 0) {
+            clearInterval(interval);
+            setTimer({ isRunning: false, seconds: 0 });
+            if (timer.playSoundAtZero) {
+              // Beep sound
+              const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+              const osc = ctx.createOscillator();
+              const gainNode = ctx.createGain();
+              osc.connect(gainNode);
+              gainNode.connect(ctx.destination);
+              osc.type = 'sine';
+              osc.frequency.setValueAtTime(880, ctx.currentTime);
+              gainNode.gain.setValueAtTime(0.1, ctx.currentTime);
+              osc.start();
+              osc.stop(ctx.currentTime + 0.5);
             }
-            setTimerMinutes(m => m - 1);
-            return 59;
+            return;
           }
-          return s - 1;
-        });
+          newM -= 1;
+          newS = 59;
+        }
+
+        setTimer({ minutes: newM, seconds: newS });
       }, 1000);
     }
     return () => clearInterval(interval);
-  }, [isTimerRunning, timerMinutes]);
+  }, [timer.isRunning, timer.minutes, timer.seconds, timer.playSoundAtZero, setTimer]);
 
-  const handleTimerToggle = () => setIsTimerRunning(!isTimerRunning);
+  const handleTimerToggle = () => setTimer({ isRunning: !timer.isRunning });
   const handleTimerReset = () => {
-    setIsTimerRunning(false);
-    setTimerMinutes(5);
-    setTimerSeconds(0);
+    setTimer({ isRunning: false, minutes: 5, seconds: 0 });
   };
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -344,33 +354,84 @@ export const RightPanel: React.FC = () => {
             {activeSection === 'chrono' ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
           </button>
           {activeSection === 'chrono' && (
-          <div className="flex flex-col items-center gap-3 p-3 border-t border-border">
-            <div className="text-3xl font-mono font-bold">
-              {String(timerMinutes).padStart(2, '0')}:{String(timerSeconds).padStart(2, '0')}
-            </div>
-            <div className="flex gap-2 w-full">
-              {!isTimerRunning && (
-                <button onClick={() => {setTimerMinutes(m => m + 1)}} className="flex-1 bg-accent text-xs py-1 rounded hover:bg-accent/80">+1m</button>
+            <div className="flex flex-col items-center gap-3 p-3 border-t border-border">
+              {timer.isDetached ? (
+                <div className="flex flex-col items-center gap-2 w-full text-center py-2">
+                  <span className="text-sm text-muted-foreground italic">Le chronomètre est détaché.</span>
+                  <button
+                    onClick={() => setTimer({ isDetached: false })}
+                    className="text-xs bg-primary text-primary-foreground px-3 py-1.5 rounded hover:bg-primary/90"
+                  >
+                    Rattacher
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <div className="flex items-center gap-1 text-3xl font-mono font-bold bg-input px-3 py-2 rounded-md border border-border">
+                    <input
+                      type="number"
+                      min="0"
+                      max="99"
+                      value={String(timer.minutes).padStart(2, '0')}
+                      onChange={(e) => {
+                        if (!timer.isRunning) {
+                          setTimer({ minutes: Math.min(99, Math.max(0, parseInt(e.target.value) || 0)) });
+                        }
+                      }}
+                      disabled={timer.isRunning}
+                      className="w-16 bg-transparent text-center focus:outline-none focus:ring-0 disabled:opacity-50 disabled:cursor-not-allowed appearance-none"
+                    />
+                    <span className="text-muted-foreground pb-1">:</span>
+                    <input
+                      type="number"
+                      min="0"
+                      max="59"
+                      value={String(timer.seconds).padStart(2, '0')}
+                      onChange={(e) => {
+                        if (!timer.isRunning) {
+                          setTimer({ seconds: Math.min(59, Math.max(0, parseInt(e.target.value) || 0)) });
+                        }
+                      }}
+                      disabled={timer.isRunning}
+                      className="w-16 bg-transparent text-center focus:outline-none focus:ring-0 disabled:opacity-50 disabled:cursor-not-allowed appearance-none"
+                    />
+                  </div>
+
+                  <label className="flex items-center gap-2 text-xs text-muted-foreground w-full cursor-pointer mt-1 mb-1">
+                    <input
+                      type="checkbox"
+                      checked={timer.playSoundAtZero}
+                      onChange={(e) => setTimer({ playSoundAtZero: e.target.checked })}
+                      className="rounded border-border w-3.5 h-3.5"
+                    />
+                    Jouer un son à la fin
+                  </label>
+
+                  <div className="flex gap-2 w-full">
+                    <button
+                      onClick={handleTimerToggle}
+                      className={`flex-[2] py-2 rounded text-sm font-medium text-white ${timer.isRunning ? 'bg-orange-500 hover:bg-orange-600' : 'bg-green-500 hover:bg-green-600'}`}
+                    >
+                      {timer.isRunning ? 'Pause' : 'Démarrer'}
+                    </button>
+                    <button
+                      onClick={handleTimerReset}
+                      className="flex-1 bg-destructive text-destructive-foreground py-2 rounded text-sm hover:bg-destructive/90"
+                    >
+                      Reset
+                    </button>
+                  </div>
+                  <div className="w-full mt-1 border-t border-border pt-2">
+                    <button
+                      onClick={() => setTimer({ isDetached: true })}
+                      className="w-full flex items-center justify-center gap-2 text-xs text-muted-foreground hover:text-foreground hover:bg-accent py-1.5 rounded transition-colors"
+                    >
+                      <ArrowUpRight size={14} /> Détacher en fenêtre volante
+                    </button>
+                  </div>
+                </>
               )}
-               {!isTimerRunning && (
-                <button onClick={() => {setTimerMinutes(m => Math.max(0, m - 1))}} className="flex-1 bg-accent text-xs py-1 rounded hover:bg-accent/80">-1m</button>
-              )}
             </div>
-            <div className="flex gap-2 w-full">
-              <button
-                onClick={handleTimerToggle}
-                className={`flex-[2] py-2 rounded text-sm font-medium text-white ${isTimerRunning ? 'bg-orange-500 hover:bg-orange-600' : 'bg-green-500 hover:bg-green-600'}`}
-              >
-                {isTimerRunning ? 'Pause' : 'Start'}
-              </button>
-              <button
-                onClick={handleTimerReset}
-                className="flex-1 bg-destructive text-destructive-foreground py-2 rounded text-sm hover:bg-destructive/90"
-              >
-                Reset
-              </button>
-            </div>
-          </div>
           )}
         </section>
 

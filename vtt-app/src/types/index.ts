@@ -126,6 +126,15 @@ export interface GameState {
   recentColors: string[];
   isNight: boolean;
   cycleNumber: number;
+  timer: {
+    minutes: number;
+    seconds: number;
+    isRunning: boolean;
+    playSoundAtZero: boolean;
+    isDetached: boolean;
+    x: number;
+    y: number;
+  };
   activeLeftTab: 'players' | 'roles' | 'tags' | 'game' | 'handouts';
   editingEntity: { type: 'player' | 'playerTemplate' | 'role' | 'tagModel' | 'tagInstance' | 'team' | 'tagCategory' | 'playerNotes' | 'playerPublicNotes', id: EntityId, parentId?: EntityId } | null;
   canvas: {

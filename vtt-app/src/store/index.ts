@@ -15,6 +15,7 @@ export interface PlayerTemplate {
 }
 
 interface VttStore extends GameState {
+  setTimer: (timerUpdate: Partial<GameState['timer']>) => void;
   playerTemplates: PlayerTemplate[];
 
   // Selection & Interaction
@@ -123,6 +124,15 @@ const initialState = {
   recentColors: ['#ef4444', '#f97316', '#eab308', '#22c55e', '#3b82f6', '#8b5cf6', '#ec4899', '#ffffff', '#000000', '#6b7280'], // default colors
   isNight: false,
   cycleNumber: 1,
+  timer: {
+    minutes: 5,
+    seconds: 0,
+    isRunning: false,
+    playSoundAtZero: false,
+    isDetached: false,
+    x: 100,
+    y: 100,
+  },
   activeLeftTab: 'players' as const,
   editingEntity: null,
   canvas: {
@@ -203,6 +213,7 @@ export const useVttStore = create<VttStore>()(
   // Tools
   setGrid: (grid) => set({ grid }),
   setRoom: (roomUpdates) => set((state) => ({ room: { ...state.room, ...roomUpdates } })),
+  setTimer: (timerUpdates) => set((state) => ({ timer: { ...state.timer, ...timerUpdates } })),
 
   // Player Templates
   addPlayerTemplate: (templateData) => set((state) => ({

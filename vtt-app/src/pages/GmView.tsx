@@ -5,6 +5,7 @@ import { Canvas } from '../components/layout/Canvas';
 import { ThemeToggle } from '../components/ThemeToggle';
 import { EditingModal } from '../components/EditingModal';
 import { HandoutWindow } from '../components/HandoutWindow';
+import { DetachedTimer } from '../components/DetachedTimer';
 import { useVttStore } from '../store';
 import { setupHostRealtimeSubscription, cleanupHostRealtime } from '../lib/realtime-host';
 
@@ -31,6 +32,8 @@ export const GmView: React.FC = () => {
       {handouts.filter(h => h.isOpen).map(handout => (
         <HandoutWindow key={handout.id} handout={handout} />
       ))}
+
+      <DetachedTimer />
     </div>
   );
 };
