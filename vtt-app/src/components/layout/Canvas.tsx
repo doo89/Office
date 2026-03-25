@@ -401,7 +401,7 @@ export const Canvas: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-4">
-          <div className="text-xs text-muted-foreground font-medium">v0.702</div>
+          <div className="text-xs text-muted-foreground font-medium">v0.703</div>
           {!roomCode ? (
             <button
               onClick={generateRoomCode}
@@ -1000,29 +1000,36 @@ export const Canvas: React.FC = () => {
                 Éditer
               </button>
 
-              <button
-                className="w-full text-left px-4 py-2 text-sm hover:bg-accent hover:text-accent-foreground flex items-center gap-2"
-                onMouseDown={(e) => {
-                  e.stopPropagation();
-                  useVttStore.getState().setEditingEntity({ type: 'playerNotes', id: contextMenu.entityId! });
-                  closeContextMenu();
-                }}
-              >
-                <FileText size={14} className="text-blue-400" />
-                Note -&gt; Privé
-              </button>
-
-              <button
-                className="w-full text-left px-4 py-2 text-sm hover:bg-accent hover:text-accent-foreground flex items-center gap-2"
-                onMouseDown={(e) => {
-                  e.stopPropagation();
-                  useVttStore.getState().setEditingEntity({ type: 'playerPublicNotes', id: contextMenu.entityId! });
-                  closeContextMenu();
-                }}
-              >
-                <FileText size={14} className="text-green-400" />
-                Note -&gt; Publique
-              </button>
+              <div className="relative group">
+                <button className="w-full text-left px-4 py-2 text-sm hover:bg-accent hover:text-accent-foreground flex items-center justify-between gap-2">
+                  <span className="flex items-center gap-2"><FileText size={14} /> Notes</span>
+                  <ChevronRight size={14} />
+                </button>
+                <div className="absolute left-full top-0 ml-1 bg-popover text-popover-foreground border border-border rounded-md shadow-xl py-1 min-w-[150px] hidden group-hover:block z-[101]">
+                  <button
+                    className="w-full text-left px-4 py-2 text-sm hover:bg-accent hover:text-accent-foreground flex items-center gap-2"
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                      useVttStore.getState().setEditingEntity({ type: 'playerNotes', id: contextMenu.entityId! });
+                      closeContextMenu();
+                    }}
+                  >
+                    <FileText size={14} className="text-blue-400" />
+                    Privée
+                  </button>
+                  <button
+                    className="w-full text-left px-4 py-2 text-sm hover:bg-accent hover:text-accent-foreground flex items-center gap-2"
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                      useVttStore.getState().setEditingEntity({ type: 'playerPublicNotes', id: contextMenu.entityId! });
+                      closeContextMenu();
+                    }}
+                  >
+                    <FileText size={14} className="text-green-400" />
+                    Publique
+                  </button>
+                </div>
+              </div>
 
               {/* Tags Submenu */}
               {players.find(p => p.id === contextMenu.entityId)!.tags.length > 0 && (

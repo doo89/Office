@@ -900,7 +900,10 @@ export const EditingModal: React.FC = () => {
         <div className="flex flex-col gap-2 h-full flex-1">
           <textarea
             value={player.publicNotes || ''}
-            onChange={(e) => updatePlayer(player.id, { publicNotes: e.target.value })}
+            onChange={(e) => updatePlayer(player.id, {
+              publicNotes: e.target.value,
+              publicNotesTimestamp: Date.now()
+            })}
             placeholder="Ajouter des notes publiques sur ce joueur..."
             className="flex-1 min-h-[200px] bg-input border border-border rounded-md p-3 text-sm focus:outline-none focus:ring-1 focus:ring-ring resize-none custom-scrollbar"
             autoFocus
@@ -915,15 +918,6 @@ export const EditingModal: React.FC = () => {
               className="rounded border-border bg-input"
             />
             Envoyer au joueur (sur smartphone)
-          </label>
-          <label className="text-sm font-medium flex items-center gap-2">
-            <input
-              type="checkbox"
-              checked={player.publicNotesVisibleToAll || false}
-              onChange={(e) => updatePlayer(player.id, { publicNotesVisibleToAll: e.target.checked })}
-              className="rounded border-border bg-input"
-            />
-            Visible par tous (clic sur le joueur)
           </label>
           <label className="text-sm font-medium flex items-center gap-2">
             <input

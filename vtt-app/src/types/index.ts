@@ -15,8 +15,8 @@ export interface Player {
   privateNotes?: string;
   publicNotes?: string;
   publicNotesSendToPlayer?: boolean;
-  publicNotesVisibleToAll?: boolean;
   publicNotesNoticeBoard?: boolean;
+  publicNotesTimestamp?: number;
 }
 
 export interface Role {

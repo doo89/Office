@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import type { SyncStatePayload } from '../lib/supabase';
-import { LogOut, UserCircle2, Tag as TagIcon, ShieldAlert } from 'lucide-react';
+import { LogOut, UserCircle2, Tag as TagIcon, ShieldAlert, X, MessageSquareWarning, ChevronUp, ChevronDown, Megaphone, Clock } from 'lucide-react';
 import type { Player, Role, Team } from '../types';
 
 export const PlayerView: React.FC = () => {
@@ -14,10 +14,23 @@ export const PlayerView: React.FC = () => {
   const [localTeam, setLocalTeam] = useState<Team | null>(null);
   const [isNight, setIsNight] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
+  const [noticeBoardPlayers, setNoticeBoardPlayers] = useState<Player[]>([]);
+  const [isNoticeBoardOpen, setIsNoticeBoardOpen] = useState(false);
+  const [expandedNoticeId, setExpandedNoticeId] = useState<string | null>(null);
 
   // Track the actual player ID once found, so if GM renames them, they stay connected
   // Use a ref so changes don't cause the useEffect to tear down the WebSocket channel
   const matchedPlayerIdRef = useRef<string | null>(null);
+  const channelRef = useRef<any>(null);
+
+  const dismissNote = () => {
+    if (!localPlayer || !channelRef.current) return;
+    channelRef.current.send({
+      type: 'broadcast',
+      event: 'update_player_state',
+      payload: { id: localPlayer.id, updates: { publicNotesSendToPlayer: false } }
+    }).catch(console.error);
+  };
 
   useEffect(() => {
     if (!roomId || !playerName || !supabase) return;
@@ -25,6 +38,7 @@ export const PlayerView: React.FC = () => {
     const channel = supabase.channel(`room:${roomId}`, {
       config: { broadcast: { ack: false }, presence: { key: playerName } },
     });
+    channelRef.current = channel;
 
     channel
       .on('broadcast', { event: 'sync_state' }, async ({ payload }) => {
@@ -46,6 +60,10 @@ export const PlayerView: React.FC = () => {
             channel.track({ playerId: found.id, name: found.name }).catch(console.error);
           }
         }
+
+        // Update notice board players
+        const noticeBoard = data.players.filter(p => p.publicNotes && p.publicNotesNoticeBoard);
+        setNoticeBoardPlayers(noticeBoard);
 
         if (found) {
           setLocalPlayer(found);
@@ -195,6 +213,29 @@ export const PlayerView: React.FC = () => {
             )}
           </div>
 
+          {/* GM Message / Public Notes targeting this player */}
+          {localPlayer.publicNotes && localPlayer.publicNotesSendToPlayer && (
+            <div className="bg-blue-900/30 border border-blue-500/50 rounded-2xl overflow-hidden mt-4 relative">
+              <div className="bg-blue-500/20 px-4 py-2 border-b border-blue-500/30 flex items-center justify-between">
+                <h4 className="text-xs font-bold text-blue-300 uppercase tracking-widest flex items-center gap-2">
+                  <MessageSquareWarning size={14} /> Message du MJ
+                </h4>
+                <button
+                  onClick={dismissNote}
+                  className="p-1 hover:bg-blue-500/20 rounded-md text-blue-400 hover:text-blue-300 transition-colors"
+                  title="Fermer le message"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+              <div className="p-4">
+                <p className="text-sm text-blue-100 whitespace-pre-wrap leading-relaxed">
+                  {localPlayer.publicNotes}
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* Tags / Status Effects */}
           {localPlayer.tags.length > 0 && (
             <div className="flex flex-col gap-3 mt-4">
@@ -221,6 +262,61 @@ export const PlayerView: React.FC = () => {
                   </div>
                 ))}
               </div>
+            </div>
+          )}
+
+          {/* Public Notice Board */}
+          {noticeBoardPlayers.length > 0 && (
+            <div className="mt-8 border border-zinc-700/50 rounded-2xl overflow-hidden bg-zinc-900/50 backdrop-blur-sm shadow-xl">
+              <button
+                onClick={() => setIsNoticeBoardOpen(!isNoticeBoardOpen)}
+                className="w-full flex items-center justify-between p-4 bg-zinc-800/80 hover:bg-zinc-800 transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  <Megaphone size={18} className="text-amber-500" />
+                  <span className="font-bold tracking-widest uppercase text-xs text-zinc-300">Panneau Affichage Public</span>
+                  <span className="bg-amber-500/20 text-amber-500 text-[10px] font-black px-2 py-0.5 rounded-full ml-1">
+                    {noticeBoardPlayers.length}
+                  </span>
+                </div>
+                {isNoticeBoardOpen ? <ChevronUp size={16} className="text-zinc-500" /> : <ChevronDown size={16} className="text-zinc-500" />}
+              </button>
+
+              {isNoticeBoardOpen && (
+                <div className="p-3 flex flex-col gap-3">
+                  {noticeBoardPlayers.map(p => (
+                    <div key={p.id} className="bg-zinc-950/50 border border-zinc-800/80 rounded-xl overflow-hidden">
+                      <button
+                        onClick={() => setExpandedNoticeId(expandedNoticeId === p.id ? null : p.id)}
+                        className="w-full flex items-center justify-between p-3 hover:bg-zinc-900 transition-colors text-left"
+                      >
+                        <div className="flex items-center gap-2 truncate pr-2">
+                          <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: p.color }} />
+                          <span className="font-bold text-sm text-zinc-200 truncate">{p.name}</span>
+                        </div>
+                        {expandedNoticeId === p.id ? <ChevronUp size={14} className="text-zinc-600 shrink-0" /> : <ChevronDown size={14} className="text-zinc-600 shrink-0" />}
+                      </button>
+
+                      {expandedNoticeId === p.id && (
+                        <div className="p-3 pt-0 border-t border-zinc-900">
+                          <p className="text-sm text-zinc-300 mt-3 whitespace-pre-wrap">
+                            {p.publicNotes}
+                          </p>
+                          {p.publicNotesTimestamp && (
+                            <div className="flex items-center gap-1.5 mt-4 text-[10px] font-medium text-zinc-600 uppercase tracking-widest">
+                              <Clock size={10} />
+                              {new Date(p.publicNotesTimestamp).toLocaleString('fr-FR', {
+                                day: '2-digit', month: '2-digit', year: '2-digit',
+                                hour: '2-digit', minute: '2-digit'
+                              }).replace(',', '')}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
