@@ -649,29 +649,6 @@ export const EditingModal: React.FC = () => {
             Visible dans l'onglet Jeu (sous le joueur)
           </label>
         </div>
-
-        <div className="flex gap-4">
-          <div className="flex flex-col gap-1 flex-1">
-            <label className="text-sm font-medium text-muted-foreground text-xs">Ordre Appel Jour</label>
-            <input
-              type="number"
-              value={tag.callOrderDay ?? ''}
-              onChange={(e) => updateTagModel(tag.id, { callOrderDay: e.target.value === '' ? null : parseInt(e.target.value) })}
-              placeholder="Ex: 1"
-              className="bg-input border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
-            />
-          </div>
-          <div className="flex flex-col gap-1 flex-1">
-            <label className="text-sm font-medium text-muted-foreground text-xs">Ordre Appel Nuit</label>
-            <input
-              type="number"
-              value={tag.callOrderNight ?? ''}
-              onChange={(e) => updateTagModel(tag.id, { callOrderNight: e.target.value === '' ? null : parseInt(e.target.value) })}
-              placeholder="Ex: 5"
-              className="bg-input border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
-            />
-          </div>
-        </div>
         <div className="flex flex-col gap-1 mt-2">
           <label className="text-sm font-medium">Couleur</label>
           <div className="flex items-center gap-3">
@@ -880,29 +857,6 @@ export const EditingModal: React.FC = () => {
             />
             Visible dans l'onglet Jeu (sous le joueur)
           </label>
-        </div>
-
-        <div className="flex gap-4">
-          <div className="flex flex-col gap-1 flex-1">
-            <label className="text-sm font-medium text-muted-foreground text-xs">Ordre Appel Jour</label>
-            <input
-              type="number"
-              value={tag.callOrderDay ?? ''}
-              onChange={(e) => updateTagInstance({ callOrderDay: e.target.value === '' ? null : parseInt(e.target.value) })}
-              placeholder="Ex: 1"
-              className="bg-input border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
-            />
-          </div>
-          <div className="flex flex-col gap-1 flex-1">
-            <label className="text-sm font-medium text-muted-foreground text-xs">Ordre Appel Nuit</label>
-            <input
-              type="number"
-              value={tag.callOrderNight ?? ''}
-              onChange={(e) => updateTagInstance({ callOrderNight: e.target.value === '' ? null : parseInt(e.target.value) })}
-              placeholder="Ex: 5"
-              className="bg-input border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
-            />
-          </div>
         </div>
         <div className="flex flex-col gap-1 mt-2">
           <label className="text-sm font-medium">Couleur</label>
