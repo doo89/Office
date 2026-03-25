@@ -33,7 +33,14 @@ export const GameTab: React.FC = () => {
 
     // Handle Auto-delete for uses
     if (field === 'uses' && newValue === 0 && tag.autoDeleteOnZeroUses) {
-      updatedTags = updatedTags.filter(t => t.instanceId !== tag.instanceId);
+      // If we delete this tag, also cascade delete any children if it was a container
+      const tagsToRemove = new Set([tag.instanceId]);
+      updatedTags.forEach(t => {
+        if (t.parentTagInstanceId === tag.instanceId) {
+          tagsToRemove.add(t.instanceId);
+        }
+      });
+      updatedTags = updatedTags.filter(t => !tagsToRemove.has(t.instanceId));
     }
 
     updatePlayer(player.id, { tags: updatedTags });

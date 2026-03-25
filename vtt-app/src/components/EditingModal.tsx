@@ -17,7 +17,7 @@ const TAG_ICONS = [
 
 export const EditingModal: React.FC = () => {
   const { editingEntity, setEditingEntity, players, playerTemplates, roles, teams, tags, tagCategories, markers, updatePlayer, updatePlayerTemplate, updateRole, updateTeam, updateTagModel, updateTagCategory, updateMarker } = useVttStore();
-  const [activeTagTab, setActiveTagTab] = React.useState<'general' | 'appearance' | 'fields'>('general');
+  const [activeTagTab, setActiveTagTab] = React.useState<'general' | 'appearance' | 'fields' | 'container'>('general');
 
   // Reset tab when editing entity changes
   React.useEffect(() => {
@@ -509,6 +509,12 @@ export const EditingModal: React.FC = () => {
           >
             Champ
           </button>
+          <button
+            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors flex-1 ${activeTagTab === 'container' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
+            onClick={() => setActiveTagTab('container')}
+          >
+            Container
+          </button>
         </div>
 
         {/* Tab Content */}
@@ -556,6 +562,46 @@ export const EditingModal: React.FC = () => {
                   />
                   Visible dans l'onglet Jeu (sous le joueur)
                 </label>
+                <label className="flex items-center gap-2 text-sm text-foreground cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={tag.showOnSmartphone || false}
+                    onChange={(e) => updateTagModel(tag.id, { showOnSmartphone: e.target.checked })}
+                    className="rounded border-border w-4 h-4"
+                  />
+                  Visible sur smartphone (version joueur)
+                </label>
+              </div>
+            </div>
+          )}
+
+          {activeTagTab === 'container' && (
+            <div className="flex flex-col gap-4">
+              <p className="text-sm text-muted-foreground mb-2">
+                Ce tag peut servir de "Container". Lorsqu'il est appliqué à un joueur, tous les tags sélectionnés ici seront appliqués en même temps avec lui.
+              </p>
+              <div className="flex flex-col gap-2 max-h-[250px] overflow-y-auto custom-scrollbar pr-2 border border-border rounded-md p-3 bg-input/50">
+                {tags.filter(t => t.id !== tag.id).map(otherTag => (
+                  <label key={otherTag.id} className="flex items-center gap-3 p-2 hover:bg-accent hover:text-accent-foreground rounded-md cursor-pointer transition-colors">
+                    <input
+                      type="checkbox"
+                      checked={tag.childTagIds?.includes(otherTag.id) || false}
+                      onChange={(e) => {
+                        const currentList = tag.childTagIds || [];
+                        const newList = e.target.checked
+                          ? [...currentList, otherTag.id]
+                          : currentList.filter(id => id !== otherTag.id);
+                        updateTagModel(tag.id, { childTagIds: newList });
+                      }}
+                      className="rounded border-border w-4 h-4"
+                    />
+                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: otherTag.color }} />
+                    <span className="text-sm font-medium flex-1">{otherTag.name}</span>
+                  </label>
+                ))}
+                {tags.filter(t => t.id !== tag.id).length === 0 && (
+                  <div className="text-sm text-muted-foreground text-center py-4">Aucun autre tag disponible</div>
+                )}
               </div>
             </div>
           )}
@@ -803,6 +849,15 @@ export const EditingModal: React.FC = () => {
                     className="rounded border-border w-4 h-4"
                   />
                   Visible dans l'onglet Jeu (sous le joueur)
+                </label>
+                <label className="flex items-center gap-2 text-sm text-foreground cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={tag.showOnSmartphone || false}
+                    onChange={(e) => updateTagInstance({ showOnSmartphone: e.target.checked })}
+                    className="rounded border-border w-4 h-4"
+                  />
+                  Visible sur smartphone (version joueur)
                 </label>
               </div>
             </div>

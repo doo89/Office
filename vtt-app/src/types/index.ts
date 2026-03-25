@@ -55,6 +55,7 @@ export interface MarkerParameter {
   callOrderNight: number | null;
   showInTooltip?: boolean;
   showInGameTab?: boolean;
+  showOnSmartphone?: boolean;
 }
 
 export interface Marker {
@@ -70,11 +71,13 @@ export interface TagModel extends MarkerParameter {
   icon: string;
   imageUrl?: string;
   categoryId?: EntityId | null;
+  childTagIds?: EntityId[]; // List of other tag model IDs to apply when this container is applied
 }
 
 // Local Tag Instance (attached to a player or marker)
 export interface TagInstance extends TagModel {
   instanceId: EntityId; // Unique ID for this instance
+  parentTagInstanceId?: EntityId; // The instanceId of the parent tag (if applied via container)
 }
 
 export interface Team {

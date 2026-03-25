@@ -3,7 +3,7 @@ import { useStore } from 'zustand';
 import { useVttStore } from '../../store';
 import { ZoomIn, ZoomOut, Maximize, Tag, Skull, Trash2, Settings, ChevronRight, Sun, Moon, Copy, Heart, icons, Users, Hand, MousePointer2, Undo2, Redo2, Radio, Lock, Globe, Bell, Check, X, WifiOff, FileText } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
-import type { Marker } from '../../types';
+import type { Marker, Player } from '../../types';
 
 export const Canvas: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -86,6 +86,26 @@ export const Canvas: React.FC = () => {
     return Math.round(value / gridSize) * gridSize;
   };
 
+  const applyTagToPlayer = (player: Player, tagModel: any) => {
+    const newTags = [...player.tags];
+    const parentInstId = uuidv4();
+
+    // Add the parent tag
+    newTags.push({ ...tagModel, instanceId: parentInstId });
+
+    // If it's a container, apply children too
+    if (tagModel.childTagIds && tagModel.childTagIds.length > 0) {
+      tagModel.childTagIds.forEach((childId: string) => {
+        const childModel = useVttStore.getState().tags.find(t => t.id === childId);
+        if (childModel) {
+          newTags.push({ ...childModel, instanceId: uuidv4(), parentTagInstanceId: parentInstId });
+        }
+      });
+    }
+
+    useVttStore.getState().updatePlayer(player.id, { tags: newTags });
+  };
+
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     if (!containerRef.current) return;
@@ -140,9 +160,7 @@ export const Canvas: React.FC = () => {
         if (hitPlayer) {
           if (window.confirm(`Voulez-vous fusionner le tag "${marker.tag.name}" avec le joueur "${hitPlayer.name}" ?`)) {
             // Merge tag into player
-            updatePlayer(hitPlayer.id, {
-              tags: [...hitPlayer.tags, { ...marker.tag }]
-            });
+            applyTagToPlayer(hitPlayer, marker.tag);
             deleteMarker(marker.id);
             return;
           }
@@ -401,7 +419,7 @@ export const Canvas: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-4">
-          <div className="text-xs text-muted-foreground font-medium">v0.703</div>
+          <div className="text-xs text-muted-foreground font-medium">v0.704</div>
           {!roomCode ? (
             <button
               onClick={generateRoomCode}
@@ -1062,12 +1080,20 @@ export const Canvas: React.FC = () => {
                               e.stopPropagation();
                               const player = players.find(p => p.id === contextMenu.entityId);
                               if (player) {
-                                updatePlayer(player.id, {
-                                  tags: player.tags.filter(t => t.instanceId !== tag.instanceId)
+                                // Cascade delete: if we remove a container, we remove its children too.
+                                const tagsToRemove = new Set([tag.instanceId]);
+                                player.tags.forEach(t => {
+                                  if (t.parentTagInstanceId === tag.instanceId) {
+                                    tagsToRemove.add(t.instanceId);
+                                  }
                                 });
+
+                                updatePlayer(player.id, {
+                                  tags: player.tags.filter(t => !tagsToRemove.has(t.instanceId))
+                                });
+                                // Keep menu open unless there are no more tags
+                                if (player.tags.length <= tagsToRemove.size) closeContextMenu();
                               }
-                              // Keep menu open unless there are no more tags
-                              if (player && player.tags.length <= 1) closeContextMenu();
                             }}
                           >
                             <Trash2 size={14} />
@@ -1340,9 +1366,7 @@ export const Canvas: React.FC = () => {
                             selectedEntityIds.forEach(id => {
                               const player = players.find(p => p.id === id);
                               if (player) {
-                                updatePlayer(player.id, {
-                                  tags: [...player.tags, { ...tagModel, instanceId: uuidv4() }]
-                                });
+                                applyTagToPlayer(player, tagModel);
                               }
                             });
                             closeContextMenu();
