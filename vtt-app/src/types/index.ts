@@ -107,6 +107,13 @@ export interface Handout {
   isMaximized?: boolean;
 }
 
+export interface SoundButton {
+  index: number;
+  name: string;
+  audioUrl: string; // base64 string
+  isOneShot: boolean;
+}
+
 export interface GameState {
   roomName: string;
   roomCode: string | null;
@@ -135,8 +142,16 @@ export interface GameState {
     x: number;
     y: number;
   };
+  soundboard: {
+    cols: number;
+    rows: number;
+    isDetached: boolean;
+    x: number;
+    y: number;
+    buttons: SoundButton[];
+  };
   activeLeftTab: 'players' | 'roles' | 'tags' | 'game' | 'handouts';
-  editingEntity: { type: 'player' | 'playerTemplate' | 'role' | 'tagModel' | 'tagInstance' | 'team' | 'tagCategory' | 'playerNotes' | 'playerPublicNotes', id: EntityId, parentId?: EntityId } | null;
+  editingEntity: { type: 'player' | 'playerTemplate' | 'role' | 'tagModel' | 'tagInstance' | 'team' | 'tagCategory' | 'playerNotes' | 'playerPublicNotes' | 'soundButton', id: EntityId, parentId?: EntityId } | null;
   canvas: {
     panX: number;
     panY: number;

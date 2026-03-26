@@ -419,7 +419,7 @@ export const Canvas: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-4">
-          <div className="text-xs text-muted-foreground font-medium">v0.705</div>
+          <div className="text-xs text-muted-foreground font-medium">v0.706</div>
           {!roomCode ? (
             <button
               onClick={generateRoomCode}

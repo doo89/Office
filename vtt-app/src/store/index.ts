@@ -16,6 +16,9 @@ export interface PlayerTemplate {
 
 interface VttStore extends GameState {
   setTimer: (timerUpdate: Partial<GameState['timer']>) => void;
+  setSoundboard: (soundboardUpdate: Partial<GameState['soundboard']>) => void;
+  updateSoundButton: (index: number, updates: Partial<GameState['soundboard']['buttons'][0]>) => void;
+  removeSoundButton: (index: number) => void;
   playerTemplates: PlayerTemplate[];
 
   // Selection & Interaction
@@ -133,6 +136,14 @@ const initialState = {
     x: 100,
     y: 100,
   },
+  soundboard: {
+    cols: 4,
+    rows: 3,
+    isDetached: false,
+    x: 200,
+    y: 200,
+    buttons: [],
+  },
   activeLeftTab: 'players' as const,
   editingEntity: null,
   canvas: {
@@ -214,6 +225,20 @@ export const useVttStore = create<VttStore>()(
   setGrid: (grid) => set({ grid }),
   setRoom: (roomUpdates) => set((state) => ({ room: { ...state.room, ...roomUpdates } })),
   setTimer: (timerUpdates) => set((state) => ({ timer: { ...state.timer, ...timerUpdates } })),
+  setSoundboard: (soundboardUpdates) => set((state) => ({ soundboard: { ...state.soundboard, ...soundboardUpdates } })),
+  updateSoundButton: (index, updates) => set((state) => {
+    const newButtons = [...state.soundboard.buttons];
+    const existingIndex = newButtons.findIndex(b => b.index === index);
+    if (existingIndex >= 0) {
+      newButtons[existingIndex] = { ...newButtons[existingIndex], ...updates };
+    } else {
+      newButtons.push({ index, name: updates.name || '', audioUrl: updates.audioUrl || '', isOneShot: updates.isOneShot || false, ...updates });
+    }
+    return { soundboard: { ...state.soundboard, buttons: newButtons } };
+  }),
+  removeSoundButton: (index) => set((state) => ({
+    soundboard: { ...state.soundboard, buttons: state.soundboard.buttons.filter(b => b.index !== index) }
+  })),
 
   // Player Templates
   addPlayerTemplate: (templateData) => set((state) => ({

@@ -1,4 +1,4 @@
-import { Settings, ChevronLeft, ChevronRight, Upload, Grid3X3, Clock, Eye, PaintBucket, ChevronDown, Image as ImageIcon, Trash2, ArrowUpRight } from 'lucide-react';
+import { Settings, ChevronLeft, ChevronRight, Upload, Grid3X3, Clock, Eye, PaintBucket, ChevronDown, Image as ImageIcon, Trash2, ArrowUpRight, Music } from 'lucide-react';
 import React, { useState, useEffect, useRef } from 'react';
 import { useVttStore } from '../../store';
 import type { BadgeConfig, BadgeType } from '../../types';
@@ -11,7 +11,8 @@ export const RightPanel: React.FC = () => {
     isNight, setNight,
     displaySettings, updateDisplaySettings,
     room, setRoom,
-    timer, setTimer
+    timer, setTimer,
+    soundboard, setSoundboard
   } = useVttStore();
 
   const [activeSection, setActiveSection] = useState<string | null>('affichage');
@@ -429,6 +430,65 @@ export const RightPanel: React.FC = () => {
                       <ArrowUpRight size={14} /> Détacher en fenêtre volante
                     </button>
                   </div>
+                </>
+              )}
+            </div>
+          )}
+        </section>
+
+        {/* Soundboard */}
+        <section className="flex flex-col border border-border rounded-md bg-background">
+          <button
+            onClick={() => toggleSection('soundboard')}
+            className="flex items-center justify-between p-2 bg-muted/50 hover:bg-muted font-semibold text-sm transition-colors"
+          >
+            <div className="flex items-center gap-2">
+              <Music size={16} /> Soundboard
+            </div>
+            {activeSection === 'soundboard' ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+          </button>
+          {activeSection === 'soundboard' && (
+            <div className="flex flex-col gap-3 p-3 border-t border-border">
+              {soundboard.isDetached ? (
+                <div className="flex flex-col items-center gap-2 w-full text-center py-2">
+                  <span className="text-sm text-muted-foreground italic">La boîte à sons est détachée.</span>
+                  <button
+                    onClick={() => setSoundboard({ isDetached: false })}
+                    className="text-xs bg-primary text-primary-foreground px-3 py-1.5 rounded hover:bg-primary/90"
+                  >
+                    Rattacher
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <div className="flex items-center gap-4">
+                    <div className="flex flex-col gap-1 flex-1">
+                      <label className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Colonnes</label>
+                      <input
+                        type="number"
+                        min="1" max="10"
+                        value={soundboard.cols}
+                        onChange={e => setSoundboard({ cols: parseInt(e.target.value) || 4 })}
+                        className="bg-input border border-border rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1 flex-1">
+                      <label className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Lignes</label>
+                      <input
+                        type="number"
+                        min="1" max="10"
+                        value={soundboard.rows}
+                        onChange={e => setSoundboard({ rows: parseInt(e.target.value) || 3 })}
+                        className="bg-input border border-border rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                      />
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setSoundboard({ isDetached: true })}
+                    className="w-full mt-2 bg-primary text-primary-foreground text-xs py-2 rounded font-medium hover:bg-primary/90 transition-colors flex items-center justify-center gap-2"
+                  >
+                    <ArrowUpRight size={14} /> Afficher la boîte à sons
+                  </button>
                 </>
               )}
             </div>

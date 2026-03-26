@@ -6,6 +6,7 @@ import { ThemeToggle } from '../components/ThemeToggle';
 import { EditingModal } from '../components/EditingModal';
 import { HandoutWindow } from '../components/HandoutWindow';
 import { DetachedTimer } from '../components/DetachedTimer';
+import { DetachedSoundboard } from '../components/DetachedSoundboard';
 import { useVttStore } from '../store';
 import { setupHostRealtimeSubscription, cleanupHostRealtime } from '../lib/realtime-host';
 
@@ -34,6 +35,7 @@ export const GmView: React.FC = () => {
       ))}
 
       <DetachedTimer />
+      <DetachedSoundboard />
     </div>
   );
 };

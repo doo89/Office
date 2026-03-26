@@ -16,7 +16,7 @@ const TAG_ICONS = [
 ];
 
 export const EditingModal: React.FC = () => {
-  const { editingEntity, setEditingEntity, players, playerTemplates, roles, teams, tags, tagCategories, markers, updatePlayer, updatePlayerTemplate, updateRole, updateTeam, updateTagModel, updateTagCategory, updateMarker } = useVttStore();
+  const { editingEntity, setEditingEntity, players, playerTemplates, roles, teams, tags, tagCategories, markers, soundboard, updatePlayer, updatePlayerTemplate, updateRole, updateTeam, updateTagModel, updateTagCategory, updateMarker, updateSoundButton, removeSoundButton } = useVttStore();
   const [activeTagTab, setActiveTagTab] = React.useState<'general' | 'appearance' | 'fields' | 'container'>('general');
 
   // Reset tab when editing entity changes
@@ -1081,6 +1081,78 @@ export const EditingModal: React.FC = () => {
             Panneau d'affichage (smartphone)
           </label>
         </div>
+      </div>
+    );
+  } else if (editingEntity.type === 'soundButton') {
+    const index = parseInt(editingEntity.id as string);
+    const btn = soundboard.buttons.find(b => b.index === index) || { index, name: '', audioUrl: '', isOneShot: false };
+
+    entityTitle = `Paramètres du Son`;
+    entityContent = (
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-1">
+          <label className="text-sm font-medium">Nom du son</label>
+          <input
+            type="text"
+            value={btn.name}
+            onChange={(e) => updateSoundButton(index, { name: e.target.value })}
+            className="bg-input border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+            placeholder={`Son ${index + 1}`}
+          />
+        </div>
+        <div className="flex flex-col gap-1">
+          <label className="text-sm font-medium">Fichier audio (.mp3, .wav, .ogg)</label>
+          <div className="flex items-center gap-2">
+            <input
+              type="file"
+              accept=".mp3,audio/mpeg,.wav,audio/wav,.ogg,audio/ogg"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) {
+                  const reader = new FileReader();
+                  reader.onloadend = () => {
+                    updateSoundButton(index, { audioUrl: reader.result as string });
+                  };
+                  reader.readAsDataURL(file);
+                }
+              }}
+              className="text-sm flex-1 text-muted-foreground file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90"
+            />
+          </div>
+          {btn.audioUrl && (
+            <div className="text-xs text-green-500 font-medium mt-1 flex items-center gap-1">
+              Fichier chargé.
+            </div>
+          )}
+        </div>
+        <div className="flex flex-col gap-1 mt-2">
+          <label className="flex items-center gap-2 text-sm font-medium cursor-pointer">
+            <input
+              type="checkbox"
+              checked={btn.isOneShot}
+              onChange={(e) => updateSoundButton(index, { isOneShot: e.target.checked })}
+              className="rounded border-border w-4 h-4"
+            />
+            1 coup (jouer une fois)
+          </label>
+          <p className="text-xs text-muted-foreground ml-6">
+            Si décoché, le son sera lu en boucle jusqu'au prochain clic.
+          </p>
+        </div>
+
+        {btn.audioUrl && (
+          <div className="mt-4 pt-4 border-t border-border">
+            <button
+              onClick={() => {
+                removeSoundButton(index);
+                handleClose();
+              }}
+              className="flex items-center gap-2 w-full justify-center px-4 py-2 bg-destructive/10 text-destructive hover:bg-destructive/20 rounded-md text-sm font-medium transition-colors"
+            >
+              <Trash2 size={16} /> Supprimer le son
+            </button>
+          </div>
+        )}
       </div>
     );
   }
