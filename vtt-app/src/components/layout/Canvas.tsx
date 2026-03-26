@@ -1,7 +1,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { useStore } from 'zustand';
 import { useVttStore } from '../../store';
-import { ZoomIn, ZoomOut, Maximize, Tag, Skull, Trash2, Settings, ChevronRight, Sun, Moon, Copy, Heart, icons, Users, Hand, MousePointer2, Undo2, Redo2, Radio, Lock, Globe, Bell, Check, X, WifiOff, FileText } from 'lucide-react';
+import { ZoomIn, ZoomOut, Maximize, Tag, Skull, Trash2, Settings, ChevronRight, Sun, Moon, Copy, Heart, icons, Users, Hand, MousePointer2, Undo2, Redo2, Radio, Lock, Globe, Bell, Check, X, WifiOff, FileText, FastForward } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 import type { Marker, Player } from '../../types';
 
@@ -10,7 +10,7 @@ export const Canvas: React.FC = () => {
   const {
     roomName, setRoomName, roomCode, generateRoomCode, clearRoomCode, isRoomPublic, toggleRoomPublic,
     joinRequests, removeJoinRequest, onlinePlayerIds,
-    canvas, setPan, setZoom, isNight, nextCycle,
+    canvas, setPan, setZoom, isNight, nextCycle, cycleMode,
     players, updatePlayer, addPlayer, deletePlayer, clearPlayers,
     markers, updateMarker, addMarker, deleteMarker, clearMarkers,
     roles, teams, grid, room, displaySettings,
@@ -419,7 +419,7 @@ export const Canvas: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-4">
-          <div className="text-xs text-muted-foreground font-medium">v0.706</div>
+          <div className="text-xs text-muted-foreground font-medium">{onlinePlayerIds.length} Joueur(s)</div>
           {!roomCode ? (
             <button
               onClick={generateRoomCode}
@@ -511,14 +511,18 @@ export const Canvas: React.FC = () => {
         <button
           onClick={nextCycle}
           className="absolute top-4 left-4 z-50 p-3 rounded-full shadow-lg bg-card/80 backdrop-blur border border-border hover:bg-accent hover:text-accent-foreground transition-all flex items-center justify-center group"
-          title={`Passer au ${isNight ? 'Jour' : 'Nuit'}`}
+          title={cycleMode === 'dayNight' ? `Passer au ${isNight ? 'Jour' : 'Nuit'}` : 'Passer au tour suivant'}
         >
-          {isNight ? <Sun className="text-yellow-500 group-hover:scale-110 transition-transform" size={28} /> : <Moon className="text-blue-400 group-hover:scale-110 transition-transform" size={28} />}
+          {cycleMode === 'dayNight' ? (
+            isNight ? <Sun className="text-yellow-500 group-hover:scale-110 transition-transform" size={28} /> : <Moon className="text-blue-400 group-hover:scale-110 transition-transform" size={28} />
+          ) : (
+            <FastForward className="text-primary group-hover:scale-110 transition-transform" size={28} />
+          )}
         </button>
       )}
 
       {/* Night Overlay */}
-      {isNight && (
+      {isNight && cycleMode === 'dayNight' && (
         <div className="absolute inset-0 bg-black/60 z-30 pointer-events-none transition-opacity duration-1000" />
       )}
 

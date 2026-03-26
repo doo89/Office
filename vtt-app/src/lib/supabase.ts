@@ -15,6 +15,7 @@ export type SyncStatePayload = {
   teams: any[];
   tags: any[];
   isNight: boolean;
+  cycleMode: 'dayNight' | 'turns';
 };
 
 export type JoinRequestPayload = {

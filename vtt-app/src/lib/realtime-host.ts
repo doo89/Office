@@ -109,6 +109,7 @@ const forceBroadcastState = () => {
     teams: state.teams,
     tags: state.tags,
     isNight: state.isNight,
+    cycleMode: state.cycleMode,
   };
 
   // We must always broadcast if it's forced by a client request, not just on diff.

@@ -127,6 +127,7 @@ const initialState = {
   recentColors: ['#ef4444', '#f97316', '#eab308', '#22c55e', '#3b82f6', '#8b5cf6', '#ec4899', '#ffffff', '#000000', '#6b7280'], // default colors
   isNight: false,
   cycleNumber: 1,
+  cycleMode: 'dayNight' as const,
   timer: {
     minutes: 5,
     seconds: 0,

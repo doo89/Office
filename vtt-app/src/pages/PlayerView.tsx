@@ -13,6 +13,7 @@ export const PlayerView: React.FC = () => {
   const [localRole, setLocalRole] = useState<Role | null>(null);
   const [localTeam, setLocalTeam] = useState<Team | null>(null);
   const [isNight, setIsNight] = useState(false);
+  const [cycleMode, setCycleMode] = useState<'dayNight' | 'turns'>('dayNight');
   const [isConnected, setIsConnected] = useState(false);
   const [noticeBoardPlayers, setNoticeBoardPlayers] = useState<Player[]>([]);
   const [isNoticeBoardOpen, setIsNoticeBoardOpen] = useState(false);
@@ -45,6 +46,7 @@ export const PlayerView: React.FC = () => {
         const data = payload as SyncStatePayload;
 
         setIsNight(data.isNight || false);
+        setCycleMode(data.cycleMode || 'dayNight');
 
         // Find player by previously matched ID, OR by name
         let found = null;
@@ -121,7 +123,7 @@ export const PlayerView: React.FC = () => {
   }, [roomId, playerName]);
 
   return (
-    <div className={`h-screen w-screen text-zinc-50 flex flex-col p-4 md:p-8 max-w-md mx-auto relative overflow-hidden transition-colors duration-1000 ${isNight ? 'bg-zinc-950' : 'bg-zinc-900'}`}>
+    <div className={`h-screen w-screen text-zinc-50 flex flex-col p-4 md:p-8 max-w-md mx-auto relative overflow-hidden transition-colors duration-1000 ${(isNight && cycleMode === 'dayNight') ? 'bg-zinc-950' : 'bg-zinc-900'}`}>
       {/* Header */}
       <div className="flex items-center justify-between border-b border-zinc-800 pb-4 mb-6 z-10">
         <div className="flex flex-col">
@@ -162,7 +164,7 @@ export const PlayerView: React.FC = () => {
           )}
 
           {/* Role Card */}
-          <div className={`relative flex flex-col items-center border rounded-2xl p-6 shadow-2xl overflow-hidden mt-4 transition-colors duration-1000 ${isNight ? 'bg-zinc-900 border-zinc-800' : 'bg-zinc-800 border-zinc-700'}`}>
+          <div className={`relative flex flex-col items-center border rounded-2xl p-6 shadow-2xl overflow-hidden mt-4 transition-colors duration-1000 ${(isNight && cycleMode === 'dayNight') ? 'bg-zinc-900 border-zinc-800' : 'bg-zinc-800 border-zinc-700'}`}>
             {localTeam && (
                <div
                   className="absolute top-0 left-0 w-full h-1.5"

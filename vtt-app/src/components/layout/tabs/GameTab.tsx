@@ -4,7 +4,7 @@ import { useVttStore } from '../../../store';
 import type { Player, Marker, TagInstance, Role } from '../../../types';
 
 export const GameTab: React.FC = () => {
-  const { isNight, cycleNumber, nextCycle, resetCycle, players, markers, updatePlayer, updatePlayers, updateMarker, roles, updateRole } = useVttStore();
+  const { isNight, cycleNumber, cycleMode, nextCycle, resetCycle, players, markers, updatePlayer, updatePlayers, updateMarker, roles, updateRole } = useVttStore();
 
   const [expandedCalledTags, setExpandedCalledTags] = useState<Record<string, boolean>>({});
   const [isDistributionExpanded, setIsDistributionExpanded] = useState<boolean>(true);
@@ -75,7 +75,7 @@ export const GameTab: React.FC = () => {
 
       // Check player's local tags
       player.tags.forEach(tag => {
-        const order = isNight ? tag.callOrderNight : tag.callOrderDay;
+        const order = (cycleMode === 'dayNight' && isNight) ? tag.callOrderNight : tag.callOrderDay;
         if (order !== null && order !== undefined) {
           isCalled = true;
           if (order < minOrder) {
@@ -89,7 +89,7 @@ export const GameTab: React.FC = () => {
       const role = useVttStore.getState().roles.find(r => r.id === player.roleId);
       if (role && role.tags) {
         role.tags.forEach(tag => {
-          const order = isNight ? tag.callOrderNight : tag.callOrderDay;
+          const order = (cycleMode === 'dayNight' && isNight) ? tag.callOrderNight : tag.callOrderDay;
           if (order !== null && order !== undefined) {
             isCalled = true;
             if (order < minOrder) {
@@ -109,7 +109,7 @@ export const GameTab: React.FC = () => {
 
     // Check Markers
     markers.forEach(marker => {
-      const order = isNight ? marker.tag.callOrderNight : marker.tag.callOrderDay;
+      const order = (cycleMode === 'dayNight' && isNight) ? marker.tag.callOrderNight : marker.tag.callOrderDay;
       if (order !== null && order !== undefined) {
         called.push({ type: 'marker', entity: marker, order, reason: `Marker: ${marker.tag.name}` });
       } else {
@@ -121,7 +121,7 @@ export const GameTab: React.FC = () => {
     called.sort((a, b) => a.order - b.order);
 
     return { calledEntities: called, otherEntities: others };
-  }, [players, markers, isNight]);
+  }, [players, markers, isNight, cycleMode]);
 
   // Role distribution logic
   const selectedRolesForDistribution = useMemo(() => {
@@ -260,15 +260,19 @@ export const GameTab: React.FC = () => {
         <div className="p-4 border border-border rounded-lg bg-card text-center flex flex-col items-center justify-center gap-3">
           <div className="flex items-center justify-between w-full">
             <div className="flex items-center gap-2 mx-auto">
-              {isNight ? <Moon className="text-blue-400" size={24} /> : <Sun className="text-yellow-400" size={24} />}
+              {cycleMode === 'dayNight' ? (
+                isNight ? <Moon className="text-blue-400" size={24} /> : <Sun className="text-yellow-400" size={24} />
+              ) : (
+                <FastForward className="text-primary" size={24} />
+              )}
               <span className="text-2xl font-bold">
-                {isNight ? 'Nuit' : 'Jour'} {cycleNumber}
+                {cycleMode === 'dayNight' ? (isNight ? 'Nuit ' : 'Jour ') : 'Tour '}{cycleNumber}
               </span>
             </div>
             <button
               onClick={resetCycle}
               className="p-2 bg-destructive/10 text-destructive hover:bg-destructive/20 rounded-md transition-colors"
-              title="Réinitialiser au Jour 1"
+              title={`Réinitialiser au ${cycleMode === 'dayNight' ? 'Jour 1' : 'Tour 1'}`}
             >
               <RotateCcw size={16} />
             </button>
@@ -283,7 +287,9 @@ export const GameTab: React.FC = () => {
       </section>
 
       <section className="flex flex-col gap-3">
-        <h3 className="font-semibold text-sm border-b border-border pb-1">Ordre d'Appel ({isNight ? 'Nuit' : 'Jour'})</h3>
+        <h3 className="font-semibold text-sm border-b border-border pb-1">
+          Ordre d'Appel ({cycleMode === 'dayNight' ? (isNight ? 'Nuit' : 'Jour') : `Tour ${cycleNumber}`})
+        </h3>
 
         {calledEntities.length === 0 ? (
           <p className="text-sm text-muted-foreground italic text-center py-2">Personne n'est appelé pour cette phase.</p>
