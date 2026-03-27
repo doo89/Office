@@ -1,7 +1,7 @@
-import { Settings, ChevronLeft, ChevronRight, Upload, Grid3X3, Clock, Eye, PaintBucket, ChevronDown, Image as ImageIcon, Trash2, ArrowUpRight, Music } from 'lucide-react';
-import React, { useState, useEffect, useRef } from 'react';
+import { Settings, ChevronLeft, ChevronRight, Upload, Grid3X3, Clock, Eye, PaintBucket, ChevronDown, Image as ImageIcon, Trash2, ArrowUpRight, Music, Shuffle } from 'lucide-react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useVttStore } from '../../store';
-import type { BadgeConfig, BadgeType } from '../../types';
+import type { BadgeConfig, BadgeType, Role, Player } from '../../types';
 import { ColorPicker } from '../ColorPicker';
 
 export const RightPanel: React.FC = () => {
@@ -12,13 +12,70 @@ export const RightPanel: React.FC = () => {
     displaySettings, updateDisplaySettings,
     room, setRoom,
     timer, setTimer,
-    soundboard, setSoundboard
+    soundboard, setSoundboard,
+    roles, updateRole, players, updatePlayers
   } = useVttStore();
 
   const [activeSection, setActiveSection] = useState<string | null>('affichage');
 
   const toggleSection = (section: string) => {
     setActiveSection(prev => prev === section ? null : section);
+  };
+
+  // Role distribution logic
+  const selectedRolesForDistribution = useMemo(() => {
+    return roles.filter(r => r.isSelectableForDistribution);
+  }, [roles]);
+
+  const totalRolesToDistribute = useMemo(() => {
+    return selectedRolesForDistribution.reduce((total, role) => {
+      if (role.isUnique) {
+        return total + 1;
+      }
+      return total + (role.distributionQuantity || 1);
+    }, 0);
+  }, [selectedRolesForDistribution]);
+
+  const totalPlayersInRoom = players.length;
+
+  const canDistribute = totalRolesToDistribute >= totalPlayersInRoom && totalPlayersInRoom > 0;
+
+  const handleDistributeRoles = () => {
+    if (!canDistribute) return;
+
+    // Create array of roles to distribute
+    const rolesPool: Role[] = [];
+    selectedRolesForDistribution.forEach(role => {
+      const quantity = role.isUnique ? 1 : (role.distributionQuantity || 1);
+      for (let i = 0; i < quantity; i++) {
+        rolesPool.push(role);
+      }
+    });
+
+    // Shuffle the roles pool using Fisher-Yates
+    for (let i = rolesPool.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [rolesPool[i], rolesPool[j]] = [rolesPool[j], rolesPool[i]];
+    }
+
+    // Assign to players
+    const updates = players.map((player, index) => {
+      const assignedRole = rolesPool[index];
+      if (assignedRole) {
+        return {
+          id: player.id,
+          updates: {
+            roleId: assignedRole.id,
+            teamId: assignedRole.teamId
+          }
+        };
+      }
+      return null;
+    }).filter(Boolean) as { id: string; updates: Partial<Player> }[];
+
+    if (updates.length > 0) {
+      updatePlayers(updates);
+    }
   };
 
   // Timer Logic
@@ -126,10 +183,10 @@ export const RightPanel: React.FC = () => {
             onClick={() => toggleSection('affichage')}
             className="flex items-center justify-between p-2 bg-muted/50 hover:bg-muted font-semibold text-sm transition-colors"
           >
-            <div className="flex items-center gap-2">
+            <div className={`flex items-center gap-2 ${activeSection === 'affichage' ? 'text-blue-400' : ''}`}>
               <Eye size={16} /> Affichage
             </div>
-            {activeSection === 'affichage' ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+            {activeSection === 'affichage' ? <ChevronDown size={16} className="text-blue-400" /> : <ChevronRight size={16} />}
           </button>
           {activeSection === 'affichage' && (
           <div className="flex flex-col gap-2 p-3 border-t border-border">
@@ -350,16 +407,91 @@ export const RightPanel: React.FC = () => {
           )}
         </section>
 
+        {/* Distribution des rôles */}
+        <section className="flex flex-col border border-border rounded-md bg-background">
+          <button
+            onClick={() => toggleSection('distribution')}
+            className="flex items-center justify-between p-2 bg-muted/50 hover:bg-muted font-semibold text-sm transition-colors"
+          >
+            <div className={`flex items-center gap-2 ${activeSection === 'distribution' ? 'text-purple-400' : ''}`}>
+              <Shuffle size={16} /> Distribution Rôles
+            </div>
+            {activeSection === 'distribution' ? <ChevronDown size={16} className="text-purple-400" /> : <ChevronRight size={16} />}
+          </button>
+          {activeSection === 'distribution' && (
+            <div className="flex flex-col gap-3 p-3 border-t border-border">
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-muted-foreground">Joueurs en salle :</span>
+                <span className="font-bold">{totalPlayersInRoom}</span>
+              </div>
+
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-muted-foreground">Rôles sélectionnés :</span>
+                <span className={`font-bold ${totalRolesToDistribute < totalPlayersInRoom ? 'text-destructive' : 'text-primary'}`}>
+                  {totalRolesToDistribute}
+                </span>
+              </div>
+
+              {selectedRolesForDistribution.length > 0 && (
+                <div className="flex flex-col gap-2 mt-2 pt-2 border-t border-border/50">
+                  {selectedRolesForDistribution.map(role => (
+                    <div key={role.id} className="flex items-center justify-between gap-2 text-sm">
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                        <div className="w-3 h-3 rounded-sm shrink-0" style={{ backgroundColor: role.color }} />
+                        <span className="truncate">{role.name}</span>
+                      </div>
+
+                      {!role.isUnique ? (
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-muted-foreground">Qté:</span>
+                          <input
+                            type="number"
+                            min="1"
+                            value={role.distributionQuantity || 1}
+                            onChange={(e) => updateRole(role.id, { distributionQuantity: Math.max(1, parseInt(e.target.value) || 1) })}
+                            className="w-16 bg-background border border-border rounded px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-ring text-center"
+                          />
+                        </div>
+                      ) : (
+                        <span className="text-xs text-muted-foreground italic mr-6">Unique</span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <button
+                onClick={handleDistributeRoles}
+                disabled={!canDistribute}
+                className={`mt-2 flex items-center justify-center gap-2 w-full py-2 rounded-md text-sm font-medium transition-colors ${
+                  canDistribute
+                    ? 'bg-primary text-primary-foreground hover:bg-primary/90'
+                    : 'bg-muted text-muted-foreground cursor-not-allowed'
+                }`}
+              >
+                <Shuffle size={16} />
+                Distribuer
+              </button>
+
+              {!canDistribute && totalPlayersInRoom > 0 && (
+                <p className="text-[10px] text-destructive text-center mt-1">
+                  Le nombre de rôles ({totalRolesToDistribute}) doit être supérieur ou égal au nombre de joueurs ({totalPlayersInRoom}).
+                </p>
+              )}
+            </div>
+          )}
+        </section>
+
         {/* Timer */}
         <section className="flex flex-col border border-border rounded-md bg-background">
           <button
             onClick={() => toggleSection('chrono')}
             className="flex items-center justify-between p-2 bg-muted/50 hover:bg-muted font-semibold text-sm transition-colors"
           >
-            <div className="flex items-center gap-2">
+            <div className={`flex items-center gap-2 ${activeSection === 'chrono' ? 'text-amber-500' : ''}`}>
               <Clock size={16} /> Chronomètre
             </div>
-            {activeSection === 'chrono' ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+            {activeSection === 'chrono' ? <ChevronDown size={16} className="text-amber-500" /> : <ChevronRight size={16} />}
           </button>
           {activeSection === 'chrono' && (
             <div className="flex flex-col items-center gap-3 p-3 border-t border-border">
@@ -449,10 +581,10 @@ export const RightPanel: React.FC = () => {
             onClick={() => toggleSection('soundboard')}
             className="flex items-center justify-between p-2 bg-muted/50 hover:bg-muted font-semibold text-sm transition-colors"
           >
-            <div className="flex items-center gap-2">
+            <div className={`flex items-center gap-2 ${activeSection === 'soundboard' ? 'text-pink-400' : ''}`}>
               <Music size={16} /> Soundboard
             </div>
-            {activeSection === 'soundboard' ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+            {activeSection === 'soundboard' ? <ChevronDown size={16} className="text-pink-400" /> : <ChevronRight size={16} />}
           </button>
           {activeSection === 'soundboard' && (
             <div className="flex flex-col gap-3 p-3 border-t border-border">
@@ -508,10 +640,10 @@ export const RightPanel: React.FC = () => {
             onClick={() => toggleSection('grille')}
             className="flex items-center justify-between p-2 bg-muted/50 hover:bg-muted font-semibold text-sm transition-colors"
           >
-            <div className="flex items-center gap-2">
+            <div className={`flex items-center gap-2 ${activeSection === 'grille' ? 'text-green-400' : ''}`}>
               <Grid3X3 size={16} /> Grille Magnétique
             </div>
-            {activeSection === 'grille' ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+            {activeSection === 'grille' ? <ChevronDown size={16} className="text-green-400" /> : <ChevronRight size={16} />}
           </button>
           {activeSection === 'grille' && (
           <div className="flex flex-col gap-2 p-3 border-t border-border">
@@ -545,10 +677,10 @@ export const RightPanel: React.FC = () => {
             onClick={() => toggleSection('salle')}
             className="flex items-center justify-between p-2 bg-muted/50 hover:bg-muted font-semibold text-sm transition-colors"
           >
-            <div className="flex items-center gap-2">
+            <div className={`flex items-center gap-2 ${activeSection === 'salle' ? 'text-indigo-400' : ''}`}>
               <PaintBucket size={16} /> Salle
             </div>
-            {activeSection === 'salle' ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+            {activeSection === 'salle' ? <ChevronDown size={16} className="text-indigo-400" /> : <ChevronRight size={16} />}
           </button>
           {activeSection === 'salle' && (
           <div className="flex flex-col gap-3 p-3 border-t border-border">

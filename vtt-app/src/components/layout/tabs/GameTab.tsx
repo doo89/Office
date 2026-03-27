@@ -1,13 +1,12 @@
-import { Moon, Sun, FastForward, RotateCcw, ChevronDown, ChevronRight, Shuffle } from 'lucide-react';
+import { Moon, Sun, FastForward, RotateCcw, ChevronDown, ChevronRight } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 import { useVttStore } from '../../../store';
-import type { Player, Marker, TagInstance, Role } from '../../../types';
+import type { Player, Marker, TagInstance } from '../../../types';
 
 export const GameTab: React.FC = () => {
-  const { isNight, cycleNumber, cycleMode, nextCycle, resetCycle, players, markers, updatePlayer, updatePlayers, updateMarker, roles, updateRole } = useVttStore();
+  const { isNight, cycleNumber, cycleMode, nextCycle, resetCycle, players, markers, updatePlayer, updateMarker } = useVttStore();
 
   const [expandedCalledTags, setExpandedCalledTags] = useState<Record<string, boolean>>({});
-  const [isDistributionExpanded, setIsDistributionExpanded] = useState<boolean>(true);
   const [expandedOtherTags, setExpandedOtherTags] = useState<Record<string, boolean>>({});
 
   const toggleCalledTag = (id: string) => {
@@ -123,138 +122,8 @@ export const GameTab: React.FC = () => {
     return { calledEntities: called, otherEntities: others };
   }, [players, markers, isNight, cycleMode]);
 
-  // Role distribution logic
-  const selectedRolesForDistribution = useMemo(() => {
-    return roles.filter(r => r.isSelectableForDistribution);
-  }, [roles]);
-
-  const totalRolesToDistribute = useMemo(() => {
-    return selectedRolesForDistribution.reduce((total, role) => {
-      if (role.isUnique) {
-        return total + 1;
-      }
-      return total + (role.distributionQuantity || 1);
-    }, 0);
-  }, [selectedRolesForDistribution]);
-
-  const totalPlayersInRoom = players.length;
-
-  const canDistribute = totalRolesToDistribute >= totalPlayersInRoom && totalPlayersInRoom > 0;
-
-  const handleDistributeRoles = () => {
-    if (!canDistribute) return;
-
-    // Create array of roles to distribute
-    const rolesPool: Role[] = [];
-    selectedRolesForDistribution.forEach(role => {
-      const quantity = role.isUnique ? 1 : (role.distributionQuantity || 1);
-      for (let i = 0; i < quantity; i++) {
-        rolesPool.push(role);
-      }
-    });
-
-    // Shuffle the roles pool using Fisher-Yates
-    for (let i = rolesPool.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [rolesPool[i], rolesPool[j]] = [rolesPool[j], rolesPool[i]];
-    }
-
-    // Assign to players
-    const updates = players.map((player, index) => {
-      const assignedRole = rolesPool[index];
-      if (assignedRole) {
-        return {
-          id: player.id,
-          updates: {
-            roleId: assignedRole.id,
-            teamId: assignedRole.teamId
-          }
-        };
-      }
-      return null;
-    }).filter(Boolean) as { id: string; updates: Partial<Player> }[];
-
-    if (updates.length > 0) {
-      updatePlayers(updates);
-    }
-  };
-
   return (
     <div className="flex flex-col gap-6">
-      {/* Distribution des rôles */}
-      <section className="flex flex-col gap-2">
-        <button
-          onClick={() => setIsDistributionExpanded(!isDistributionExpanded)}
-          className="flex items-center justify-between font-semibold text-sm border-b border-border pb-1 hover:text-primary transition-colors"
-        >
-          <span>Distribution des Rôles</span>
-          {isDistributionExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-        </button>
-
-        {isDistributionExpanded && (
-          <div className="flex flex-col gap-3 p-3 bg-muted/30 rounded-lg border border-border">
-            <div className="flex justify-between items-center text-sm">
-              <span className="text-muted-foreground">Joueurs en salle :</span>
-              <span className="font-bold">{totalPlayersInRoom}</span>
-            </div>
-
-            <div className="flex justify-between items-center text-sm">
-              <span className="text-muted-foreground">Rôles sélectionnés :</span>
-              <span className={`font-bold ${totalRolesToDistribute < totalPlayersInRoom ? 'text-destructive' : 'text-primary'}`}>
-                {totalRolesToDistribute}
-              </span>
-            </div>
-
-            {selectedRolesForDistribution.length > 0 && (
-              <div className="flex flex-col gap-2 mt-2 pt-2 border-t border-border/50">
-                {selectedRolesForDistribution.map(role => (
-                  <div key={role.id} className="flex items-center justify-between gap-2 text-sm">
-                    <div className="flex items-center gap-2 flex-1 min-w-0">
-                      <div className="w-3 h-3 rounded-sm shrink-0" style={{ backgroundColor: role.color }} />
-                      <span className="truncate">{role.name}</span>
-                    </div>
-
-                    {!role.isUnique ? (
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-muted-foreground">Qté:</span>
-                        <input
-                          type="number"
-                          min="1"
-                          value={role.distributionQuantity || 1}
-                          onChange={(e) => updateRole(role.id, { distributionQuantity: Math.max(1, parseInt(e.target.value) || 1) })}
-                          className="w-16 bg-background border border-border rounded px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-ring text-center"
-                        />
-                      </div>
-                    ) : (
-                      <span className="text-xs text-muted-foreground italic mr-6">Unique</span>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-
-            <button
-              onClick={handleDistributeRoles}
-              disabled={!canDistribute}
-              className={`mt-2 flex items-center justify-center gap-2 w-full py-2 rounded-md text-sm font-medium transition-colors ${
-                canDistribute
-                  ? 'bg-primary text-primary-foreground hover:bg-primary/90'
-                  : 'bg-muted text-muted-foreground cursor-not-allowed'
-              }`}
-            >
-              <Shuffle size={16} />
-              Distribuer Aléatoirement
-            </button>
-
-            {!canDistribute && totalPlayersInRoom > 0 && (
-              <p className="text-[10px] text-destructive text-center mt-1">
-                Le nombre de rôles ({totalRolesToDistribute}) doit être supérieur ou égal au nombre de joueurs ({totalPlayersInRoom}).
-              </p>
-            )}
-          </div>
-        )}
-      </section>
-
       {cycleMode !== 'none' && (
         <section className="flex flex-col gap-3">
           <h3 className="font-semibold text-sm border-b border-border pb-1">Phase Actuelle</h3>
