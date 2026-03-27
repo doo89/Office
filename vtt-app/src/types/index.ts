@@ -112,6 +112,9 @@ export interface SoundButton {
   name: string;
   audioUrl: string; // base64 string
   isOneShot: boolean;
+  icon?: string;
+  color?: string;
+  imageUrl?: string;
 }
 
 export interface GameState {

@@ -1085,7 +1085,7 @@ export const EditingModal: React.FC = () => {
     );
   } else if (editingEntity.type === 'soundButton') {
     const index = parseInt(editingEntity.id as string);
-    const btn = soundboard.buttons.find(b => b.index === index) || { index, name: '', audioUrl: '', isOneShot: false };
+    const btn = soundboard.buttons.find(b => b.index === index) || { index, name: '', audioUrl: '', isOneShot: true, color: '#3b82f6', icon: 'Music' };
 
     entityTitle = `Paramètres du Son`;
     entityContent = (
@@ -1126,6 +1126,75 @@ export const EditingModal: React.FC = () => {
           )}
         </div>
         <div className="flex flex-col gap-1 mt-2">
+          <label className="text-sm font-medium">Icône</label>
+          <div className="flex flex-wrap gap-1 bg-input border border-border rounded-md p-2 max-h-32 overflow-y-auto custom-scrollbar">
+            {TAG_ICONS.map(iconName => {
+              const IconComponent = icons[iconName as keyof typeof icons];
+              if (!IconComponent) return null;
+              return (
+                <button
+                  key={iconName}
+                  onClick={() => updateSoundButton(index, { icon: iconName })}
+                  className={`p-1.5 rounded-md transition-colors flex items-center justify-center ${
+                    btn.icon === iconName
+                      ? 'bg-primary text-primary-foreground shadow-sm'
+                      : 'hover:bg-accent hover:text-accent-foreground text-muted-foreground'
+                  }`}
+                  title={iconName}
+                >
+                  {React.createElement(IconComponent, { size: 16 })}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-1">
+          <label className="text-sm font-medium">Image de fond optionnelle</label>
+          <div className="flex items-center gap-2">
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) {
+                  const reader = new FileReader();
+                  reader.onloadend = () => {
+                    updateSoundButton(index, { imageUrl: reader.result as string });
+                  };
+                  reader.readAsDataURL(file);
+                }
+              }}
+              className="text-sm flex-1 text-muted-foreground file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90"
+            />
+            {btn.imageUrl && (
+              <button
+                onClick={() => updateSoundButton(index, { imageUrl: undefined })}
+                className="p-2 bg-destructive text-destructive-foreground rounded-md hover:bg-destructive/90 transition-colors"
+                title="Supprimer l'image"
+              >
+                <X size={16} />
+              </button>
+            )}
+          </div>
+          {btn.imageUrl && (
+            <div className="mt-2 w-12 h-12 rounded-md overflow-hidden border border-border">
+              <img src={btn.imageUrl} alt="background" className="w-full h-full object-cover" />
+            </div>
+          )}
+        </div>
+
+        <div className="flex flex-col gap-1 mt-2">
+          <label className="text-sm font-medium">Couleur d'accentuation</label>
+          <ColorPicker
+            color={btn.color || '#3b82f6'}
+            onChange={(c) => updateSoundButton(index, { color: c })}
+            label="Couleur"
+            className="!w-10 !h-10"
+          />
+        </div>
+
+        <div className="flex flex-col gap-1 mt-2 border-t border-border pt-4">
           <label className="flex items-center gap-2 text-sm font-medium cursor-pointer">
             <input
               type="checkbox"

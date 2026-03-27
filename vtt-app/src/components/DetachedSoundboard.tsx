@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useVttStore } from '../store';
-import { Music, X, Settings } from 'lucide-react';
+import { Music, X, Settings, Repeat, icons } from 'lucide-react';
 
 export const DetachedSoundboard: React.FC = () => {
   const { soundboard, setSoundboard, setEditingEntity } = useVttStore();
@@ -9,6 +9,7 @@ export const DetachedSoundboard: React.FC = () => {
 
   // Track playing audios to toggle/pause them
   const audioRefs = useRef<Record<number, HTMLAudioElement>>({});
+  const [audioStates, setAudioStates] = useState<Record<number, { isPlaying: boolean, progress: number }>>({});
 
   // Cleanup audios on unmount
   useEffect(() => {
@@ -65,7 +66,21 @@ export const DetachedSoundboard: React.FC = () => {
 
     // Existing audio -> Play / Pause
     if (!audioRefs.current[index]) {
-      audioRefs.current[index] = new Audio(btn.audioUrl);
+      const newAudio = new Audio(btn.audioUrl);
+
+      newAudio.addEventListener('play', () => setAudioStates(prev => ({ ...prev, [index]: { ...prev[index], isPlaying: true } })));
+      newAudio.addEventListener('pause', () => setAudioStates(prev => ({ ...prev, [index]: { ...prev[index], isPlaying: false } })));
+      newAudio.addEventListener('ended', () => {
+        setAudioStates(prev => ({ ...prev, [index]: { isPlaying: false, progress: 0 } }));
+        newAudio.currentTime = 0;
+      });
+      newAudio.addEventListener('timeupdate', () => {
+        if (newAudio.duration) {
+          setAudioStates(prev => ({ ...prev, [index]: { ...prev[index], progress: (newAudio.currentTime / newAudio.duration) * 100 } }));
+        }
+      });
+
+      audioRefs.current[index] = newAudio;
     }
     const audio = audioRefs.current[index];
 
@@ -73,6 +88,7 @@ export const DetachedSoundboard: React.FC = () => {
     if (!audio.paused) {
       audio.pause();
       audio.currentTime = 0;
+      setAudioStates(prev => ({ ...prev, [index]: { isPlaying: false, progress: 0 } }));
     } else {
       audio.loop = !btn.isOneShot;
       audio.play().catch(e => console.error("Audio playback error", e));
@@ -120,30 +136,55 @@ export const DetachedSoundboard: React.FC = () => {
         {Array.from({ length: totalButtons }).map((_, i) => {
           const btn = soundboard.buttons.find(b => b.index === i);
           const hasSound = !!btn && !!btn.audioUrl;
+          const state = audioStates[i];
+          const isPlaying = state?.isPlaying || false;
+          const progress = state?.progress || 0;
+
+          const IconComponent = btn?.icon && icons[btn.icon as keyof typeof icons] ? icons[btn.icon as keyof typeof icons] : Music;
 
           return (
             <button
               key={i}
               onClick={() => handleButtonClick(i)}
               onContextMenu={(e) => handleButtonContextMenu(e, i)}
-              className={`aspect-square rounded-md flex flex-col items-center justify-center p-1 text-center transition-all border ${
+              className={`relative aspect-square rounded-md flex flex-col items-center justify-center p-1 text-center transition-all border overflow-hidden ${
                 hasSound
-                  ? 'bg-primary border-primary text-primary-foreground shadow hover:bg-primary/90'
+                  ? 'bg-primary border-primary text-primary-foreground hover:bg-primary/90'
                   : 'bg-muted border-dashed border-muted-foreground/30 hover:bg-accent text-muted-foreground hover:text-foreground'
               }`}
+              style={{
+                boxShadow: isPlaying && btn?.color ? `0 0 15px ${btn.color}, inset 0 0 10px ${btn.color}40` : undefined,
+                borderColor: isPlaying && btn?.color ? btn.color : undefined,
+                backgroundImage: btn?.imageUrl ? `url(${btn.imageUrl})` : undefined,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                textShadow: btn?.imageUrl ? '0 1px 3px rgba(0,0,0,0.8)' : undefined
+              }}
             >
+              {btn?.imageUrl && <div className="absolute inset-0 bg-black/40 z-0" />}
+
               {hasSound ? (
-                <>
-                  <Music size={16} className="mb-1 opacity-70" />
-                  <span className="text-[10px] font-bold leading-tight break-words w-full truncate px-1">
+                <div className="relative z-10 flex flex-col items-center justify-center w-full h-full">
+                  {React.createElement(IconComponent, { size: 20, className: "mb-1 drop-shadow-md", color: btn.color || 'currentColor' })}
+                  <span className="text-[10px] font-bold leading-tight break-words w-full truncate px-1" style={{ color: btn.color || 'inherit' }}>
                     {btn.name || `Son ${i+1}`}
                   </span>
+
                   {!btn.isOneShot && (
-                     <span className="text-[8px] opacity-50 uppercase tracking-widest mt-0.5">Boucle</span>
+                     <div className="absolute top-1 right-1 text-white/70" title="En boucle">
+                       <Repeat size={10} className={isPlaying ? 'animate-spin-slow' : ''} />
+                     </div>
                   )}
-                </>
+
+                  {/* Progress bar at bottom */}
+                  {isPlaying && (
+                    <div className="absolute bottom-0 left-0 h-1 bg-black/50 w-full">
+                      <div className="h-full transition-all duration-100 ease-linear" style={{ width: `${progress}%`, backgroundColor: btn.color || '#fff' }} />
+                    </div>
+                  )}
+                </div>
               ) : (
-                <Settings size={14} className="opacity-50" />
+                <Settings size={14} className="opacity-50 relative z-10" />
               )}
             </button>
           );

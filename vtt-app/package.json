@@ -1,7 +1,7 @@
 {
   "name": "vtt-app",
   "private": true,
-  "version": "0.706",
+  "version": "0.707",
   "type": "module",
   "scripts": {
     "dev": "vite",

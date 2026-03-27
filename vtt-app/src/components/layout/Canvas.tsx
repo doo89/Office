@@ -419,7 +419,10 @@ export const Canvas: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-4">
-          <div className="text-xs text-muted-foreground font-medium">{onlinePlayerIds.length} Joueur(s)</div>
+          <div className="text-xs text-muted-foreground font-medium">
+            <span className="mr-2 border-r border-border pr-2">v0.707</span>
+            {onlinePlayerIds.length} Joueur(s)
+          </div>
           {!roomCode ? (
             <button
               onClick={generateRoomCode}
@@ -482,8 +485,6 @@ export const Canvas: React.FC = () => {
               </button>
             </div>
           )}
-
-          <span className="text-[10px] text-muted-foreground ml-2">v0.602</span>
         </div>
       </div>
 

@@ -233,7 +233,15 @@ export const useVttStore = create<VttStore>()(
     if (existingIndex >= 0) {
       newButtons[existingIndex] = { ...newButtons[existingIndex], ...updates };
     } else {
-      newButtons.push({ index, name: updates.name || '', audioUrl: updates.audioUrl || '', isOneShot: updates.isOneShot || false, ...updates });
+      newButtons.push({
+        index,
+        name: updates.name || '',
+        audioUrl: updates.audioUrl || '',
+        isOneShot: updates.isOneShot ?? true,
+        color: updates.color || '#3b82f6',
+        icon: updates.icon || 'Music',
+        ...updates
+      });
     }
     return { soundboard: { ...state.soundboard, buttons: newButtons } };
   }),
