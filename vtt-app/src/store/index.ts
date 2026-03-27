@@ -15,6 +15,7 @@ export interface PlayerTemplate {
 }
 
 interface VttStore extends GameState {
+  setCycleMode: (mode: GameState['cycleMode']) => void;
   setTimer: (timerUpdate: Partial<GameState['timer']>) => void;
   setSoundboard: (soundboardUpdate: Partial<GameState['soundboard']>) => void;
   updateSoundButton: (index: number, updates: Partial<GameState['soundboard']['buttons'][0]>) => void;
@@ -217,6 +218,7 @@ export const useVttStore = create<VttStore>()(
 
   setPan: (x, y) => set((state) => ({ canvas: { ...state.canvas, panX: x, panY: y } })),
   setZoom: (zoom) => set((state) => ({ canvas: { ...state.canvas, zoom } })),
+  setCycleMode: (mode) => set({ cycleMode: mode }),
   setActiveLeftTab: (tab) => set({ activeLeftTab: tab }),
   setEditingEntity: (entity) => set({ editingEntity: entity }),
   toggleLeftPanel: () => set((state) => ({ isLeftPanelOpen: !state.isLeftPanelOpen })),

@@ -136,7 +136,7 @@ export interface GameState {
   recentColors: string[];
   isNight: boolean;
   cycleNumber: number;
-  cycleMode: 'dayNight' | 'turns';
+  cycleMode: 'dayNight' | 'turns' | 'none';
   timer: {
     minutes: number;
     seconds: number;

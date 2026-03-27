@@ -8,7 +8,7 @@ export const RightPanel: React.FC = () => {
   const {
     isRightPanelOpen, toggleRightPanel,
     grid, setGrid,
-    isNight, setNight,
+    cycleMode, setCycleMode,
     displaySettings, updateDisplaySettings,
     room, setRoom,
     timer, setTimer,
@@ -133,16 +133,20 @@ export const RightPanel: React.FC = () => {
           </button>
           {activeSection === 'affichage' && (
           <div className="flex flex-col gap-2 p-3 border-t border-border">
-            <label className="flex items-center gap-2 text-sm cursor-pointer">
-              <input
-                type="checkbox"
-                checked={isNight}
-                onChange={(e) => setNight(e.target.checked)}
-                className="rounded border-border"
-              />
-              Mode Nuit Actif
-            </label>
-            <label className="flex items-center gap-2 text-sm cursor-pointer">
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Type de cycle</label>
+              <select
+                value={cycleMode}
+                onChange={(e) => setCycleMode(e.target.value as 'dayNight' | 'turns' | 'none')}
+                className="bg-input border border-border rounded p-1 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+              >
+                <option value="dayNight">Jour/Nuit</option>
+                <option value="turns">Par tour</option>
+                <option value="none">Aucun</option>
+              </select>
+            </div>
+
+            <label className="flex items-center gap-2 text-sm cursor-pointer mt-2">
               <input
                 type="checkbox"
                 checked={displaySettings.showCenter}
@@ -151,15 +155,18 @@ export const RightPanel: React.FC = () => {
               />
               Afficher le centre de la salle
             </label>
-            <label className="flex items-center gap-2 text-sm cursor-pointer">
-              <input
-                type="checkbox"
-                checked={displaySettings.showCycleIcon}
-                onChange={(e) => updateDisplaySettings({ showCycleIcon: e.target.checked })}
-                className="rounded border-border"
-              />
-              Afficher l'icône Jour/Nuit
-            </label>
+
+            {cycleMode !== 'none' && (
+              <label className="flex items-center gap-2 text-sm cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={displaySettings.showCycleIcon}
+                  onChange={(e) => updateDisplaySettings({ showCycleIcon: e.target.checked })}
+                  className="rounded border-border"
+                />
+                Afficher l'icône {cycleMode === 'dayNight' ? 'Jour/Nuit' : 'Tours'}
+              </label>
+            )}
 
             {/* Foreground Selection */}
             <div className="mt-2 flex flex-col gap-1.5 border-t border-border/50 pt-2">

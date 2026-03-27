@@ -13,7 +13,7 @@ export const PlayerView: React.FC = () => {
   const [localRole, setLocalRole] = useState<Role | null>(null);
   const [localTeam, setLocalTeam] = useState<Team | null>(null);
   const [isNight, setIsNight] = useState(false);
-  const [cycleMode, setCycleMode] = useState<'dayNight' | 'turns'>('dayNight');
+  const [cycleMode, setCycleMode] = useState<'dayNight' | 'turns' | 'none'>('dayNight');
   const [isConnected, setIsConnected] = useState(false);
   const [noticeBoardPlayers, setNoticeBoardPlayers] = useState<Player[]>([]);
   const [isNoticeBoardOpen, setIsNoticeBoardOpen] = useState(false);

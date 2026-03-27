@@ -255,40 +255,44 @@ export const GameTab: React.FC = () => {
         )}
       </section>
 
-      <section className="flex flex-col gap-3">
-        <h3 className="font-semibold text-sm border-b border-border pb-1">Phase Actuelle</h3>
-        <div className="p-4 border border-border rounded-lg bg-card text-center flex flex-col items-center justify-center gap-3">
-          <div className="flex items-center justify-between w-full">
-            <div className="flex items-center gap-2 mx-auto">
-              {cycleMode === 'dayNight' ? (
-                isNight ? <Moon className="text-blue-400" size={24} /> : <Sun className="text-yellow-400" size={24} />
-              ) : (
-                <FastForward className="text-primary" size={24} />
-              )}
-              <span className="text-2xl font-bold">
-                {cycleMode === 'dayNight' ? (isNight ? 'Nuit ' : 'Jour ') : 'Tour '}{cycleNumber}
-              </span>
+      {cycleMode !== 'none' && (
+        <section className="flex flex-col gap-3">
+          <h3 className="font-semibold text-sm border-b border-border pb-1">Phase Actuelle</h3>
+          <div className="p-4 border border-border rounded-lg bg-card text-center flex flex-col items-center justify-center gap-3">
+            <div className="flex items-center justify-between w-full">
+              <div className="flex items-center gap-2 mx-auto">
+                {cycleMode === 'dayNight' ? (
+                  isNight ? <Moon className="text-blue-400" size={24} /> : <Sun className="text-yellow-400" size={24} />
+                ) : (
+                  <FastForward className="text-primary" size={24} />
+                )}
+                <span className="text-2xl font-bold">
+                  {cycleMode === 'dayNight' ? (isNight ? 'Nuit ' : 'Jour ') : 'Tour '}{cycleNumber}
+                </span>
+              </div>
+              <button
+                onClick={resetCycle}
+                className="p-2 bg-destructive/10 text-destructive hover:bg-destructive/20 rounded-md transition-colors"
+                title={`Réinitialiser au ${cycleMode === 'dayNight' ? 'Jour 1' : 'Tour 1'}`}
+              >
+                <RotateCcw size={16} />
+              </button>
             </div>
             <button
-              onClick={resetCycle}
-              className="p-2 bg-destructive/10 text-destructive hover:bg-destructive/20 rounded-md transition-colors"
-              title={`Réinitialiser au ${cycleMode === 'dayNight' ? 'Jour 1' : 'Tour 1'}`}
+              onClick={nextCycle}
+              className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm hover:bg-primary/90 transition-colors w-full justify-center"
             >
-              <RotateCcw size={16} />
+              <FastForward size={16} /> Passer à la phase suivante
             </button>
           </div>
-          <button
-            onClick={nextCycle}
-            className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm hover:bg-primary/90 transition-colors w-full justify-center"
-          >
-            <FastForward size={16} /> Passer à la phase suivante
-          </button>
-        </div>
-      </section>
+        </section>
+      )}
 
       <section className="flex flex-col gap-3">
         <h3 className="font-semibold text-sm border-b border-border pb-1">
-          Ordre d'Appel ({cycleMode === 'dayNight' ? (isNight ? 'Nuit' : 'Jour') : `Tour ${cycleNumber}`})
+          {cycleMode === 'none'
+            ? "Ordre d'Appel"
+            : `Ordre d'Appel (${cycleMode === 'dayNight' ? (isNight ? 'Nuit' : 'Jour') : `Tour ${cycleNumber}`})`}
         </h3>
 
         {calledEntities.length === 0 ? (
