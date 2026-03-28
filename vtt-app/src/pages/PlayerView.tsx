@@ -228,7 +228,7 @@ export const PlayerView: React.FC = () => {
           </div>
 
           {/* GM Message / Public Notes targeting this player */}
-          {localPlayer.publicNotes && localPlayer.publicNotesSendToPlayer && (
+          {localPlayer.publicNotes && localPlayer.publicNotesSendToPlayer !== false && (
             <div className="bg-blue-900/30 border border-blue-500/50 rounded-2xl overflow-hidden mt-4 relative">
               <div className="bg-blue-500/20 px-4 py-2 border-b border-blue-500/30 flex items-center justify-between">
                 <h4 className="text-xs font-bold text-blue-300 uppercase tracking-widest flex items-center gap-2">
@@ -251,13 +251,13 @@ export const PlayerView: React.FC = () => {
           )}
 
           {/* Tags / Status Effects */}
-          {localPlayer.tags.filter(t => t.showOnSmartphone).length > 0 && (
+          {localPlayer.tags.filter(t => t.showOnSmartphone !== false).length > 0 && (
             <div className="flex flex-col gap-3 mt-4">
               <h4 className="text-xs font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-2">
                 <TagIcon size={14} /> Effets Actifs
               </h4>
               <div className="grid grid-cols-1 gap-2">
-                {localPlayer.tags.filter(t => t.showOnSmartphone).map(tag => (
+                {localPlayer.tags.filter(t => t.showOnSmartphone !== false).map(tag => (
                   <div key={tag.instanceId} className="bg-zinc-900/80 border border-zinc-800 rounded-xl p-4 flex flex-col gap-2">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2 font-bold text-white">
