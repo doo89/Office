@@ -137,7 +137,9 @@ export const setupHostRealtimeSubscription = () => {
       state.roles !== prevState.roles ||
       state.teams !== prevState.teams ||
       state.tags !== prevState.tags ||
+      state.handouts !== prevState.handouts ||
       state.isNight !== prevState.isNight ||
+      state.cycleMode !== prevState.cycleMode ||
       state.isRoomPublic !== prevState.isRoomPublic;
 
     if (state.roomCode !== prevState.roomCode) {
@@ -147,9 +149,8 @@ export const setupHostRealtimeSubscription = () => {
         cleanupHostRealtime();
       }
     } else if (relevantChanged && currentChannel) {
-      // isRoomPublic changes no longer trigger a full re-init. It's read dynamically in the event handler.
-      // They just trigger a force broadcast so that clients know the current state (if they needed to).
-      forceBroadcastState();
+      // Small debounce to avoid sending too many broadcasts during rapid state updates
+      setTimeout(() => forceBroadcastState(), 100);
     }
   });
 };

@@ -1,4 +1,4 @@
-import { Settings, ChevronLeft, ChevronRight, Upload, Grid3X3, Clock, Eye, PaintBucket, ChevronDown, Image as ImageIcon, Trash2, ArrowUpRight, Music, Shuffle } from 'lucide-react';
+import { Settings, ChevronLeft, ChevronRight, Upload, Grid3X3, Clock, Eye, PaintBucket, ChevronDown, Image as ImageIcon, Trash2, ArrowUpRight, Music, Shuffle, RotateCcw } from 'lucide-react';
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useVttStore } from '../../store';
 import type { BadgeConfig, BadgeType, Role, Player } from '../../types';
@@ -791,6 +791,19 @@ export const RightPanel: React.FC = () => {
           style={{ display: 'none' }}
           onChange={handleImport}
         />
+        <button
+           onClick={() => {
+             if (window.confirm("Êtes-vous sûr de vouloir réinitialiser l'application ? Tout votre travail actuel sera effacé de manière irréversible.")) {
+               localStorage.removeItem('vtt-state');
+               sessionStorage.clear();
+               window.location.reload();
+             }
+           }}
+          className="flex items-center justify-center gap-2 w-full py-2 mt-2 bg-destructive/10 text-destructive hover:bg-destructive hover:text-destructive-foreground rounded-md text-sm font-medium transition-colors"
+          title="Remettre le programme à zéro et vider le cache"
+        >
+          <RotateCcw size={16} /> Réinitialiser
+        </button>
       </div>
 
       <button
