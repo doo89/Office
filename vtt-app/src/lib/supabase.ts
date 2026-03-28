@@ -14,6 +14,7 @@ export type SyncStatePayload = {
   roles: any[];
   teams: any[];
   tags: any[];
+  handouts: any[];
   isNight: boolean;
   cycleMode: 'dayNight' | 'turns' | 'none';
 };

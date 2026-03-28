@@ -108,6 +108,7 @@ const forceBroadcastState = () => {
     roles: state.roles,
     teams: state.teams,
     tags: state.tags,
+    handouts: state.handouts,
     isNight: state.isNight,
     cycleMode: state.cycleMode,
   };
