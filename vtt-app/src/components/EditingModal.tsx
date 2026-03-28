@@ -761,6 +761,20 @@ export const EditingModal: React.FC = () => {
                   placeholder="Saisissez un texte libre ici..."
                 />
               </div>
+
+              <div className="flex flex-col gap-1 mt-2">
+                <label className="text-sm font-medium text-muted-foreground">Référence d'aide (Image)</label>
+                <select
+                  value={tag.handoutId || ''}
+                  onChange={(e) => updateTagModel(tag.id, { handoutId: e.target.value || undefined })}
+                  className="bg-input border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                >
+                  <option value="">Aucune</option>
+                  {useVttStore.getState().handouts.map(h => (
+                    <option key={h.id} value={h.id}>{h.name}</option>
+                  ))}
+                </select>
+              </div>
             </div>
           )}
         </div>
@@ -1017,6 +1031,20 @@ export const EditingModal: React.FC = () => {
                   className="bg-input border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring min-h-[100px] resize-y"
                   placeholder="Saisissez un texte libre ici..."
                 />
+              </div>
+
+              <div className="flex flex-col gap-1 mt-2">
+                <label className="text-sm font-medium text-muted-foreground">Référence d'aide (Image)</label>
+                <select
+                  value={tag.handoutId || ''}
+                  onChange={(e) => updateTagInstance({ handoutId: e.target.value || undefined })}
+                  className="bg-input border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                >
+                  <option value="">Aucune</option>
+                  {useVttStore.getState().handouts.map(h => (
+                    <option key={h.id} value={h.id}>{h.name}</option>
+                  ))}
+                </select>
               </div>
             </div>
           )}

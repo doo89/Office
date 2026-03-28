@@ -420,7 +420,7 @@ export const Canvas: React.FC = () => {
 
         <div className="flex items-center gap-4">
           <div className="text-xs text-muted-foreground font-medium">
-            <span className="mr-2 border-r border-border pr-2">v0.710</span>
+            <span className="mr-2 border-r border-border pr-2">v0.711</span>
             {onlinePlayerIds.length} Joueur(s)
           </div>
           {!roomCode ? (
