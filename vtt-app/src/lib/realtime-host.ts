@@ -3,7 +3,6 @@ import { supabase } from './supabase';
 import { useVttStore } from '../store';
 
 let currentChannel: RealtimeChannel | null = null;
-let broadcastTimeout: any = null;
 
 export const initHostRealtime = (roomCode: string) => {
   if (!supabase) return;
@@ -104,20 +103,11 @@ const forceBroadcastState = () => {
   if (!currentChannel) return;
 
   const state = useVttStore.getState();
-  // Compute active handout IDs to shrink payload
-  const activeHandoutIds = new Set<string>();
-  state.players.forEach(p => {
-    p.tags.forEach(t => {
-      if (t.handoutId) activeHandoutIds.add(t.handoutId);
-    });
-  });
-
   const payload = {
     players: state.players,
     roles: state.roles,
     teams: state.teams,
     tags: state.tags,
-    handouts: state.handouts.filter(h => activeHandoutIds.has(h.id)),
     isNight: state.isNight,
     cycleMode: state.cycleMode,
   };
@@ -146,9 +136,7 @@ export const setupHostRealtimeSubscription = () => {
       state.roles !== prevState.roles ||
       state.teams !== prevState.teams ||
       state.tags !== prevState.tags ||
-      state.handouts !== prevState.handouts ||
       state.isNight !== prevState.isNight ||
-      state.cycleMode !== prevState.cycleMode ||
       state.isRoomPublic !== prevState.isRoomPublic;
 
     if (state.roomCode !== prevState.roomCode) {
@@ -158,12 +146,9 @@ export const setupHostRealtimeSubscription = () => {
         cleanupHostRealtime();
       }
     } else if (relevantChanged && currentChannel) {
-      // Robust debounce to avoid sending too many broadcasts and hitting rate limits
-      if (broadcastTimeout) clearTimeout(broadcastTimeout);
-      broadcastTimeout = setTimeout(() => {
-        forceBroadcastState();
-        broadcastTimeout = null;
-      }, 150);
+      // isRoomPublic changes no longer trigger a full re-init. It's read dynamically in the event handler.
+      // They just trigger a force broadcast so that clients know the current state (if they needed to).
+      forceBroadcastState();
     }
   });
 };

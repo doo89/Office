@@ -507,7 +507,7 @@ export const EditingModal: React.FC = () => {
             className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors flex-1 ${activeTagTab === 'fields' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
             onClick={() => setActiveTagTab('fields')}
           >
-            Champs
+            Champ
           </button>
           <button
             className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors flex-1 ${activeTagTab === 'container' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
@@ -565,7 +565,7 @@ export const EditingModal: React.FC = () => {
                 <label className="flex items-center gap-2 text-sm text-foreground cursor-pointer">
                   <input
                     type="checkbox"
-                    checked={tag.showOnSmartphone !== false}
+                    checked={tag.showOnSmartphone || false}
                     onChange={(e) => updateTagModel(tag.id, { showOnSmartphone: e.target.checked })}
                     className="rounded border-border w-4 h-4"
                   />
@@ -761,20 +761,6 @@ export const EditingModal: React.FC = () => {
                   placeholder="Saisissez un texte libre ici..."
                 />
               </div>
-
-              <div className="flex flex-col gap-1 mt-2">
-                <label className="text-sm font-medium text-muted-foreground">Référence d'aide (Image)</label>
-                <select
-                  value={tag.handoutId || ''}
-                  onChange={(e) => updateTagModel(tag.id, { handoutId: e.target.value || undefined })}
-                  className="bg-input border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
-                >
-                  <option value="">Aucune</option>
-                  {useVttStore.getState().handouts.map(h => (
-                    <option key={h.id} value={h.id}>{h.name}</option>
-                  ))}
-                </select>
-              </div>
             </div>
           )}
         </div>
@@ -828,13 +814,7 @@ export const EditingModal: React.FC = () => {
             className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors flex-1 ${activeTagTab === 'fields' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
             onClick={() => setActiveTagTab('fields')}
           >
-            Champs
-          </button>
-          <button
-            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors flex-1 ${activeTagTab === 'container' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
-            onClick={() => setActiveTagTab('container')}
-          >
-            Container
+            Champ
           </button>
         </div>
 
@@ -873,7 +853,7 @@ export const EditingModal: React.FC = () => {
                 <label className="flex items-center gap-2 text-sm text-foreground cursor-pointer">
                   <input
                     type="checkbox"
-                    checked={tag.showOnSmartphone !== false}
+                    checked={tag.showOnSmartphone || false}
                     onChange={(e) => updateTagInstance({ showOnSmartphone: e.target.checked })}
                     className="rounded border-border w-4 h-4"
                   />
@@ -1037,20 +1017,6 @@ export const EditingModal: React.FC = () => {
                   className="bg-input border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring min-h-[100px] resize-y"
                   placeholder="Saisissez un texte libre ici..."
                 />
-              </div>
-
-              <div className="flex flex-col gap-1 mt-2">
-                <label className="text-sm font-medium text-muted-foreground">Référence d'aide (Image)</label>
-                <select
-                  value={tag.handoutId || ''}
-                  onChange={(e) => updateTagInstance({ handoutId: e.target.value || undefined })}
-                  className="bg-input border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
-                >
-                  <option value="">Aucune</option>
-                  {useVttStore.getState().handouts.map(h => (
-                    <option key={h.id} value={h.id}>{h.name}</option>
-                  ))}
-                </select>
               </div>
             </div>
           )}

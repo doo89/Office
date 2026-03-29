@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import type { SyncStatePayload } from '../lib/supabase';
-import { LogOut, UserCircle2, Tag as TagIcon, ShieldAlert, X, MessageSquareWarning, ChevronUp, ChevronDown, Megaphone, Clock, Image as ImageIcon } from 'lucide-react';
+import { LogOut, UserCircle2, Tag as TagIcon, ShieldAlert, X, MessageSquareWarning, ChevronUp, ChevronDown, Megaphone, Clock } from 'lucide-react';
 import type { Player, Role, Team } from '../types';
 
 export const PlayerView: React.FC = () => {
@@ -18,7 +18,6 @@ export const PlayerView: React.FC = () => {
   const [noticeBoardPlayers, setNoticeBoardPlayers] = useState<Player[]>([]);
   const [isNoticeBoardOpen, setIsNoticeBoardOpen] = useState(false);
   const [expandedNoticeId, setExpandedNoticeId] = useState<string | null>(null);
-  const [handoutReferences, setHandoutReferences] = useState<any[]>([]);
 
   // Track the actual player ID once found, so if GM renames them, they stay connected
   // Use a ref so changes don't cause the useEffect to tear down the WebSocket channel
@@ -76,17 +75,6 @@ export const PlayerView: React.FC = () => {
           const effectiveTeamId = role?.seenInTeamId || role?.teamId || found.teamId;
           const team = data.teams.find(t => t.id === effectiveTeamId);
           setLocalTeam(team || null);
-
-          // Get handout references
-          const handoutIds = found.tags
-            .filter((t: any) => t.handoutId)
-            .map((t: any) => t.handoutId);
-
-          if (handoutIds.length > 0 && data.handouts) {
-            setHandoutReferences(data.handouts.filter((h: any) => handoutIds.includes(h.id)));
-          } else {
-            setHandoutReferences([]);
-          }
         } else {
           setLocalPlayer(null);
           setLocalRole(null);
@@ -228,7 +216,7 @@ export const PlayerView: React.FC = () => {
           </div>
 
           {/* GM Message / Public Notes targeting this player */}
-          {localPlayer.publicNotes && localPlayer.publicNotesSendToPlayer !== false && (
+          {localPlayer.publicNotes && localPlayer.publicNotesSendToPlayer && (
             <div className="bg-blue-900/30 border border-blue-500/50 rounded-2xl overflow-hidden mt-4 relative">
               <div className="bg-blue-500/20 px-4 py-2 border-b border-blue-500/30 flex items-center justify-between">
                 <h4 className="text-xs font-bold text-blue-300 uppercase tracking-widest flex items-center gap-2">
@@ -251,13 +239,13 @@ export const PlayerView: React.FC = () => {
           )}
 
           {/* Tags / Status Effects */}
-          {localPlayer.tags.filter(t => t.showOnSmartphone !== false).length > 0 && (
+          {localPlayer.tags.filter(t => t.showOnSmartphone).length > 0 && (
             <div className="flex flex-col gap-3 mt-4">
               <h4 className="text-xs font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-2">
                 <TagIcon size={14} /> Effets Actifs
               </h4>
               <div className="grid grid-cols-1 gap-2">
-                {localPlayer.tags.filter(t => t.showOnSmartphone !== false).map(tag => (
+                {localPlayer.tags.filter(t => t.showOnSmartphone).map(tag => (
                   <div key={tag.instanceId} className="bg-zinc-900/80 border border-zinc-800 rounded-xl p-4 flex flex-col gap-2">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2 font-bold text-white">
@@ -273,31 +261,6 @@ export const PlayerView: React.FC = () => {
                     {tag.description && (
                       <p className="text-xs text-zinc-500 italic mt-1 leading-relaxed">{tag.description}</p>
                     )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Reference Images (Handouts via Tags) */}
-          {handoutReferences.length > 0 && (
-            <div className="flex flex-col gap-3 mt-4">
-              <h4 className="text-xs font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-2">
-                <ImageIcon size={14} /> Images de Référence
-              </h4>
-              <div className="grid grid-cols-1 gap-4">
-                {handoutReferences.map((handout, idx) => (
-                  <div key={idx} className="bg-zinc-900/80 border border-zinc-800 rounded-xl overflow-hidden flex flex-col">
-                    <div className="bg-zinc-800/50 px-3 py-2 border-b border-zinc-800/80 font-bold text-sm text-zinc-200 truncate">
-                      {handout.name}
-                    </div>
-                    <div className="w-full relative bg-zinc-950 p-2">
-                      <img
-                        src={handout.imageUrl}
-                        alt={handout.name}
-                        className="w-full h-auto max-h-[300px] object-contain rounded-md"
-                      />
-                    </div>
                   </div>
                 ))}
               </div>

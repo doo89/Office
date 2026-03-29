@@ -1,4 +1,4 @@
-import { Settings, ChevronLeft, ChevronRight, Upload, Grid3X3, Clock, Eye, PaintBucket, ChevronDown, Image as ImageIcon, Trash2, ArrowUpRight, Music, Shuffle, RotateCcw } from 'lucide-react';
+import { Settings, ChevronLeft, ChevronRight, Upload, Grid3X3, Clock, Eye, PaintBucket, ChevronDown, Image as ImageIcon, Trash2, ArrowUpRight, Music, Shuffle } from 'lucide-react';
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useVttStore } from '../../store';
 import type { BadgeConfig, BadgeType, Role, Player } from '../../types';
@@ -791,24 +791,6 @@ export const RightPanel: React.FC = () => {
           style={{ display: 'none' }}
           onChange={handleImport}
         />
-      </div>
-
-      {/* Danger Zone */}
-      <div className="p-4 border-t border-border bg-destructive/5 flex flex-col gap-2">
-        <span className="text-xs font-bold text-destructive uppercase tracking-widest text-center mb-1">Zone de Danger</span>
-        <button
-           onClick={() => {
-             if (window.confirm("Êtes-vous sûr de vouloir réinitialiser l'application ? Tout votre travail actuel sera effacé de manière irréversible.")) {
-               localStorage.clear();
-               sessionStorage.clear();
-               window.location.reload();
-             }
-           }}
-          className="flex items-center justify-center gap-2 w-full py-2 bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-md text-sm font-bold shadow-md transition-colors"
-          title="Remettre le programme à zéro et vider le cache"
-        >
-          <RotateCcw size={16} /> Tout Réinitialiser
-        </button>
       </div>
 
       <button

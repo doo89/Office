@@ -420,7 +420,7 @@ export const Canvas: React.FC = () => {
 
         <div className="flex items-center gap-4">
           <div className="text-xs text-muted-foreground font-medium">
-            <span className="mr-2 border-r border-border pr-2">v0.714</span>
+            <span className="mr-2 border-r border-border pr-2">v0.709</span>
             {onlinePlayerIds.length} Joueur(s)
           </div>
           {!roomCode ? (
@@ -451,10 +451,10 @@ export const Canvas: React.FC = () => {
                       <div key={req} className="flex items-center justify-between p-2 hover:bg-accent rounded-sm group">
                         <span className="text-sm font-medium truncate pr-2">{req}</span>
                         <div className="flex items-center gap-1 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button onMouseDown={(e) => { e.stopPropagation(); handleAcceptJoin(req); }} className="p-1 bg-emerald-500/20 text-emerald-500 hover:bg-emerald-500 hover:text-white rounded transition-colors" title="Accepter">
+                          <button onClick={() => handleAcceptJoin(req)} className="p-1 bg-emerald-500/20 text-emerald-500 hover:bg-emerald-500 hover:text-white rounded transition-colors" title="Accepter">
                             <Check size={14} />
                           </button>
-                          <button onMouseDown={(e) => { e.stopPropagation(); handleRejectJoin(req); }} className="p-1 bg-red-500/20 text-red-500 hover:bg-red-500 hover:text-white rounded transition-colors" title="Refuser">
+                          <button onClick={() => handleRejectJoin(req)} className="p-1 bg-red-500/20 text-red-500 hover:bg-red-500 hover:text-white rounded transition-colors" title="Refuser">
                             <X size={14} />
                           </button>
                         </div>

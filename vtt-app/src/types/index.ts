@@ -56,7 +56,6 @@ export interface MarkerParameter {
   showInTooltip?: boolean;
   showInGameTab?: boolean;
   showOnSmartphone?: boolean;
-  handoutId?: string;
 }
 
 export interface Marker {
