@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import type { Player, Role, Team, TagModel } from '../types';
 
 const supabaseUrl = (import.meta.env.VITE_SUPABASE_URL || import.meta.env.NEXT_PUBLIC_SUPABASE_URL) as string;
 const supabaseAnonKey = (import.meta.env.VITE_SUPABASE_ANON_KEY || import.meta.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) as string;
@@ -10,10 +11,10 @@ export const supabase = supabaseUrl && supabaseAnonKey
 
 // Realtime Channel Type Defs
 export type SyncStatePayload = {
-  players: any[];
-  roles: any[];
-  teams: any[];
-  tags: any[];
+  players: Player[];
+  roles: Role[];
+  teams: Team[];
+  tags: TagModel[];
   isNight: boolean;
   cycleMode: 'dayNight' | 'turns' | 'none';
 };
