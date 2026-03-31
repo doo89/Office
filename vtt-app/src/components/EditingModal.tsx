@@ -56,11 +56,10 @@ export const EditingModal: React.FC = () => {
                 <button
                   key={iconName}
                   onClick={() => updateTagCategory(category.id, { icon: iconName })}
-                  className={`p-1.5 rounded-md transition-colors flex items-center justify-center ${
-                    category.icon === iconName
+                  className={`p-1.5 rounded-md transition-colors flex items-center justify-center ${category.icon === iconName
                       ? 'bg-primary text-primary-foreground shadow-sm'
                       : 'hover:bg-accent hover:text-accent-foreground text-muted-foreground'
-                  }`}
+                    }`}
                   title={iconName}
                 >
                   {React.createElement(IconComponent, { size: 16 })}
@@ -250,17 +249,17 @@ export const EditingModal: React.FC = () => {
           </select>
         </div>
         <div className="flex items-center gap-2 mt-2">
-            <input
-              type="checkbox"
-              id="dead-player"
-              checked={player.isDead}
-              onChange={(e) => updatePlayer(player.id, { isDead: e.target.checked })}
-              className="w-4 h-4 rounded border-border text-primary focus:ring-ring cursor-pointer"
-            />
-            <label htmlFor="dead-player" className="text-sm font-medium text-destructive whitespace-nowrap cursor-pointer">
-              Joueur Mort
-            </label>
-          </div>
+          <input
+            type="checkbox"
+            id="dead-player"
+            checked={player.isDead}
+            onChange={(e) => updatePlayer(player.id, { isDead: e.target.checked })}
+            className="w-4 h-4 rounded border-border text-primary focus:ring-ring cursor-pointer"
+          />
+          <label htmlFor="dead-player" className="text-sm font-medium text-destructive whitespace-nowrap cursor-pointer">
+            Joueur Mort
+          </label>
+        </div>
       </div>
     );
   } else if (editingEntity.type === 'role') {
@@ -300,135 +299,135 @@ export const EditingModal: React.FC = () => {
           </div>
         </div>
         <div className="flex items-center gap-2 mt-2">
-            <input
-              type="checkbox"
-              id="unique-role-edit"
-              checked={role.isUnique}
-              onChange={(e) => updateRole(role.id, { isUnique: e.target.checked })}
-              className="w-4 h-4 rounded border-border text-primary focus:ring-ring cursor-pointer"
-            />
-            <label htmlFor="unique-role-edit" className="text-sm font-medium cursor-pointer">
-              Rôle Unique (un seul joueur peut l'avoir)
-            </label>
-          </div>
+          <input
+            type="checkbox"
+            id="unique-role-edit"
+            checked={role.isUnique}
+            onChange={(e) => updateRole(role.id, { isUnique: e.target.checked })}
+            className="w-4 h-4 rounded border-border text-primary focus:ring-ring cursor-pointer"
+          />
+          <label htmlFor="unique-role-edit" className="text-sm font-medium cursor-pointer">
+            Rôle Unique (un seul joueur peut l'avoir)
+          </label>
+        </div>
 
-          <div className="flex flex-col gap-1">
-            <label className="text-sm font-medium">Image du rôle</label>
-            <div className="flex items-center gap-2">
-              <input
-                type="file"
-                accept="image/*"
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) {
-                    const reader = new FileReader();
-                    reader.onloadend = () => {
-                      updateRole(role.id, { imageUrl: reader.result as string });
-                    };
-                    reader.readAsDataURL(file);
-                  }
-                }}
-                className="text-sm flex-1 text-muted-foreground file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90"
-              />
-              {role.imageUrl && (
-                <button
-                  onClick={() => updateRole(role.id, { imageUrl: undefined })}
-                  className="p-2 bg-destructive text-destructive-foreground rounded-md hover:bg-destructive/90 transition-colors"
-                  title="Supprimer l'image"
-                >
-                  <X size={16} />
-                </button>
-              )}
-            </div>
+        <div className="flex flex-col gap-1">
+          <label className="text-sm font-medium">Image du rôle</label>
+          <div className="flex items-center gap-2">
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) {
+                  const reader = new FileReader();
+                  reader.onloadend = () => {
+                    updateRole(role.id, { imageUrl: reader.result as string });
+                  };
+                  reader.readAsDataURL(file);
+                }
+              }}
+              className="text-sm flex-1 text-muted-foreground file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90"
+            />
             {role.imageUrl && (
-              <div className="mt-2 w-16 h-16 rounded-md overflow-hidden border border-border">
-                <img src={role.imageUrl} alt={role.name} className="w-full h-full object-cover" />
-              </div>
+              <button
+                onClick={() => updateRole(role.id, { imageUrl: undefined })}
+                className="p-2 bg-destructive text-destructive-foreground rounded-md hover:bg-destructive/90 transition-colors"
+                title="Supprimer l'image"
+              >
+                <X size={16} />
+              </button>
             )}
           </div>
+          {role.imageUrl && (
+            <div className="mt-2 w-16 h-16 rounded-md overflow-hidden border border-border">
+              <img src={role.imageUrl} alt={role.name} className="w-full h-full object-cover" />
+            </div>
+          )}
+        </div>
 
-          <div className="flex flex-col gap-1">
-            <label className="text-sm font-medium">Équipe (réelle)</label>
+        <div className="flex flex-col gap-1">
+          <label className="text-sm font-medium">Équipe (réelle)</label>
+          <select
+            value={role.teamId || ''}
+            onChange={(e) => updateRole(role.id, { teamId: e.target.value || null })}
+            className="bg-input border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+          >
+            <option value="">-- Aucune --</option>
+            {teams.map(t => (
+              <option key={t.id} value={t.id}>{t.name}</option>
+            ))}
+          </select>
+        </div>
+
+        <div className="flex gap-4">
+          <div className="flex flex-col gap-1 flex-1">
+            <label className="text-sm font-medium">Vu comme rôle (info-bulle)</label>
             <select
-              value={role.teamId || ''}
-              onChange={(e) => updateRole(role.id, { teamId: e.target.value || null })}
+              value={role.seenAsRoleId || ''}
+              onChange={(e) => updateRole(role.id, { seenAsRoleId: e.target.value || null })}
               className="bg-input border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
             >
-              <option value="">-- Aucune --</option>
+              <option value="">-- Aucun --</option>
+              {roles.filter(r => r.id !== role.id).map(r => (
+                <option key={r.id} value={r.id}>{r.name}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex flex-col gap-1 flex-1">
+            <label className="text-sm font-medium">Vu dans équipe (info-bulle)</label>
+            <select
+              value={role.seenInTeamId || ''}
+              onChange={(e) => updateRole(role.id, { seenInTeamId: e.target.value || null })}
+              className="bg-input border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+            >
+              <option value="">-- Identique à réelle --</option>
               {teams.map(t => (
                 <option key={t.id} value={t.id}>{t.name}</option>
               ))}
             </select>
           </div>
+        </div>
 
-          <div className="flex gap-4">
-            <div className="flex flex-col gap-1 flex-1">
-              <label className="text-sm font-medium">Vu comme rôle (info-bulle)</label>
-              <select
-                value={role.seenAsRoleId || ''}
-                onChange={(e) => updateRole(role.id, { seenAsRoleId: e.target.value || null })}
-                className="bg-input border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
-              >
-                <option value="">-- Aucun --</option>
-                {roles.filter(r => r.id !== role.id).map(r => (
-                  <option key={r.id} value={r.id}>{r.name}</option>
-                ))}
-              </select>
-            </div>
+        <div className="flex flex-col gap-1">
+          <label className="text-sm font-medium">Description libre</label>
+          <textarea
+            value={role.description || ''}
+            onChange={(e) => updateRole(role.id, { description: e.target.value })}
+            placeholder="Ex: Si tué la nuit, ressuscite le lendemain..."
+            className="bg-input border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring min-h-[80px]"
+          />
+        </div>
 
-            <div className="flex flex-col gap-1 flex-1">
-              <label className="text-sm font-medium">Vu dans équipe (info-bulle)</label>
-              <select
-                value={role.seenInTeamId || ''}
-                onChange={(e) => updateRole(role.id, { seenInTeamId: e.target.value || null })}
-                className="bg-input border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
-              >
-                <option value="">-- Identique à réelle --</option>
-                {teams.map(t => (
-                  <option key={t.id} value={t.id}>{t.name}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-1">
-            <label className="text-sm font-medium">Description libre</label>
-            <textarea
-              value={role.description || ''}
-              onChange={(e) => updateRole(role.id, { description: e.target.value })}
-              placeholder="Ex: Si tué la nuit, ressuscite le lendemain..."
-              className="bg-input border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring min-h-[80px]"
-            />
-          </div>
-
-          <div className="flex flex-col gap-1">
-            <label className="text-sm font-medium">Tags attachés</label>
-            {tags.length === 0 ? (
-              <p className="text-xs text-muted-foreground italic">Aucun tag défini dans le jeu.</p>
-            ) : (
-              <select
-                multiple
-                value={(role.tags || []).map(t => t.id)}
-                onChange={(e) => {
-                  const options = Array.from(e.target.selectedOptions);
-                  const selectedTagIds = options.map(o => o.value);
-                  const newTags = tags.filter(t => selectedTagIds.includes(t.id));
-                  updateRole(role.id, { tags: newTags });
-                }}
-                className="w-full bg-input border border-border rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-ring focus:border-input outline-none h-24 custom-scrollbar"
-                title="Maintenez Ctrl (ou Cmd) pour sélectionner plusieurs tags."
-              >
-                {tags.map(tag => (
-                  <option key={tag.id} value={tag.id}>
-                    {tag.name}
-                  </option>
-                ))}
-              </select>
-            )}
-            <span className="text-[10px] text-muted-foreground leading-tight mt-1">
-              Maintenez <kbd className="bg-muted px-1 rounded">Ctrl</kbd> ou <kbd className="bg-muted px-1 rounded">Cmd</kbd> pour sélectionner plusieurs tags.
-            </span>
-          </div>
+        <div className="flex flex-col gap-1">
+          <label className="text-sm font-medium">Tags attachés</label>
+          {tags.length === 0 ? (
+            <p className="text-xs text-muted-foreground italic">Aucun tag défini dans le jeu.</p>
+          ) : (
+            <select
+              multiple
+              value={(role.tags || []).map(t => t.id)}
+              onChange={(e) => {
+                const options = Array.from(e.target.selectedOptions);
+                const selectedTagIds = options.map(o => o.value);
+                const newTags = tags.filter(t => selectedTagIds.includes(t.id));
+                updateRole(role.id, { tags: newTags });
+              }}
+              className="w-full bg-input border border-border rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-ring focus:border-input outline-none h-24 custom-scrollbar"
+              title="Maintenez Ctrl (ou Cmd) pour sélectionner plusieurs tags."
+            >
+              {tags.map(tag => (
+                <option key={tag.id} value={tag.id}>
+                  {tag.name}
+                </option>
+              ))}
+            </select>
+          )}
+          <span className="text-[10px] text-muted-foreground leading-tight mt-1">
+            Maintenez <kbd className="bg-muted px-1 rounded">Ctrl</kbd> ou <kbd className="bg-muted px-1 rounded">Cmd</kbd> pour sélectionner plusieurs tags.
+          </span>
+        </div>
 
       </div>
     );
@@ -458,11 +457,10 @@ export const EditingModal: React.FC = () => {
                 <button
                   key={iconName}
                   onClick={() => updateTeam(team.id, { icon: iconName })}
-                  className={`p-2 rounded-md transition-colors flex items-center justify-center ${
-                    team.icon === iconName
+                  className={`p-2 rounded-md transition-colors flex items-center justify-center ${team.icon === iconName
                       ? 'bg-primary text-primary-foreground shadow-sm'
                       : 'hover:bg-accent hover:text-accent-foreground text-muted-foreground'
-                  }`}
+                    }`}
                   title={iconName}
                 >
                   {React.createElement(IconComponent, { size: 20 })}
@@ -507,7 +505,7 @@ export const EditingModal: React.FC = () => {
             className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors flex-1 ${activeTagTab === 'fields' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
             onClick={() => setActiveTagTab('fields')}
           >
-            Champs
+            Champ
           </button>
           <button
             className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors flex-1 ${activeTagTab === 'container' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
@@ -618,11 +616,10 @@ export const EditingModal: React.FC = () => {
                       <button
                         key={iconName}
                         onClick={() => updateTagModel(tag.id, { icon: iconName })}
-                        className={`p-2 rounded-md transition-colors flex items-center justify-center ${
-                          tag.icon === iconName
+                        className={`p-2 rounded-md transition-colors flex items-center justify-center ${tag.icon === iconName
                             ? 'bg-primary text-primary-foreground shadow-sm'
                             : 'hover:bg-accent hover:text-accent-foreground text-muted-foreground'
-                        }`}
+                          }`}
                         title={iconName}
                       >
                         {React.createElement(IconComponent, { size: 20 })}
@@ -814,7 +811,13 @@ export const EditingModal: React.FC = () => {
             className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors flex-1 ${activeTagTab === 'fields' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
             onClick={() => setActiveTagTab('fields')}
           >
-            Champs
+            Champ
+          </button>
+          <button
+            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors flex-1 ${activeTagTab === 'container' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
+            onClick={() => setActiveTagTab('container')}
+          >
+            Container
           </button>
         </div>
 
@@ -875,11 +878,10 @@ export const EditingModal: React.FC = () => {
                       <button
                         key={iconName}
                         onClick={() => updateTagInstance({ icon: iconName })}
-                        className={`p-2 rounded-md transition-colors flex items-center justify-center ${
-                          tag.icon === iconName
+                        className={`p-2 rounded-md transition-colors flex items-center justify-center ${tag.icon === iconName
                             ? 'bg-primary text-primary-foreground shadow-sm'
                             : 'hover:bg-accent hover:text-accent-foreground text-muted-foreground'
-                        }`}
+                          }`}
                         title={iconName}
                       >
                         {React.createElement(IconComponent, { size: 20 })}
@@ -1020,6 +1022,37 @@ export const EditingModal: React.FC = () => {
               </div>
             </div>
           )}
+
+          {activeTagTab === 'container' && (
+            <div className="flex flex-col gap-4">
+              <p className="text-sm text-muted-foreground mb-2">
+                Ce tag peut servir de "Container". Lorsqu'il est appliqué à un joueur, tous les tags sélectionnés ici seront appliqués en même temps avec lui.
+              </p>
+              <div className="flex flex-col gap-2 max-h-[250px] overflow-y-auto custom-scrollbar pr-2 border border-border rounded-md p-3 bg-input/50">
+                {tags.filter(t => t.id !== tag.id).map(otherTag => (
+                  <label key={otherTag.id} className="flex items-center gap-3 p-2 hover:bg-accent hover:text-accent-foreground rounded-md cursor-pointer transition-colors">
+                    <input
+                      type="checkbox"
+                      checked={tag.childTagIds?.includes(otherTag.id) || false}
+                      onChange={(e) => {
+                        const currentList = tag.childTagIds || [];
+                        const newList = e.target.checked
+                          ? [...currentList, otherTag.id]
+                          : currentList.filter((id: string) => id !== otherTag.id);
+                        updateTagInstance({ childTagIds: newList });
+                      }}
+                      className="rounded border-border w-4 h-4"
+                    />
+                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: otherTag.color }} />
+                    <span className="text-sm font-medium flex-1">{otherTag.name}</span>
+                  </label>
+                ))}
+                {tags.filter(t => t.id !== tag.id).length === 0 && (
+                  <div className="text-sm text-muted-foreground text-center py-4">Aucun autre tag disponible</div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     );
@@ -1135,11 +1168,10 @@ export const EditingModal: React.FC = () => {
                 <button
                   key={iconName}
                   onClick={() => updateSoundButton(index, { icon: iconName })}
-                  className={`p-1.5 rounded-md transition-colors flex items-center justify-center ${
-                    btn.icon === iconName
+                  className={`p-1.5 rounded-md transition-colors flex items-center justify-center ${btn.icon === iconName
                       ? 'bg-primary text-primary-foreground shadow-sm'
                       : 'hover:bg-accent hover:text-accent-foreground text-muted-foreground'
-                  }`}
+                    }`}
                   title={iconName}
                 >
                   {React.createElement(IconComponent, { size: 16 })}
