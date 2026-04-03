@@ -193,7 +193,7 @@ export const PlayerView: React.FC = () => {
                 className={`text-3xl font-black tracking-tight mt-1 ${localPlayer.isDead ? 'text-zinc-600' : 'text-white'}`}
                 style={{ color: localPlayer.isDead ? undefined : (localRole?.color || '#fff') }}
               >
-                {localRole ? localRole.name : "Pas encore de rôle"}
+                {localRole ? localRole.name : "Villageois"}
               </h3>
 
               {localTeam && (

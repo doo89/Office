@@ -202,13 +202,11 @@ export const useVttStore = create<VttStore>()(
 
   setRoomName: (name) => set({ roomName: name }),
   generateRoomCode: () => {
-    // Génère un code alphanumérique de 6 caractères pour plus de sécurité contre les attaques par force brute
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    // Generate a 4-letter uppercase code
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
     let code = '';
-    const array = new Uint32Array(6);
-    crypto.getRandomValues(array);
-    for (let i = 0; i < 6; i++) {
-        code += chars.charAt(array[i] % chars.length);
+    for (let i = 0; i < 4; i++) {
+      code += chars.charAt(Math.floor(Math.random() * chars.length));
     }
     set({ roomCode: code });
   },

@@ -99,36 +99,15 @@ export const cleanupHostRealtime = () => {
   }
 };
 
-// Vérifie si une chaîne est une image encodée en base64 (peut peser plusieurs centaines de Ko)
-const isBase64Image = (str: string | undefined): boolean => {
-  if (!str) return false;
-  return str.startsWith('data:image');
-};
-
-// Supprime les images base64 des objets avant le broadcast pour rester sous la limite
-// de 1 Mo de Supabase Realtime. La vue joueur n'affiche pas les images de rôle/joueur
-// en base64 — seules les URL distantes (https://…) peuvent être conservées.
-const stripBase64Images = <T extends { imageUrl?: string }>(items: T[]): T[] =>
-  items.map(item => {
-    if (isBase64Image(item.imageUrl)) {
-      const { imageUrl: _removed, ...rest } = item as Record<string, unknown>;
-      void _removed; // éviter l'erreur "variable déclarée mais non utilisée"
-      return rest as T;
-    }
-    return item;
-  });
-
 const forceBroadcastState = () => {
   if (!currentChannel) return;
 
   const state = useVttStore.getState();
-
-  // On nettoie les images base64 pour éviter que le payload dépasse la limite de 1 Mo
   const payload = {
-    players: stripBase64Images(state.players),
-    roles: stripBase64Images(state.roles),
-    teams: state.teams,    // pas d'imageUrl sur les équipes
-    tags: stripBase64Images(state.tags),
+    players: state.players,
+    roles: state.roles,
+    teams: state.teams,
+    tags: state.tags,
     isNight: state.isNight,
     cycleMode: state.cycleMode,
   };
