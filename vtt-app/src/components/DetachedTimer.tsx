@@ -64,8 +64,11 @@ export const DetachedTimer: React.FC = () => {
           <Clock size={14} /> Chronomètre
         </div>
         <button
-          onClick={(e) => { e.stopPropagation(); setTimer({ isDetached: false }); }}
-          className="p-1 hover:bg-accent hover:text-foreground text-muted-foreground rounded transition-colors"
+          onPointerDown={(e) => {
+            e.stopPropagation(); // Stop drag from initiating
+            setTimer({ isDetached: false });
+          }}
+          className="p-1 hover:bg-accent hover:text-foreground text-muted-foreground rounded transition-colors z-50 pointer-events-auto"
           title="Rattacher au panneau"
         >
           <X size={14} />

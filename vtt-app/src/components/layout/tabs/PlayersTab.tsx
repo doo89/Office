@@ -1,4 +1,4 @@
-import { Plus, Trash2, Edit2, Shield, Users, Sword, Heart, Star, Flag, icons } from 'lucide-react';
+import { Plus, Trash2, Edit2, Users, icons } from 'lucide-react';
 import React, { useState } from 'react';
 import { useVttStore } from '../../../store';
 import { ColorPicker } from '../../ColorPicker';
@@ -176,12 +176,7 @@ export const PlayersTab: React.FC = () => {
             <p className="text-sm text-muted-foreground text-center py-2">Aucune équipe.</p>
           ) : (
             teams.map((team) => {
-              let IconComponent = Users;
-              if (team.icon === 'Shield') IconComponent = Shield;
-              if (team.icon === 'Sword') IconComponent = Sword;
-              if (team.icon === 'Heart') IconComponent = Heart;
-              if (team.icon === 'Star') IconComponent = Star;
-              if (team.icon === 'Flag') IconComponent = Flag;
+              let IconComponent = icons[team.icon as keyof typeof icons] || Users;
 
               return (
                 <div key={team.id} className="flex items-center justify-between p-2 rounded-md border border-border bg-card hover:bg-accent/50 group">

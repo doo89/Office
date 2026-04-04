@@ -118,8 +118,11 @@ export const DetachedSoundboard: React.FC = () => {
           <Music size={14} /> Boîte à sons
         </div>
         <button
-          onClick={(e) => { e.stopPropagation(); setSoundboard({ isDetached: false }); }}
-          className="p-1 hover:bg-accent hover:text-foreground text-muted-foreground rounded transition-colors"
+          onPointerDown={(e) => {
+            e.stopPropagation(); // Stop drag from initiating
+            setSoundboard({ isDetached: false });
+          }}
+          className="p-1 hover:bg-accent hover:text-foreground text-muted-foreground rounded transition-colors z-50 pointer-events-auto"
           title="Rattacher au panneau"
         >
           <X size={14} />

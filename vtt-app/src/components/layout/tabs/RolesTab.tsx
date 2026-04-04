@@ -4,13 +4,9 @@ import { useVttStore } from '../../../store';
 import { ColorPicker } from '../../ColorPicker';
 
 export const RolesTab: React.FC = () => {
-  const { roles, teams, tags, setEditingEntity, addRole, updateRole, deleteRole } = useVttStore();
+  const { roles, teams, setEditingEntity, addRole, updateRole, deleteRole } = useVttStore();
   const [newRoleName, setNewRoleName] = useState('');
   const [newRoleColor, setNewRoleColor] = useState('#3b82f6');
-  const [newRoleLives, setNewRoleLives] = useState(1);
-  const [newRoleUnique, setNewRoleUnique] = useState(true);
-  const [newRoleTeamId, setNewRoleTeamId] = useState<string>('');
-  const [newRoleTags, setNewRoleTags] = useState<string[]>([]);
   const [expandedTeams, setExpandedTeams] = useState<Record<string, boolean>>({});
 
   const rolesByTeam = useMemo(() => {
@@ -38,23 +34,17 @@ export const RolesTab: React.FC = () => {
   const handleAddRole = () => {
     if (!newRoleName.trim()) return;
 
-    const selectedTags = tags.filter(t => newRoleTags.includes(t.id));
-
     addRole({
       name: newRoleName,
       color: newRoleColor,
-      lives: newRoleLives,
-      isUnique: newRoleUnique,
-      teamId: newRoleTeamId || null,
-      tags: selectedTags,
+      lives: 1,
+      isUnique: true,
+      teamId: null,
+      tags: [],
       isSelectableForDistribution: false,
       distributionQuantity: 1,
     });
     setNewRoleName('');
-    setNewRoleLives(1);
-    setNewRoleUnique(true);
-    setNewRoleTeamId('');
-    setNewRoleTags([]);
   };
 
   return (
@@ -70,69 +60,7 @@ export const RolesTab: React.FC = () => {
             onChange={(e) => setNewRoleName(e.target.value)}
             className="w-full bg-input border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
           />
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-medium text-muted-foreground">Équipe :</label>
-            <select
-              value={newRoleTeamId}
-              onChange={(e) => setNewRoleTeamId(e.target.value)}
-              className="w-full bg-input border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
-            >
-              <option value="">-- Aucune --</option>
-              {teams.map(team => (
-                <option key={team.id} value={team.id}>{team.name}</option>
-              ))}
-            </select>
-          </div>
 
-          <div className="flex items-center gap-3 justify-between">
-            <div className="flex items-center gap-2 flex-1">
-              <label className="text-xs font-medium text-muted-foreground whitespace-nowrap">Vies:</label>
-              <input
-                type="number"
-                min="0"
-                value={newRoleLives}
-                onChange={(e) => setNewRoleLives(parseInt(e.target.value) || 0)}
-                className="w-full bg-input border border-border rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-ring text-center"
-              />
-            </div>
-            <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                id="unique-role"
-                checked={newRoleUnique}
-                onChange={(e) => setNewRoleUnique(e.target.checked)}
-                className="w-4 h-4 rounded border-border text-primary focus:ring-ring cursor-pointer"
-              />
-              <label htmlFor="unique-role" className="text-xs font-medium text-muted-foreground whitespace-nowrap cursor-pointer">
-                Unique
-              </label>
-            </div>
-          </div>
-
-          {tags.length > 0 && (
-            <div className="flex flex-col gap-1.5 mt-1">
-              <span className="text-xs font-medium text-muted-foreground">Tags par défaut :</span>
-              <select
-                multiple
-                value={newRoleTags}
-                onChange={(e) => {
-                  const options = Array.from(e.target.selectedOptions);
-                  setNewRoleTags(options.map(o => o.value));
-                }}
-                className="w-full bg-background border border-border rounded px-3 py-2 text-sm focus:ring-1 focus:ring-ring focus:border-input outline-none h-24 custom-scrollbar"
-                title="Maintenez Ctrl (ou Cmd) pour sélectionner plusieurs tags."
-              >
-                {tags.map(tag => (
-                  <option key={tag.id} value={tag.id}>
-                    {tag.name}
-                  </option>
-                ))}
-              </select>
-              <span className="text-[10px] text-muted-foreground leading-tight">
-                Maintenez <kbd className="bg-muted px-1 rounded">Ctrl</kbd> ou <kbd className="bg-muted px-1 rounded">Cmd</kbd> pour sélectionner plusieurs tags.
-              </span>
-            </div>
-          )}
 
           <div className="flex items-center gap-2">
             <ColorPicker

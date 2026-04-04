@@ -202,10 +202,10 @@ export const useVttStore = create<VttStore>()(
 
   setRoomName: (name) => set({ roomName: name }),
   generateRoomCode: () => {
-    // Generate a 4-letter uppercase code
+    // Generate a 6-letter uppercase code
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
     let code = '';
-    for (let i = 0; i < 4; i++) {
+    for (let i = 0; i < 6; i++) {
       code += chars.charAt(Math.floor(Math.random() * chars.length));
     }
     set({ roomCode: code });
