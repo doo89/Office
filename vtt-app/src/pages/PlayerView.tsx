@@ -18,6 +18,7 @@ export const PlayerView: React.FC = () => {
   const [noticeBoardPlayers, setNoticeBoardPlayers] = useState<Player[]>([]);
   const [isNoticeBoardOpen, setIsNoticeBoardOpen] = useState(false);
   const [expandedNoticeId, setExpandedNoticeId] = useState<string | null>(null);
+  const [handoutImages, setHandoutImages] = useState<{ id: string; url: string; name: string }[]>([]);
 
   // Track the actual player ID once found, so if GM renames them, they stay connected
   // Use a ref so changes don't cause the useEffect to tear down the WebSocket channel
@@ -75,10 +76,28 @@ export const PlayerView: React.FC = () => {
           const effectiveTeamId = role?.seenInTeamId || role?.teamId || found.teamId;
           const team = data.teams.find(t => t.id === effectiveTeamId);
           setLocalTeam(team || null);
+
+          // Extract handout images from tags
+          const newHandouts: { id: string; url: string; name: string }[] = [];
+          if (data.handouts) {
+            found.tags.forEach((tag: any) => {
+              if (tag.handoutId) {
+                const handout = data.handouts.find((h: any) => h.id === tag.handoutId);
+                if (handout && handout.imageUrl) {
+                  // Avoid duplicates
+                  if (!newHandouts.find(h => h.id === handout.id)) {
+                    newHandouts.push({ id: handout.id, url: handout.imageUrl, name: handout.name });
+                  }
+                }
+              }
+            });
+          }
+          setHandoutImages(newHandouts);
         } else {
           setLocalPlayer(null);
           setLocalRole(null);
           setLocalTeam(null);
+          setHandoutImages([]);
           // If we lost our ID (e.g. player deleted), reset it
           if (matchedPlayerIdRef.current) {
             matchedPlayerIdRef.current = null;
@@ -319,6 +338,26 @@ export const PlayerView: React.FC = () => {
                   ))}
                 </div>
               )}
+            </div>
+          )}
+
+          {/* Gallery for Tag Handout References */}
+          {handoutImages.length > 0 && (
+            <div className="mt-8">
+              <h4 className="text-xs font-bold text-zinc-500 uppercase tracking-widest mb-3 text-center">Aides de Jeu (Références)</h4>
+              <div className="flex flex-wrap gap-4 justify-center">
+                {handoutImages.map((handout) => (
+                  <div key={handout.id} className="relative group cursor-pointer" onClick={() => window.open(handout.url, '_blank')}>
+                    <div className="w-24 h-24 rounded-lg overflow-hidden border-2 border-zinc-700 bg-zinc-800 shadow-lg hover:border-blue-500 transition-colors">
+                      <img src={handout.url} alt={handout.name} className="w-full h-full object-cover" />
+                    </div>
+                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-lg">
+                      <span className="text-[10px] font-bold text-white uppercase px-2 text-center">Agrandir</span>
+                    </div>
+                    <p className="text-[10px] text-zinc-400 text-center mt-1 truncate w-24">{handout.name}</p>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 

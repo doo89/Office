@@ -108,6 +108,7 @@ const forceBroadcastState = () => {
     roles: state.roles,
     teams: state.teams,
     tags: state.tags,
+    handouts: state.handouts,
     isNight: state.isNight,
     cycleMode: state.cycleMode,
   };
@@ -136,6 +137,7 @@ export const setupHostRealtimeSubscription = () => {
       state.roles !== prevState.roles ||
       state.teams !== prevState.teams ||
       state.tags !== prevState.tags ||
+      state.handouts !== prevState.handouts ||
       state.isNight !== prevState.isNight ||
       state.isRoomPublic !== prevState.isRoomPublic;
 

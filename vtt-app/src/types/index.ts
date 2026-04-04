@@ -72,6 +72,7 @@ export interface TagModel extends MarkerParameter {
   imageUrl?: string;
   categoryId?: EntityId | null;
   childTagIds?: EntityId[]; // List of other tag model IDs to apply when this container is applied
+  handoutId?: EntityId | null; // Reference to a handout image
 }
 
 // Local Tag Instance (attached to a player or marker)

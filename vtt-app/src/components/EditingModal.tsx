@@ -17,7 +17,7 @@ const TAG_ICONS = [
 ];
 
 export const EditingModal: React.FC = () => {
-  const { editingEntity, setEditingEntity, players, playerTemplates, roles, teams, tags, tagCategories, markers, soundboard, updatePlayer, updatePlayerTemplate, updateRole, updateTeam, updateTagModel, updateTagCategory, updateMarker, updateSoundButton, removeSoundButton } = useVttStore();
+  const { editingEntity, setEditingEntity, players, playerTemplates, roles, teams, tags, tagCategories, markers, soundboard, handouts, updatePlayer, updatePlayerTemplate, updateRole, updateTeam, updateTagModel, updateTagCategory, updateMarker, updateSoundButton, removeSoundButton } = useVttStore();
   const [activeTagTab, setActiveTagTab] = React.useState<'general' | 'appearance' | 'fields' | 'container'>('general');
 
   // Reset tab when editing entity changes
@@ -758,6 +758,23 @@ export const EditingModal: React.FC = () => {
                   placeholder="Saisissez un texte libre ici..."
                 />
               </div>
+
+              <div className="flex flex-col gap-1 mt-4">
+                <label className="text-sm font-medium text-muted-foreground">Associer une Aide de Jeu</label>
+                <select
+                  value={tag.handoutId || ''}
+                  onChange={(e) => updateTagModel(tag.id, { handoutId: e.target.value || null })}
+                  className="bg-input border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                >
+                  <option value="">Aucune (Optionnel)</option>
+                  {handouts.map(h => (
+                    <option key={h.id} value={h.id}>{h.name}</option>
+                  ))}
+                </select>
+                <p className="text-xs text-muted-foreground mt-1">
+                  L'image de cette aide s'affichera dans une galerie sur le smartphone du joueur possédant ce tag.
+                </p>
+              </div>
             </div>
           )}
         </div>
@@ -1013,6 +1030,23 @@ export const EditingModal: React.FC = () => {
                   className="bg-input border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring min-h-[100px] resize-y"
                   placeholder="Saisissez un texte libre ici..."
                 />
+              </div>
+
+              <div className="flex flex-col gap-1 mt-4">
+                <label className="text-sm font-medium text-muted-foreground">Associer une Aide de Jeu</label>
+                <select
+                  value={tag.handoutId || ''}
+                  onChange={(e) => updateTagInstance({ handoutId: e.target.value || null })}
+                  className="bg-input border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                >
+                  <option value="">Aucune (Optionnel)</option>
+                  {handouts.map(h => (
+                    <option key={h.id} value={h.id}>{h.name}</option>
+                  ))}
+                </select>
+                <p className="text-xs text-muted-foreground mt-1">
+                  L'image de cette aide s'affichera dans une galerie sur le smartphone du joueur possédant ce tag.
+                </p>
               </div>
             </div>
           )}
