@@ -524,7 +524,7 @@ export const Canvas: React.FC = () => {
 
       {/* Night Overlay */}
       {isNight && cycleMode === 'dayNight' && (
-        <div className="absolute inset-0 bg-black/60 z-30 pointer-events-none transition-opacity duration-1000" />
+        <div className="absolute inset-0 bg-black/60 z-0 pointer-events-none transition-opacity duration-1000" />
       )}
 
       {/* Grid Overlay */}
@@ -972,9 +972,14 @@ export const Canvas: React.FC = () => {
                   <TagIconComponent size={20} style={{ color: marker.tag.color }} />
                 )}
               </div>
+            
+              {/* Tag Name Label */}
+              <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-1 bg-background/80 backdrop-blur-sm px-2 py-0.5 rounded text-xs font-bold whitespace-nowrap border border-border pointer-events-none text-center">
+                <span>{marker.tag.name}</span>
+              </div>
 
                {/* Tooltip */}
-               <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 w-max max-w-[200px] bg-popover text-popover-foreground text-xs p-2 rounded shadow-xl border border-border opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
+               <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-7 w-max max-w-[200px] bg-popover text-popover-foreground text-xs p-2 rounded shadow-xl border border-border opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
                 <p className="font-bold" style={{ color: marker.tag.color }}>{marker.tag.name}</p>
                 <div className="text-[10px] text-muted-foreground mt-1">
                   {marker.tag.uses !== null && <span>Uses: {marker.tag.uses} </span>}
